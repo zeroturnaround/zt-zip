@@ -16,13 +16,13 @@
     <repository>
       <id>zt-releases</id>
       <name>ZeroTurnaround Releases</name>
-      <url>dav:http://repos.zeroturnaround.com/nexus/content/repositories/zt-releases</url>
+      <url>dav:http://repos.zeroturnaround.com/nexus/content/repositories/zt-public-releases</url>
       <layout>default</layout>
     </repository>
     <snapshotRepository>
       <id>zt-snapshots</id>
       <name>ZeroTurnaround Snapshots</name>
-      <url>dav:http://repos.zeroturnaround.com/nexus/content/repositories/zt-snapshots</url>
+      <url>dav:http://repos.zeroturnaround.com/nexus/content/repositories/zt-public-snapshots</url>
       <layout>default</layout>
     </snapshotRepository>
   </distributionManagement>
@@ -30,14 +30,14 @@
   <repositories>
     <repository>
       <id>zt-releases</id>
-      <url>dav:http://repos.zeroturnaround.com/nexus/content/repositories/zt-releases</url>
+      <url>dav:http://repos.zeroturnaround.com/nexus/content/repositories/zt-public-releases</url>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
     </repository>
     <repository>
       <id>zt-snapshots</id>
-      <url>dav:http://repos.zeroturnaround.com/nexus/content/repositories/zt-snapshots</url>
+      <url>dav:http://repos.zeroturnaround.com/nexus/content/repositories/zt-public-snapshots</url>
       <snapshots>
         <enabled>true</enabled>
       </snapshots>
