@@ -1,3 +1,4 @@
 bin/
 target/
 test.log
+*.swp

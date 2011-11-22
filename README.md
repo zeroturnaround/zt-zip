@@ -16,13 +16,15 @@ The project artifact can be downloaded from the
 To include it in your maven project then you need to define the repository and the dependency.
 
 ```xml
-<repository>
-  <id>zt-releases</id>
-  <url>http://repos.zeroturnaround.com/nexus/content/groups/zt-public/</url>
-  <snapshots>
-    <enabled>false</enabled>
-  </snapshots>
-</repository>
+<repositories>
+    <repository>
+      <id>zt-public-releases</id>
+      <url>http://repos.zeroturnaround.com/nexus/content/groups/zt-public/</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+</repositories>
 
 ...
 <dependency>
@@ -35,6 +37,15 @@ To include it in your maven project then you need to define the repository and t
 ...
 ```
 
+### Examples
+
+#### Print all entries in a ZIP archive
 ```java
-package org.zeroturnaround
+ZipUtil.iterate(new File("/tmp/archive.zip"), new ZipEntryCallback() {
+      public void process(InputStream is, ZipEntry entry) throws IOException {
+        String name = entry.getName();
+        System.out.println(name);
+      }
+    });
 ```
+
