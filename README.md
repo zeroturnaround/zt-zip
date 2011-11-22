@@ -7,6 +7,8 @@ The project was started and coded by Rein Raudjärv when he needed to process a 
 LiveRebel internals. Soon after we started using the utility in other projects because of the ease of use and it
 *just worked*.
 
+The project is built using java.util.zip.* packages for stream based access. Most convenience methods for filesystem
+usage is also supported.
 
 ### Installation
 
