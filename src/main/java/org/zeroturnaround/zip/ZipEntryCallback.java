@@ -13,34 +13,27 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.zeroturnaround.zip;
+package org.zeroturnaround.zip;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.ZipEntry;
 
-
 /**
- * ZIP entry with its contents.
- * 
+ * Call-back for traversing ZIP entries with their contents.
+ *  
  * @author Rein Raudjärv
+ * 
+ * @see ZipInfoCallback
  */
-public interface ZipEntrySource {
+public interface ZipEntryCallback {
   
   /**
-   * @return path of the given entry (not <code>null</code>).
+   * Invoked for each entry in a ZIP file.
+   * 
+   * @param in contents of the ZIP entry.
+   * @param zipEntry ZIP entry.
    */
-  String getPath();
-
-  /**
-   * @return meta-data of the given entry (not <code>null</code>).
-   */
-  ZipEntry getEntry();
-  
-  /**
-   * @return an input stream of the given entry 
-   *    or <code>null</code> if this entry is a directory.
-   */
-  InputStream getInputStream() throws IOException;
+  void process(InputStream in, ZipEntry zipEntry) throws IOException;
   
 }

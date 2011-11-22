@@ -13,23 +13,21 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.zeroturnaround.zip;
+package org.zeroturnaround.zip;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.ZipEntry;
 
-public class FileSource implements ZipEntrySource {
+public class ByteSource implements ZipEntrySource {
 
   private final String path;
-  private final File file;
+  private final byte[] bytes;
   
-  public FileSource(String path, File file) {
+  public ByteSource(String path, byte[] bytes) {
     this.path = path;
-    this.file = file;
+    this.bytes = bytes;
   }
   
   public String getPath() {
@@ -38,21 +36,21 @@ public class FileSource implements ZipEntrySource {
   
   public ZipEntry getEntry() {
     ZipEntry entry = new ZipEntry(path);
-    if (!file.isDirectory())
-      entry.setSize(file.length());
-    entry.setTime(file.lastModified());
+    if (bytes != null)
+      entry.setSize(bytes.length);
+    entry.setTime(System.currentTimeMillis());
     return entry;
   }
 
   public InputStream getInputStream() throws IOException {
-    if (file.isDirectory())
+    if (bytes == null)
       return null;
     else
-      return new BufferedInputStream(new FileInputStream(file));
+      return new ByteArrayInputStream(bytes);
   }
   
   public String toString() {
-    return "FileSource[" + path + ", " + file + "]";
+    return "ByteSource[" + path + "]";
   }
 
 }

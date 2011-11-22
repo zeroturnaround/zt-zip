@@ -24,8 +24,8 @@ import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
-import com.zeroturnaround.zip.ZipEntrySource;
-import com.zeroturnaround.zip.ZipUtil;
+import org.zeroturnaround.zip.ZipEntrySource;
+import org.zeroturnaround.zip.ZipUtil;
 
 public class ZipUtilTest extends TestCase {
 

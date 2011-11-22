@@ -13,27 +13,23 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.zeroturnaround.zip;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.zip.ZipEntry;
+package org.zeroturnaround.zip;
 
 /**
- * Call-back for traversing ZIP entries with their contents.
- *  
+ * NOP implementation of the name mapper.
+ * 
  * @author Rein Raudjärv
  * 
- * @see ZipInfoCallback
+ * @see NameMapper
  */
-public interface ZipEntryCallback {
+class IdentityNameMapper implements NameMapper {
   
-  /**
-   * Invoked for each entry in a ZIP file.
-   * 
-   * @param in contents of the ZIP entry.
-   * @param zipEntry ZIP entry.
-   */
-  void process(InputStream in, ZipEntry zipEntry) throws IOException;
+  public static final NameMapper INSTANCE = new IdentityNameMapper();
+
+  private IdentityNameMapper() {}
   
+  public String map(String name) {
+    return name;
+  }
+
 }

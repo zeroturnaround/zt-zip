@@ -13,25 +13,22 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package com.zeroturnaround.zip;
-
-import java.io.IOException;
-import java.util.zip.ZipEntry;
+package org.zeroturnaround.zip;
 
 /**
- * Call-back for traversing ZIP entries without their contents.
+ * Call-back for filtering and renaming ZIP entries while packing or unpacking.
  *  
  * @author Rein Raudjärv
  * 
- * @see ZipEntryCallback
+ * @see ZipUtil
  */
-public interface ZipInfoCallback {
+public interface NameMapper {
   
   /**
-   * Invoked for each entry in a ZIP file.
-   * 
-   * @param zipEntry ZIP entry.
+   * @param name original name.
+   * @return name to be stored in the ZIP file or the destination directory,
+   *    <code>null</code> means that the entry will be skipped.
    */
-  void process(ZipEntry zipEntry) throws IOException;
+  String map(String name);
   
 }
