@@ -8,8 +8,9 @@
   <version>1.0-SNAPSHOT</version>
 
   <scm>
-    <connection>scm:hg:${basedir}</connection>
-    <developerConnection>scm:hg:${basedir}</developerConnection>
+    <connection>scm:git:git@github.com:zerotunaround/zt-zip.git</connection>
+    <url>scm:git:git@github.com:zeroturnaround/zt-zip.git</url>
+    <developerConnection>scm:git:git@github.com:zerotunaround/zt-zip.git</developerConnection>
   </scm>
 
   <distributionManagement>

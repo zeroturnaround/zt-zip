@@ -2,3 +2,7 @@ bin/
 target/
 test.log
 *.swp
+.classpath
+.project
+.settings/
+
