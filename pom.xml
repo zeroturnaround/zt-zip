@@ -114,17 +114,6 @@
         <version>1.0-beta-2</version>
         <extensions>true</extensions>
       </plugin>
-      <plugin>
-        <groupId>com.mycila.maven-license-plugin</groupId>
-        <artifactId>maven-license-plugin</artifactId>
-        <configuration>
-          <header>etc/header.txt</header>
-          <strictChecking>true</strictChecking>
-          <properties>
-            <year>2012</year>
-          </properties>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
 </project>
