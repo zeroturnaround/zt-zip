@@ -39,7 +39,7 @@ To include it in your maven project then you need to define the repository and t
 ...
 ```
 
-## About
+## Background
 
 We had the following functional requirements:
 
