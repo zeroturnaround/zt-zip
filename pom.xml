@@ -7,9 +7,9 @@
   <version>1.1-SNAPSHOT</version>
 
   <scm>
-    <connection>scm:git:git@github.com:zerotunaround/zt-zip.git</connection>
+    <connection>scm:git:git@github.com:zeroturnaround/zt-zip.git</connection>
     <url>scm:git:git@github.com:zeroturnaround/zt-zip.git</url>
-    <developerConnection>scm:git:git@github.com:zerotunaround/zt-zip.git</developerConnection>
+    <developerConnection>scm:git:git@github.com:zeroturnaround/zt-zip.git</developerConnection>
   </scm>
 
   <distributionManagement>
