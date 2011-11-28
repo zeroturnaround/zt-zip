@@ -41,13 +41,68 @@ To include it in your maven project then you need to define the repository and t
 
 ### Examples
 
-#### Print all entries in a ZIP archive
+#### Check if an entry exists in a ZIP archive
 ```java
-ZipUtil.iterate(new File("/tmp/archive.zip"), new ZipEntryCallback() {
-      public void process(InputStream is, ZipEntry entry) throws IOException {
-        String name = entry.getName();
-        System.out.println(name);
-      }
-    });
+boolean exists = ZipUtil.containsEntry(new File("/tmp/demo"), "foo.txt");
 ```
 
+#### Extract an entry from a ZIP archive into a byte array
+```java
+byte[] bytes = ZipUtil.unpackEntry(new File("/tmp/demo.zip"), "foo.txt");
+```
+
+#### Extract an entry from a ZIP archive into file system
+```java
+ZipUtil.unpackEntry(new File("/tmp/demo.zip"), "foo.txt", new File("/tmp/bar.txt"));
+```
+
+#### Extract a ZIP archive
+```java
+ZipUtil.unpack(new File("/tmp/demo.zip"), new File("/tmp/demo"));
+```
+
+#### Extract a ZIP archive which becomes a directory
+```java
+ZipUtil.explode(new File("/tmp/demo.zip"));
+```
+
+#### Extract a directory from a ZIP archive including the directory name
+```java
+ZipUtil.unpack(new File("/tmp/demo.zip"), new File("/tmp/demo"), new NameMapper() {
+  public String map(String name) {
+    return name.startsWith("doc/") ? name : null;
+  }
+});
+```
+
+#### Extract a directory from a ZIP archive excluding the directory name
+```java
+final String prefix = "doc/"; 
+ZipUtil.unpack(new File("/tmp/demo.zip"), new File("/tmp/demo"), new NameMapper() {
+  public String map(String name) {
+    return name.startsWith(prefix) ? name.substring(prefix.length()) : name;
+  }
+});
+```
+
+#### Print .class entry names in a ZIP archive
+```java
+ZipUtil.iterate(new File("/tmp/demo.zip"), new ZipInfoCallback() {
+  public void process(ZipEntry zipEntry) throws IOException {
+    if (zipEntry.getName().endsWith(".class"))
+      System.out.println("Found " + zipEntry.getName());
+  }
+});
+```
+
+#### Print .txt entries in a ZIP archive (uses IoUtils from Commons IO)
+```java
+ZipUtil.iterate(new File("/tmp/demo.zip"), new ZipEntryCallback() {
+  public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+    if (zipEntry.getName().endsWith(".txt")) {
+      System.out.println("Found " + zipEntry.getName());
+      IOUtils.copy(in, System.out);
+    }
+  }
+});
+```
