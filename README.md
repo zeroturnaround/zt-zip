@@ -39,6 +39,27 @@ To include it in your maven project then you need to define the repository and t
 ...
 ```
 
+## About
+
+We had the following functional requirements:
+
+1. pack and unpack directories recursively
+  1. include/exclude entries
+  2. rename entries
+  3. packing/unpacking in place - ZIP becomes directory and vice versa
+2. iterate through ZIP entries
+3. add or replace entries from files or byte arrays
+4. compare two archives - compare all entries ignoring time stamps
+
+and these non-functional requirements:
+
+1. use existing APIs as much as possible
+2. be simple to use
+3. be effective to use - do not traverse an entire ZIP file if only a single entry is needed
+4. be safe to use - do not enable user to leave streams open and keep files locked
+5. do not declare exceptions
+6. be compatible with Java 1.4
+
 ## Examples
 
 ### Unpacking
