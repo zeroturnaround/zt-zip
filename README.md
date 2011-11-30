@@ -191,17 +191,17 @@ boolean replaced = ZipUtil.replaceEntries(new File("/tmp/demo.zip"), entries, ne
 
 ### Comparison
 
-#### Compare two ZIP archives (ignoring tine stamps of the entries) 
+#### Compare two ZIP archives (ignoring timestamps of the entries) 
 ```java
 boolean equals = ZipUtil.archiveEquals(new File("/tmp/demo1.zip"), new File("/tmp/demo2.zip"));
 ```
 
-#### Compare two ZIP archive entries with same name (ignoring tine stamps of the entries) 
+#### Compare two ZIP archive entries with same name (ignoring timestamps of the entries) 
 ```java
 boolean equals = ZipUtil.entryEquals(new File("/tmp/demo1.zip"), new File("/tmp/demo2.zip"), "foo.txt");
 ```
 
-#### Compare two ZIP archive entries with different names (ignoring tine stamps of the entries) 
+#### Compare two ZIP archive entries with different names (ignoring timestamps of the entries) 
 ```java
 boolean equals = ZipUtil.entryEquals(new File("/tmp/demo1.zip"), new File("/tmp/demo2.zip"), "foo1.txt", "foo2.txt");
 ```
