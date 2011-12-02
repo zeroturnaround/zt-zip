@@ -38,7 +38,8 @@ public class UnpackExample {
       zf.close();
     }
     
-    ZipFile zf = new ZipFile("demo.zip");
+    zf = new ZipFile("demo.zip");
+    byte[] bytes = new byte[0];
     try {
       
       ZipEntry ze = zf.getEntry("foo.txt");
