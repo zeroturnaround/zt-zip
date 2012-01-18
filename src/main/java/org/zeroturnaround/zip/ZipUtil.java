@@ -333,7 +333,7 @@ public class ZipUtil {
    *          output directory (created automatically if not found).
    */
   public static void unpack(InputStream is, File outputDir, NameMapper mapper) {
-    log.debug("Extracting into '{}'.", is, outputDir);
+    log.debug("Extracting {} into '{}'.", is, outputDir);
     iterate(is, new Unpacker(outputDir, mapper));
   }
   
