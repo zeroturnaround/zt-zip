@@ -1112,9 +1112,13 @@ public class ZipUtil {
 
       ZipEntry e1 = zf1.getEntry(path1);
       ZipEntry e2 = zf2.getEntry(path2);
+      if (e1 == null && e2 == null) return true;
+      if (e1 == null || e2 == null) return false;
 
       is1 = zf1.getInputStream(e1);
       is2 = zf2.getInputStream(e2);
+      if (is1 == null && is2 == null) return true;
+      if (is1 == null || is2 == null) return false;
 
       return IOUtils.contentEquals(is1, is2);
     }
