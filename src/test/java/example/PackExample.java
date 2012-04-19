@@ -13,6 +13,8 @@ import org.zeroturnaround.zip.ZipUtil;
 
 public class PackExample {
 
+  private PackExample() {}
+  
   public static void usual() throws IOException {
     File dir = new File("demo");
     

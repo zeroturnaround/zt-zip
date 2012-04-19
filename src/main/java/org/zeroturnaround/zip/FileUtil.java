@@ -29,7 +29,9 @@ import org.apache.commons.io.IOUtils;
  * 
  * @author Rein Raudjärv
  */
-class FileUtil {
+final class FileUtil {
+  
+  private FileUtil() {}
   
   /**
    * Copies the given file into an output stream.

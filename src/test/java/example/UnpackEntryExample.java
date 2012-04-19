@@ -11,7 +11,8 @@ import org.zeroturnaround.zip.ZipUtil;
 
 
 public class UnpackEntryExample {
-
+  private UnpackEntryExample() {}
+  
   public static void usual() throws IOException {
     byte[] bytes = null;
     ZipFile zf = new ZipFile("demo.zip");

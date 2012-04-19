@@ -24,31 +24,34 @@ public class ByteSource implements ZipEntrySource {
 
   private final String path;
   private final byte[] bytes;
-  
+
   public ByteSource(String path, byte[] bytes) {
     this.path = path;
-    this.bytes = bytes;
+    this.bytes = (byte[])bytes.clone();
   }
-  
+
   public String getPath() {
     return path;
   }
-  
+
   public ZipEntry getEntry() {
     ZipEntry entry = new ZipEntry(path);
-    if (bytes != null)
+    if (bytes != null) {
       entry.setSize(bytes.length);
+    }
     entry.setTime(System.currentTimeMillis());
     return entry;
   }
 
   public InputStream getInputStream() throws IOException {
-    if (bytes == null)
+    if (bytes == null) {
       return null;
-    else
+    }
+    else {
       return new ByteArrayInputStream(bytes);
+    }
   }
-  
+
   public String toString() {
     return "ByteSource[" + path + "]";
   }

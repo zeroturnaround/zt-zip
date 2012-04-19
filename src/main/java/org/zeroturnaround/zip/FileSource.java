@@ -38,17 +38,20 @@ public class FileSource implements ZipEntrySource {
   
   public ZipEntry getEntry() {
     ZipEntry entry = new ZipEntry(path);
-    if (!file.isDirectory())
+    if (!file.isDirectory()) {
       entry.setSize(file.length());
+    }
     entry.setTime(file.lastModified());
     return entry;
   }
 
   public InputStream getInputStream() throws IOException {
-    if (file.isDirectory())
+    if (file.isDirectory()) {
       return null;
-    else
+    }
+    else {
       return new BufferedInputStream(new FileInputStream(file));
+    }
   }
   
   public String toString() {

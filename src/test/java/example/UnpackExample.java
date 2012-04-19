@@ -13,7 +13,8 @@ import org.zeroturnaround.zip.ZipUtil;
 
 
 public class UnpackExample {
-
+  private UnpackExample() {}
+  
   public static void usual() throws IOException {
     ZipFile zf = new ZipFile("demo.zip");
     try {

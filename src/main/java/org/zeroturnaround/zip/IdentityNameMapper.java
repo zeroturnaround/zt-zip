@@ -22,7 +22,7 @@ package org.zeroturnaround.zip;
  * 
  * @see NameMapper
  */
-class IdentityNameMapper implements NameMapper {
+final class IdentityNameMapper implements NameMapper {
   
   public static final NameMapper INSTANCE = new IdentityNameMapper();
 
