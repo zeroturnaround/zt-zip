@@ -1,46 +1,60 @@
-package example;
+package org.zeroturnaround.zip;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.ZipEntry;
 
+import junit.framework.TestCase;
+
 import org.apache.commons.io.IOUtils;
-import org.zeroturnaround.zip.ByteSource;
-import org.zeroturnaround.zip.FileSource;
-import org.zeroturnaround.zip.NameMapper;
-import org.zeroturnaround.zip.ZipEntryCallback;
-import org.zeroturnaround.zip.ZipEntrySource;
-import org.zeroturnaround.zip.ZipInfoCallback;
-import org.zeroturnaround.zip.ZipUtil;
 
-public final class Examples {
-
-  private Examples() {
-  }
+public final class MainExamplesTest extends TestCase {
 
   /* Unpacking */
 
-  public static void contains() {
-    boolean exists = ZipUtil.containsEntry(new File("/tmp/demo"), "foo.txt");
-    System.out.println("Exists: " + exists);
+  public static final String DEMO_ZIP = "src/test/resources/demo.zip";
+  public static final String DUPLICATE_ZIP = "src/test/resources/duplicate.zip";
+  public static final String DEMO_COPY_ZIP = "src/test/resources/demo-copy.zip";
+  public static final String FOO_TXT = "foo.txt";
+
+  public static void testContains() {
+    boolean exists = ZipUtil.containsEntry(new File(DEMO_ZIP), FOO_TXT);
+    assertTrue(exists);
   }
 
-  public static void unpackEntryImMemory() {
-    byte[] bytes = ZipUtil.unpackEntry(new File("/tmp/demo.zip"), "foo.txt");
-    System.out.println("Read " + bytes.length + " bytes.");
+  public static void testUnpackEntryImMemory() {
+    byte[] bytes = ZipUtil.unpackEntry(new File(DEMO_ZIP), FOO_TXT);
+    assertEquals(bytes.length, 12);
   }
 
-  public static void unpackEntry() {
-    ZipUtil.unpackEntry(new File("/tmp/demo.zip"), "foo.txt", new File("/tmp/bar.txt"));
+  public static void testUnpackEntry() throws IOException {
+    File tmpFile = File.createTempFile("prefix", "suffix");
+    ZipUtil.unpackEntry(new File(DEMO_ZIP), FOO_TXT, tmpFile);
+    assertTrue(tmpFile.length() > 0);
   }
 
-  public static void unpack() {
-    ZipUtil.unpack(new File("/tmp/demo.zip"), new File("/tmp/demo"));
+  public static void testUnpack() throws IOException {
+    File tmpDir = File.createTempFile("prefix", "suffix");
+    tmpDir.delete();
+    tmpDir.mkdir();
+    ZipUtil.unpack(new File(DEMO_ZIP), tmpDir);
+    File fooFile = new File(tmpDir, FOO_TXT);
+    assertTrue(fooFile.exists());
   }
 
-  public static void upnackInPlace() {
-    ZipUtil.explode(new File("/tmp/demo.zip"));
+  public static void upnackInPlace() throws Exception{
+    File demoFile = new File(DEMO_ZIP);
+    File outDir = File.createTempFile("prefix", "suffix");
+    outDir.delete();
+    outDir.mkdir();
+    
+    File outFile = new File(outDir, "demo");
+    
+    FileUtil.copy(demoFile, new FileOutputStream(outFile));
+    ZipUtil.explode(outFile);
+    assertTrue((new File(outDir, FOO_TXT)).exists());
   }
 
   public static void unpackDocOnly() {
@@ -80,6 +94,29 @@ public final class Examples {
       }
     });
   }
+  
+  /* Comparison */
+
+  public static void testEntryEquals() {
+    boolean equals = ZipUtil.entryEquals(new File(DEMO_ZIP), new File(DEMO_COPY_ZIP), FOO_TXT);
+    assertTrue(equals);
+  }
+
+  public static void testEntryEqualsDifferentNames() {
+    boolean equals = ZipUtil
+        .entryEquals(new File(DEMO_ZIP), new File(DEMO_COPY_ZIP), "foo1.txt", "foo2.txt");
+    assertTrue(equals);
+  }
+
+  public void testArchiveEquals() {
+    boolean result = ZipUtil.archiveEquals(new File(DEMO_ZIP), new File(DEMO_COPY_ZIP));
+    assertTrue(result);
+  }
+  
+  public void testArchiveEqualsNo() {
+    boolean result = ZipUtil.archiveEquals(new File(DEMO_ZIP), new File(DUPLICATE_ZIP));
+    assertFalse(result);
+  }
 
   /* Packing */
 
@@ -108,7 +145,7 @@ public final class Examples {
   }
 
   public static void addEntryCustom() {
-    ZipEntrySource[] entries = new ZipEntrySource[] { new FileSource("doc/readme.txt", new File("foo.txt")),
+    ZipEntrySource[] entries = new ZipEntrySource[] { new FileSource("doc/readme.txt", new File(FOO_TXT)),
         new ByteSource("sample.txt", "bar".getBytes()) };
     ZipUtil.addEntries(new File("/tmp/demo.zip"), entries, new File("/tmp/new.zip"));
   }
@@ -126,28 +163,10 @@ public final class Examples {
   }
 
   public static void replaceEntryCustom() {
-    ZipEntrySource[] entries = new ZipEntrySource[] { new FileSource("doc/readme.txt", new File("foo.txt")),
+    ZipEntrySource[] entries = new ZipEntrySource[] { new FileSource("doc/readme.txt", new File(FOO_TXT)),
         new ByteSource("sample.txt", "bar".getBytes()) };
     boolean replaced = ZipUtil.replaceEntries(new File("/tmp/demo.zip"), entries, new File("/tmp/new.zip"));
     System.out.println("Replaced: " + replaced);
-  }
-
-  /* Comparison */
-
-  public static void archiveEquals() {
-    boolean equals = ZipUtil.archiveEquals(new File("/tmp/demo1.zip"), new File("/tmp/demo2.zip"));
-    System.out.println("Archives are equal: " + equals);
-  }
-
-  public static void entryEquals() {
-    boolean equals = ZipUtil.entryEquals(new File("/tmp/demo1.zip"), new File("/tmp/demo2.zip"), "foo.txt");
-    System.out.println("Entries are equal: " + equals);
-  }
-
-  public static void entryEqualsDifferentNames() {
-    boolean equals = ZipUtil
-        .entryEquals(new File("/tmp/demo1.zip"), new File("/tmp/demo2.zip"), "foo1.txt", "foo2.txt");
-    System.out.println("Entries are equal: " + equals);
   }
 
 }
