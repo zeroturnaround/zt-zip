@@ -473,6 +473,16 @@ public final class ZipUtil {
   public static void pack(File rootDir, File zip, NameMapper mapper) {
     log.debug("Compressing '{}' into '{}'.", rootDir, zip);
 
+    File[] listFiles = rootDir.listFiles();
+    if (listFiles == null) {
+      if (!rootDir.exists()) {
+        throw new RuntimeException("Given file '" + rootDir + "' doesn't exist!");
+      }
+      throw new RuntimeException("Given file '" + rootDir + "' is not a directory!");
+    }
+    else if (listFiles.length == 0) {
+      throw new RuntimeException("Given directory '" + rootDir + "' doesn't contain any files!");
+    }
     ZipOutputStream out = null;
     try {
       out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zip)));
@@ -501,7 +511,7 @@ public final class ZipUtil {
   private static void pack(File dir, ZipOutputStream out, NameMapper mapper, String pathPrefix) throws IOException {
     File[] files = dir.listFiles();
     if (files == null) {
-      return; // Not a directory
+      throw new IOException("Given file is not a directory '" + dir + "'");
     }
 
     for (int i = 0; i < files.length; i++) {
