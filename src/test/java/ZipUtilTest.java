@@ -121,7 +121,6 @@ public class ZipUtilTest extends TestCase {
     }
     catch (Exception e) {
       ok = true;
-      e.printStackTrace();
     }
     assertTrue(message, ok);
   }
