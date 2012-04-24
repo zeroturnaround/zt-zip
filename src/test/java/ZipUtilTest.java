@@ -53,10 +53,10 @@ public class ZipUtilTest extends TestCase {
       FileUtils.deleteQuietly(file);
     }
   }
-  
+
   public void testDuplicateEntryAtAdd() throws IOException {
     File src = new File(getClass().getResource("duplicate.zip").getPath());
-    
+
     File dest = File.createTempFile("temp", null);
     try {
       ZipUtil.addEntries(src, new ZipEntrySource[0], dest);
@@ -65,10 +65,10 @@ public class ZipUtilTest extends TestCase {
       FileUtils.deleteQuietly(dest);
     }
   }
-  
+
   public void testDuplicateEntryAtReplace() throws IOException {
     File src = new File(getClass().getResource("duplicate.zip").getPath());
-    
+
     File dest = File.createTempFile("temp", null);
     try {
       ZipUtil.replaceEntries(src, new ZipEntrySource[0], dest);
@@ -77,10 +77,10 @@ public class ZipUtilTest extends TestCase {
       FileUtils.deleteQuietly(dest);
     }
   }
-  
+
   public void testDuplicateEntryAtAddOrReplace() throws IOException {
     File src = new File(getClass().getResource("duplicate.zip").getPath());
-    
+
     File dest = File.createTempFile("temp", null);
     try {
       ZipUtil.addOrReplaceEntries(src, new ZipEntrySource[0], dest);
@@ -89,5 +89,40 @@ public class ZipUtilTest extends TestCase {
       FileUtils.deleteQuietly(dest);
     }
   }
-  
+
+  public void testUnexplode() throws IOException {
+    File file = File.createTempFile("tempFile", null);
+    File tmpDir = file.getParentFile();
+
+    unexplodeWithException(file, "shouldn't be able to unexplode file that is not a directory");
+    assertTrue("Should be able to delete tmp file", file.delete());
+    unexplodeWithException(file, "shouldn't be able to unexplode file that doesn't exist");
+
+    // create empty tmp dir with the same name as deleted file
+    File dir = new File(tmpDir, file.getName());
+    dir.deleteOnExit();
+    assertTrue("Should be able to create directory with the same name as there was tmp file", dir.mkdir());
+
+    unexplodeWithException(dir, "shouldn't be able to unexplode dir that doesn't contain any files");
+
+    // unexplode should succeed with at least one file in directory
+    File.createTempFile("temp", null, dir);
+    ZipUtil.unexplode(dir);
+
+    assertTrue("zip file should exist with the same name as the directory that was unexploded", dir.exists());
+    assertTrue("unexploding input directory should have produced zip file with the same name", !dir.isDirectory());
+    assertTrue("Should be able to delete zip that was created from directory", dir.delete());
+  }
+
+  private void unexplodeWithException(File file, String message) {
+    boolean ok = false;
+    try {
+      ZipUtil.unexplode(file);
+    }
+    catch (Exception e) {
+      ok = true;
+      e.printStackTrace();
+    }
+    assertTrue(message, ok);
+  }
 }
