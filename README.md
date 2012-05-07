@@ -32,7 +32,7 @@ To include it in your maven project then you need to define the repository and t
 <dependency>
     <groupId>org.zeroturnaround</groupId>
     <artifactId>zt-zip</artifactId>
-    <version>1.0</version>
+    <version>1.1</version>
     <type>jar</type>
     <scope>provided</scope>
 </dependency>
