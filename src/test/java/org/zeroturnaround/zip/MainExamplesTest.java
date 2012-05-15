@@ -9,6 +9,8 @@ import java.util.zip.ZipEntry;
 import junit.framework.TestCase;
 
 import org.apache.commons.io.IOUtils;
+import org.zeroturnaround.zip.transform.ByteArrayZipEntryTransformer;
+import org.zeroturnaround.zip.transform.StringZipEntryTransformer;
 
 public final class MainExamplesTest extends TestCase {
 
@@ -167,6 +169,16 @@ public final class MainExamplesTest extends TestCase {
         new ByteSource("sample.txt", "bar".getBytes()) };
     boolean replaced = ZipUtil.replaceEntries(new File("/tmp/demo.zip"), entries, new File("/tmp/new.zip"));
     System.out.println("Replaced: " + replaced);
+  }
+
+  /* Transforming */
+
+  public static void transformEntry() {
+    ZipUtil.transformEntry(new File("/tmp/demo"), "sample.txt", new StringZipEntryTransformer() {
+      protected String transform(ZipEntry zipEntry, String input) throws IOException {
+        return input.toUpperCase();
+      }
+    }, new File("/tmp/demo.zip"));
   }
 
 }

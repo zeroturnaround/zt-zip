@@ -189,6 +189,17 @@ ZipEntrySource[] entries = new ZipEntrySource[] {
 boolean replaced = ZipUtil.replaceEntries(new File("/tmp/demo.zip"), entries, new File("/tmp/new.zip"));
 ```
 
+### Transforming
+
+#### Transform a ZIP archive entry into uppercase
+```java
+boolean transformed = ZipUtil.transformEntry(new File("/tmp/demo"), "sample.txt", new StringZipEntryTransformer() {
+    protected String transform(ZipEntry zipEntry, String input) throws IOException {
+        return input.toUpperCase();
+    }
+}, new File("/tmp/demo.zip"));
+```
+
 ### Comparison
 
 #### Compare two ZIP archives (ignoring timestamps of the entries) 
