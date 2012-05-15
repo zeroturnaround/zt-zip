@@ -49,7 +49,8 @@ We had the following functional requirements:
   3. packing/unpacking in place - ZIP becomes directory and vice versa
 2. iterate through ZIP entries
 3. add or replace entries from files or byte arrays
-4. compare two archives - compare all entries ignoring time stamps
+4. transform ZIP entries
+5. compare two archives - compare all entries ignoring time stamps
 
 and these non-functional requirements:
 
