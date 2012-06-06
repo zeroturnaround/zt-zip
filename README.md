@@ -49,7 +49,8 @@ We had the following functional requirements:
   3. packing/unpacking in place - ZIP becomes directory and vice versa
 2. iterate through ZIP entries
 3. add or replace entries from files or byte arrays
-4. compare two archives - compare all entries ignoring time stamps
+4. transform ZIP entries
+5. compare two archives - compare all entries ignoring time stamps
 
 and these non-functional requirements:
 
@@ -187,6 +188,17 @@ ZipEntrySource[] entries = new ZipEntrySource[] {
     new ByteSource("sample.txt", "bar".getBytes())
 };
 boolean replaced = ZipUtil.replaceEntries(new File("/tmp/demo.zip"), entries, new File("/tmp/new.zip"));
+```
+
+### Transforming
+
+#### Transform a ZIP archive entry into uppercase
+```java
+boolean transformed = ZipUtil.transformEntry(new File("/tmp/demo"), "sample.txt", new StringZipEntryTransformer() {
+    protected String transform(ZipEntry zipEntry, String input) throws IOException {
+        return input.toUpperCase();
+    }
+}, new File("/tmp/demo.zip"));
 ```
 
 ### Comparison
