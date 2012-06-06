@@ -15,6 +15,7 @@
  */
 package org.zeroturnaround.zip;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -42,7 +43,7 @@ final class FileUtil {
   public static void copy(File file, OutputStream out) throws IOException {
     FileInputStream in = new FileInputStream(file);
     try {
-      IOUtils.copy(in, out);
+      IOUtils.copy(new BufferedInputStream(in), out);
     }
     finally {
       IOUtils.closeQuietly(in);
