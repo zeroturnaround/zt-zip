@@ -23,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
@@ -40,6 +41,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.zeroturnaround.zip.transform.ZipEntryTransformer;
+import org.zeroturnaround.zip.transform.ZipEntryTransformerEntry;
 
 /**
  * ZIP file manipulation utilities.
@@ -862,6 +865,175 @@ public final class ZipUtil {
     for (int i = 0; i < entries.length; i++) {
       ZipEntrySource source = entries[i];
       result.put(source.getPath(), source);
+    }
+    return result;
+  }
+
+  /**
+   * Copies an existing ZIP file and transforms a given entry in it.
+   * 
+   * @param zip
+   *          an existing ZIP file (only read).
+   * @param path
+   *          new ZIP entry path.
+   * @param transformer
+   *          transformer for the given ZIP entry.
+   * @param destZip
+   *          new ZIP file created.
+   * @return <code>true</code> if the entry was replaced.
+   */
+  public static boolean transformEntry(File zip, String path, ZipEntryTransformer transformer, File destZip) {
+    return transformEntry(zip, new ZipEntryTransformerEntry(path, transformer), destZip);
+  }
+  
+  /**
+   * Copies an existing ZIP file and transforms a given entry in it.
+   * 
+   * @param zip
+   *          an existing ZIP file (only read).
+   * @param entry
+   *          transformer for a ZIP entry.
+   * @param destZip
+   *          new ZIP file created.
+   * @return <code>true</code> if the entry was replaced.
+   */
+  public static boolean transformEntry(File zip, ZipEntryTransformerEntry entry, File destZip) {
+    return transformEntries(zip, new ZipEntryTransformerEntry[] { entry }, destZip);
+  }
+
+  /**
+   * Copies an existing ZIP file and transforms the given entries in it.
+   * 
+   * @param zip
+   *          an existing ZIP file (only read).
+   * @param entries
+   *          ZIP entry transformers.
+   * @param destZip
+   *          new ZIP file created.
+   * @return <code>true</code> if at least one entry was replaced.
+   */
+  public static boolean transformEntries(File zip, ZipEntryTransformerEntry[] entries, File destZip) {
+    if (log.isDebugEnabled())
+      log.debug("Copying '" + zip + "' to '" + destZip + "' and transforming entries " + Arrays.asList(entries) + ".");
+    
+    try {
+      ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destZip)));
+      try {
+        TransformerZipEntryCallback action = new TransformerZipEntryCallback(entries, out);
+        iterate(zip, action);
+        return action.found();
+      }
+      finally {
+        IOUtils.closeQuietly(out);
+      }
+    }
+    catch (IOException e) {
+      throw rethrow(e);
+    }
+  }
+
+  /**
+   * Copies an existing ZIP file and transforms a given entry in it.
+   * 
+   * @param is
+   *          a ZIP input stream.
+   * @param path
+   *          new ZIP entry path.
+   * @param transformer
+   *          transformer for the given ZIP entry.
+   * @param os
+   *          a ZIP output stream.
+   * @return <code>true</code> if the entry was replaced.
+   */
+  public static boolean transformEntry(InputStream is, String path, ZipEntryTransformer transformer, OutputStream os) {
+    return transformEntry(is, new ZipEntryTransformerEntry(path, transformer), os);
+  }
+  
+  /**
+   * Copies an existing ZIP file and transforms a given entry in it.
+   * 
+   * @param is
+   *          a ZIP input stream.
+   * @param entry
+   *          transformer for a ZIP entry.
+   * @param os
+   *          a ZIP output stream.
+   * @return <code>true</code> if the entry was replaced.
+   */
+  public static boolean transformEntry(InputStream is, ZipEntryTransformerEntry entry, OutputStream os) {
+    return transformEntries(is, new ZipEntryTransformerEntry[] { entry }, os);
+  }
+
+  /**
+   * Copies an existing ZIP file and transforms the given entries in it.
+   * 
+   * @param is
+   *          a ZIP input stream.
+   * @param entries
+   *          ZIP entry transformers.
+   * @param os
+   *          a ZIP output stream.
+   * @return <code>true</code> if at least one entry was replaced.
+   */
+  public static boolean transformEntries(InputStream is, ZipEntryTransformerEntry[] entries, OutputStream os) {
+    if (log.isDebugEnabled())
+      log.debug("Copying '" + is + "' to '" + os + "' and transforming entries " + Arrays.asList(entries) + ".");
+
+    try {
+      ZipOutputStream out = new ZipOutputStream(os);
+      TransformerZipEntryCallback action = new TransformerZipEntryCallback(entries, out);
+      iterate(is, action);
+      // Finishes writing the contents of the ZIP output stream without closing the underlying stream.
+      out.finish();
+      return action.found();
+    }
+    catch (IOException e) {
+      throw rethrow(e);
+    }
+  }
+
+  private static class TransformerZipEntryCallback implements ZipEntryCallback {
+
+    private final Map entryByPath;
+    private final int entryCount;
+    private final ZipOutputStream out;
+    private final Set names = new HashSet();
+
+    public TransformerZipEntryCallback(ZipEntryTransformerEntry[] entries, ZipOutputStream out) {
+      entryByPath = byPath(entries);
+      entryCount = entryByPath.size();
+      this.out = out;
+    }
+
+    public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+      if (names.add(zipEntry.getName())) {
+        ZipEntryTransformer entry = (ZipEntryTransformer) entryByPath.remove(zipEntry.getName());
+        if (entry != null)
+          entry.transform(in, zipEntry, out);
+        else
+          copyEntry(zipEntry, in, out);
+      }
+      else if (log.isDebugEnabled())
+        log.debug("Duplicate entry: {}", zipEntry.getName());
+    }
+
+    /**
+     * @return <code>true</code> if at least one entry was replaced.
+     */
+    public boolean found() {
+      return entryByPath.size() < entryCount;
+    }
+
+  }
+
+  /**
+   * @return transformers by path.
+   */
+  private static Map byPath(ZipEntryTransformerEntry[] entries) {
+    Map result = new HashMap();
+    for (int i = 0; i < entries.length; i++) {
+      ZipEntryTransformerEntry entry = entries[i];
+      result.put(entry.getPath(), entry.getTransformer());
     }
     return result;
   }
