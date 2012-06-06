@@ -126,24 +126,55 @@ public final class ZipUtil {
     ZipFile zf = null;
     try {
       zf = new ZipFile(zip);
-      ZipEntry ze = zf.getEntry(name);
-      if (ze == null) {
-        return null; // entry not found
-      }
-
-      InputStream is = zf.getInputStream(ze);
-      try {
-        return IOUtils.toByteArray(is);
-      }
-      finally {
-        IOUtils.closeQuietly(is);
-      }
+      return doUnpackEntry(zf, name);
     }
     catch (IOException e) {
       throw rethrow(e);
     }
     finally {
       closeQuietly(zf);
+    }
+  }
+
+  /**
+   * Unpacks a single entry from a ZIP file.
+   *
+   * @param zf
+   *          ZIP file.
+   * @param name
+   *          entry name.
+   * @return contents of the entry or <code>null</code> if it was not found.
+   */
+  public static byte[] unpackEntry(ZipFile zf, String name) {
+    try {
+      return doUnpackEntry(zf, name);
+    }
+    catch (IOException e) {
+      throw rethrow(e);
+    }
+  }
+
+  /**
+   * Unpacks a single entry from a ZIP file.
+   *
+   * @param zf
+   *          ZIP file.
+   * @param name
+   *          entry name.
+   * @return contents of the entry or <code>null</code> if it was not found.
+   */
+  private static byte[] doUnpackEntry(ZipFile zf, String name) throws IOException {
+    ZipEntry ze = zf.getEntry(name);
+    if (ze == null) {
+      return null; // entry not found
+    }
+
+    InputStream is = zf.getInputStream(ze);
+    try {
+      return IOUtils.toByteArray(is);
+    }
+    finally {
+      IOUtils.closeQuietly(is);
     }
   }
 
@@ -1316,12 +1347,60 @@ public final class ZipUtil {
     ZipFile zf1 = null;
     ZipFile zf2 = null;
 
-    InputStream is1 = null;
-    InputStream is2 = null;
     try {
       zf1 = new ZipFile(f1);
       zf2 = new ZipFile(f2);
 
+      return doEntryEquals(zf1, zf2, path1, path2);
+    }
+    catch (IOException e) {
+      throw rethrow(e);
+    }
+    finally {
+      closeQuietly(zf1);
+      closeQuietly(zf2);
+    }
+  }
+
+  /**
+   * Compares two ZIP entries (byte-by-byte). .
+   *
+   * @param zf1
+   *          first ZIP file.
+   * @param zf2
+   *          second ZIP file.
+   * @param path1
+   *          name of the first entry.
+   * @param path2
+   *          name of the second entry.
+   * @return <code>true</code> if the contents of the entries were same.
+   */
+  public static boolean entryEquals(ZipFile zf1, ZipFile zf2, String path1, String path2) {
+    try {
+      return doEntryEquals(zf1, zf2, path1, path2);
+    }
+    catch (IOException e) {
+      throw rethrow(e);
+    }
+  }
+
+  /**
+   * Compares two ZIP entries (byte-by-byte). .
+   *
+   * @param zf1
+   *          first ZIP file.
+   * @param zf2
+   *          second ZIP file.
+   * @param path1
+   *          name of the first entry.
+   * @param path2
+   *          name of the second entry.
+   * @return <code>true</code> if the contents of the entries were same.
+   */
+  private static boolean doEntryEquals(ZipFile zf1, ZipFile zf2, String path1, String path2) throws IOException {
+    InputStream is1 = null;
+    InputStream is2 = null;
+    try {
       ZipEntry e1 = zf1.getEntry(path1);
       ZipEntry e2 = zf2.getEntry(path2);
 
@@ -1336,7 +1415,7 @@ public final class ZipUtil {
       is1 = zf1.getInputStream(e1);
       is2 = zf2.getInputStream(e2);
       if (is1 == null && is2 == null) {
-          return true;
+        return true;
       }
       if (is1 == null || is2 == null) {
         return false;
@@ -1344,15 +1423,9 @@ public final class ZipUtil {
 
       return IOUtils.contentEquals(is1, is2);
     }
-    catch (IOException e) {
-      throw rethrow(e);
-    }
     finally {
       IOUtils.closeQuietly(is1);
       IOUtils.closeQuietly(is2);
-
-      closeQuietly(zf1);
-      closeQuietly(zf2);
     }
   }
 
