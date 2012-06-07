@@ -356,6 +356,98 @@ public final class ZipUtil {
     }
   }
 
+  /**
+   * Reads the given ZIP file and executes the given action for a single entry.
+   *
+   * @param zip
+   *          input ZIP file.
+   * @param name
+   *          entry name.
+   * @param action
+   *          action to be called for this entry.
+   * @return <code>true</code> if the entry was found,
+   *         <code>false</code> if the entry was not found.
+   *
+   * @see ZipEntryCallback
+   */
+  public static boolean handle(File zip, String name, ZipEntryCallback action) {
+    ZipFile zf = null;
+    try {
+      zf = new ZipFile(zip);
+
+      ZipEntry ze = zf.getEntry(name);
+      if (ze == null) {
+        return false; // entry not found
+      }
+
+      InputStream in = new BufferedInputStream(zf.getInputStream(ze));
+      try {
+        action.process(in, ze);
+      }
+      finally {
+        IOUtils.closeQuietly(in);
+      }
+      return true;
+    }
+    catch (IOException e) {
+      throw rethrow(e);
+    }
+    finally {
+      closeQuietly(zf);
+    }
+  }
+  
+  /**
+   * Reads the given ZIP stream and executes the given action for a single entry.
+   *
+   * @param is
+   *          input ZIP stream (it will not be closed automatically).
+   * @param name
+   *          entry name.
+   * @param action
+   *          action to be called for this entry.
+   * @return <code>true</code> if the entry was found,
+   *         <code>false</code> if the entry was not found.
+   *
+   * @see ZipEntryCallback
+   */
+  public static boolean handle(InputStream is, String name, ZipEntryCallback action) {
+    SingleZipEntryCallback helper = new SingleZipEntryCallback(name, action);
+    iterate(is, helper);
+    return helper.found();
+  }
+
+  /**
+   * ZipEntryCallback which is only applied to single entry.
+   *
+   * @author Rein Raudjärv
+   */
+  private static class SingleZipEntryCallback implements ZipEntryCallback {
+
+    private final String name;
+
+    private final ZipEntryCallback action;
+
+    private boolean found;
+
+    public SingleZipEntryCallback(String name, ZipEntryCallback action) {
+      this.name = name;
+      this.action = action;
+    }
+
+    public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+      if (name.equals(zipEntry.getName())) {
+        found = true;
+        action.process(in, zipEntry);
+      }
+    }
+
+    public boolean found() {
+      return found;
+    }
+
+  }
+
   /* Extracting whole ZIP files. */
 
   /**
