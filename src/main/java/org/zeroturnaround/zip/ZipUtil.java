@@ -179,6 +179,41 @@ public final class ZipUtil {
   }
 
   /**
+   * Unpacks a single entry from a ZIP stream.
+   *
+   * @param is
+   *          ZIP stream.
+   * @param name
+   *          entry name.
+   * @return contents of the entry or <code>null</code> if it was not found.
+   */
+  public static byte[] unpackEntry(InputStream is, String name) {
+    ByteArrayUnpacker action = new ByteArrayUnpacker();
+    if (!handle(is, name, action))
+      return null; // entry not found
+    return action.getBytes();
+  }
+
+  /**
+   * Copies an entry into a byte array.
+   * 
+   * @author Rein Raudjärv
+   */
+  private static class ByteArrayUnpacker implements ZipEntryCallback {
+
+    private byte[] bytes;
+
+    public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+      bytes = IOUtils.toByteArray(in);
+    }
+
+    public byte[] getBytes() {
+      return bytes;
+    }
+
+  }
+
+  /**
    * Unpacks a single file from a ZIP archive to a file.
    *
    * @param zip
@@ -255,6 +290,41 @@ public final class ZipUtil {
       IOUtils.closeQuietly(in);
     }
     return true;
+  }
+
+  /**
+   * Unpacks a single file from a ZIP stream to a file.
+   *
+   * @param is
+   *          ZIP stream.
+   * @param name
+   *          entry name.
+   * @param file    
+   *          target file to be created or overwritten.
+   * @return <code>true</code> if the entry was found and unpacked,
+   *         <code>false</code> if the entry was not found.
+   */
+  public static boolean unpackEntry(InputStream is, String name, File file) throws IOException {
+    return handle(is, name, new FileUnpacker(file));
+  }
+
+  /**
+   * Copies an entry into a File.
+   * 
+   * @author Rein Raudjärv
+   */
+  private static class FileUnpacker implements ZipEntryCallback {
+
+    private final File file;
+
+    public FileUnpacker(File file) {
+      this.file = file;
+    }
+
+    public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+      FileUtil.copy(in, file);
+    }
+
   }
 
   /* Traversing ZIP files */
