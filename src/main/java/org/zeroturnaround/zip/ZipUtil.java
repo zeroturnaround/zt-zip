@@ -191,26 +191,10 @@ public final class ZipUtil {
    *         <code>false</code> if the entry was not found.
    */
   public static boolean unpackEntry(File zip, String name, File file) {
-    if (log.isTraceEnabled()) {
-      log.trace("Extracting '" + zip + "' entry '" + name + "' into '" + file + "'.");
-    }
-
     ZipFile zf = null;
     try {
       zf = new ZipFile(zip);
-      ZipEntry ze = zf.getEntry(name);
-      if (ze == null) {
-        return false; // entry not found
-      }
-
-      InputStream in = new BufferedInputStream(zf.getInputStream(ze));
-      try {
-        FileUtil.copy(in, file);
-      }
-      finally {
-        IOUtils.closeQuietly(in);
-      }
-      return true;
+      return doUnpackEntry(zf, name, file);
     }
     catch (IOException e) {
       throw rethrow(e);
@@ -218,6 +202,59 @@ public final class ZipUtil {
     finally {
       closeQuietly(zf);
     }
+  }
+
+  /**
+   * Unpacks a single file from a ZIP archive to a file.
+   *
+   * @param zf
+   *          ZIP file.
+   * @param name
+   *          entry name.
+   * @param file    
+   *          target file to be created or overwritten.
+   * @return <code>true</code> if the entry was found and unpacked,
+   *         <code>false</code> if the entry was not found.
+   */
+  public static boolean unpackEntry(ZipFile zf, String name, File file) {
+    try {
+      return doUnpackEntry(zf, name, file);
+    }
+    catch (IOException e) {
+      throw rethrow(e);
+    }
+  }
+
+  /**
+   * Unpacks a single file from a ZIP archive to a file.
+   *
+   * @param zf
+   *          ZIP file.
+   * @param name
+   *          entry name.
+   * @param file    
+   *          target file to be created or overwritten.
+   * @return <code>true</code> if the entry was found and unpacked,
+   *         <code>false</code> if the entry was not found.
+   */
+  private static boolean doUnpackEntry(ZipFile zf, String name, File file) throws IOException {
+    if (log.isTraceEnabled()) {
+      log.trace("Extracting '" + zf.getName() + "' entry '" + name + "' into '" + file + "'.");
+    }
+
+    ZipEntry ze = zf.getEntry(name);
+    if (ze == null) {
+      return false; // entry not found
+    }
+
+    InputStream in = new BufferedInputStream(zf.getInputStream(ze));
+    try {
+      FileUtil.copy(in, file);
+    }
+    finally {
+      IOUtils.closeQuietly(in);
+    }
+    return true;
   }
 
   /* Traversing ZIP files */
