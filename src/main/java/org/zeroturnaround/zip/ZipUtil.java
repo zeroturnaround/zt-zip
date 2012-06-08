@@ -179,6 +179,41 @@ public final class ZipUtil {
   }
 
   /**
+   * Unpacks a single entry from a ZIP stream.
+   *
+   * @param is
+   *          ZIP stream.
+   * @param name
+   *          entry name.
+   * @return contents of the entry or <code>null</code> if it was not found.
+   */
+  public static byte[] unpackEntry(InputStream is, String name) {
+    ByteArrayUnpacker action = new ByteArrayUnpacker();
+    if (!handle(is, name, action))
+      return null; // entry not found
+    return action.getBytes();
+  }
+
+  /**
+   * Copies an entry into a byte array.
+   * 
+   * @author Rein Raudjärv
+   */
+  private static class ByteArrayUnpacker implements ZipEntryCallback {
+
+    private byte[] bytes;
+
+    public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+      bytes = IOUtils.toByteArray(in);
+    }
+
+    public byte[] getBytes() {
+      return bytes;
+    }
+
+  }
+
+  /**
    * Unpacks a single file from a ZIP archive to a file.
    *
    * @param zip
@@ -191,26 +226,10 @@ public final class ZipUtil {
    *         <code>false</code> if the entry was not found.
    */
   public static boolean unpackEntry(File zip, String name, File file) {
-    if (log.isTraceEnabled()) {
-      log.trace("Extracting '" + zip + "' entry '" + name + "' into '" + file + "'.");
-    }
-
     ZipFile zf = null;
     try {
       zf = new ZipFile(zip);
-      ZipEntry ze = zf.getEntry(name);
-      if (ze == null) {
-        return false; // entry not found
-      }
-
-      InputStream in = new BufferedInputStream(zf.getInputStream(ze));
-      try {
-        FileUtil.copy(in, file);
-      }
-      finally {
-        IOUtils.closeQuietly(in);
-      }
-      return true;
+      return doUnpackEntry(zf, name, file);
     }
     catch (IOException e) {
       throw rethrow(e);
@@ -218,6 +237,94 @@ public final class ZipUtil {
     finally {
       closeQuietly(zf);
     }
+  }
+
+  /**
+   * Unpacks a single file from a ZIP archive to a file.
+   *
+   * @param zf
+   *          ZIP file.
+   * @param name
+   *          entry name.
+   * @param file    
+   *          target file to be created or overwritten.
+   * @return <code>true</code> if the entry was found and unpacked,
+   *         <code>false</code> if the entry was not found.
+   */
+  public static boolean unpackEntry(ZipFile zf, String name, File file) {
+    try {
+      return doUnpackEntry(zf, name, file);
+    }
+    catch (IOException e) {
+      throw rethrow(e);
+    }
+  }
+
+  /**
+   * Unpacks a single file from a ZIP archive to a file.
+   *
+   * @param zf
+   *          ZIP file.
+   * @param name
+   *          entry name.
+   * @param file    
+   *          target file to be created or overwritten.
+   * @return <code>true</code> if the entry was found and unpacked,
+   *         <code>false</code> if the entry was not found.
+   */
+  private static boolean doUnpackEntry(ZipFile zf, String name, File file) throws IOException {
+    if (log.isTraceEnabled()) {
+      log.trace("Extracting '" + zf.getName() + "' entry '" + name + "' into '" + file + "'.");
+    }
+
+    ZipEntry ze = zf.getEntry(name);
+    if (ze == null) {
+      return false; // entry not found
+    }
+
+    InputStream in = new BufferedInputStream(zf.getInputStream(ze));
+    try {
+      FileUtil.copy(in, file);
+    }
+    finally {
+      IOUtils.closeQuietly(in);
+    }
+    return true;
+  }
+
+  /**
+   * Unpacks a single file from a ZIP stream to a file.
+   *
+   * @param is
+   *          ZIP stream.
+   * @param name
+   *          entry name.
+   * @param file    
+   *          target file to be created or overwritten.
+   * @return <code>true</code> if the entry was found and unpacked,
+   *         <code>false</code> if the entry was not found.
+   */
+  public static boolean unpackEntry(InputStream is, String name, File file) throws IOException {
+    return handle(is, name, new FileUnpacker(file));
+  }
+
+  /**
+   * Copies an entry into a File.
+   * 
+   * @author Rein Raudjärv
+   */
+  private static class FileUnpacker implements ZipEntryCallback {
+
+    private final File file;
+
+    public FileUnpacker(File file) {
+      this.file = file;
+    }
+
+    public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+      FileUtil.copy(in, file);
+    }
+
   }
 
   /* Traversing ZIP files */
@@ -317,6 +424,98 @@ public final class ZipUtil {
     catch (IOException e) {
       throw rethrow(e);
     }
+  }
+
+  /**
+   * Reads the given ZIP file and executes the given action for a single entry.
+   *
+   * @param zip
+   *          input ZIP file.
+   * @param name
+   *          entry name.
+   * @param action
+   *          action to be called for this entry.
+   * @return <code>true</code> if the entry was found,
+   *         <code>false</code> if the entry was not found.
+   *
+   * @see ZipEntryCallback
+   */
+  public static boolean handle(File zip, String name, ZipEntryCallback action) {
+    ZipFile zf = null;
+    try {
+      zf = new ZipFile(zip);
+
+      ZipEntry ze = zf.getEntry(name);
+      if (ze == null) {
+        return false; // entry not found
+      }
+
+      InputStream in = new BufferedInputStream(zf.getInputStream(ze));
+      try {
+        action.process(in, ze);
+      }
+      finally {
+        IOUtils.closeQuietly(in);
+      }
+      return true;
+    }
+    catch (IOException e) {
+      throw rethrow(e);
+    }
+    finally {
+      closeQuietly(zf);
+    }
+  }
+  
+  /**
+   * Reads the given ZIP stream and executes the given action for a single entry.
+   *
+   * @param is
+   *          input ZIP stream (it will not be closed automatically).
+   * @param name
+   *          entry name.
+   * @param action
+   *          action to be called for this entry.
+   * @return <code>true</code> if the entry was found,
+   *         <code>false</code> if the entry was not found.
+   *
+   * @see ZipEntryCallback
+   */
+  public static boolean handle(InputStream is, String name, ZipEntryCallback action) {
+    SingleZipEntryCallback helper = new SingleZipEntryCallback(name, action);
+    iterate(is, helper);
+    return helper.found();
+  }
+
+  /**
+   * ZipEntryCallback which is only applied to single entry.
+   *
+   * @author Rein Raudjärv
+   */
+  private static class SingleZipEntryCallback implements ZipEntryCallback {
+
+    private final String name;
+
+    private final ZipEntryCallback action;
+
+    private boolean found;
+
+    public SingleZipEntryCallback(String name, ZipEntryCallback action) {
+      this.name = name;
+      this.action = action;
+    }
+
+    public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+      if (name.equals(zipEntry.getName())) {
+        found = true;
+        action.process(in, zipEntry);
+      }
+    }
+
+    public boolean found() {
+      return found;
+    }
+
   }
 
   /* Extracting whole ZIP files. */
