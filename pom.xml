@@ -4,7 +4,7 @@
   <artifactId>zt-zip</artifactId>
   <packaging>jar</packaging>
   <name>ZT Zip</name>
-  <version>1.2-SNAPSHOT</version>
+  <version>1.2</version>
 
   <scm>
     <connection>scm:git:git@github.com:zeroturnaround/zt-zip.git</connection>
