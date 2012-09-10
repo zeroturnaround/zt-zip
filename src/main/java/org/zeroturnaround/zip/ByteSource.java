@@ -24,10 +24,16 @@ public class ByteSource implements ZipEntrySource {
 
   private final String path;
   private final byte[] bytes;
+  private final long time;
 
   public ByteSource(String path, byte[] bytes) {
+    this(path, bytes, System.currentTimeMillis());
+  }
+
+  public ByteSource(String path, byte[] bytes, long time) {
     this.path = path;
     this.bytes = (byte[])bytes.clone();
+    this.time = time;
   }
 
   public String getPath() {
@@ -39,7 +45,7 @@ public class ByteSource implements ZipEntrySource {
     if (bytes != null) {
       entry.setSize(bytes.length);
     }
-    entry.setTime(System.currentTimeMillis());
+    entry.setTime(time);
     return entry;
   }
 
