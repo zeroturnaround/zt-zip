@@ -692,6 +692,37 @@ public final class ZipUtil {
   public static void pack(File rootDir, File zip) {
     pack(rootDir, zip, IdentityNameMapper.INSTANCE);
   }
+  
+  /**
+   * Compresses the given file into a ZIP file.
+   * <p>
+   * The ZIP file must not be a directory and its parent directory must exist.
+   *
+   * @param File
+   *          file that needs to be zipped.
+   * @param destZipFile
+   *          ZIP file that will be created or overwritten.
+   */
+  public static void packFile(File fileToPack, File destZipFile) {
+    log.debug("Compressing '{}' into '{}'.", fileToPack, destZipFile);
+
+    ZipOutputStream out = null;
+    try {
+      out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destZipFile)));
+      ZipEntry zipEntry = new ZipEntry(fileToPack.getName());
+      zipEntry.setSize(fileToPack.length());
+      zipEntry.setTime(fileToPack.lastModified());
+      out.putNextEntry(zipEntry);
+      FileUtil.copy(fileToPack, out);
+      out.closeEntry();
+    }
+    catch (IOException e) {
+      throw rethrow(e);
+    }
+    finally {
+      IOUtils.closeQuietly(out);
+    }
+  }
 
   /**
    * Compresses the given directory and all its sub-directories into a ZIP file.

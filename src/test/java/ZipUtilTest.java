@@ -23,7 +23,6 @@ import junit.framework.TestCase;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-
 import org.zeroturnaround.zip.ZipEntrySource;
 import org.zeroturnaround.zip.ZipUtil;
 
@@ -41,7 +40,8 @@ public class ZipUtilTest extends TestCase {
         zos.putNextEntry(new ZipEntry(name));
         zos.write(contents);
         zos.closeEntry();
-      } finally {
+      }
+      finally {
         IOUtils.closeQuietly(zos);
       }
 
@@ -49,7 +49,8 @@ public class ZipUtilTest extends TestCase {
       byte[] actual = ZipUtil.unpackEntry(file, name);
       assertNotNull(actual);
       assertEquals(new String(contents), new String(actual));
-    } finally {
+    }
+    finally {
       FileUtils.deleteQuietly(file);
     }
   }
@@ -114,6 +115,19 @@ public class ZipUtilTest extends TestCase {
     assertTrue("Should be able to delete zip that was created from directory", dir.delete());
   }
 
+  public void testPackFile() throws Exception {
+    File fileToPack = new File(getClass().getResource("TestFile.txt").getPath());
+    File dest = File.createTempFile("temp", null);
+    ZipUtil.packFile(fileToPack, dest);
+    assertTrue(dest.exists());
+
+    ZipUtil.explode(dest);
+    assertTrue((new File(dest, "TestFile.txt")).exists());
+    // if fails then maybe somebody changed the file contents and did not update
+    // the test
+    assertEquals(108, (new File(dest, "TestFile.txt")).length());
+  }
+
   private void unexplodeWithException(File file, String message) {
     boolean ok = false;
     try {
@@ -123,9 +137,5 @@ public class ZipUtilTest extends TestCase {
       ok = true;
     }
     assertTrue(message, ok);
-  }
-  
-  public void testPackFile() {
-    
   }
 }
