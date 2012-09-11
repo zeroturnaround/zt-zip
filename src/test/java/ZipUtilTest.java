@@ -114,7 +114,7 @@ public class ZipUtilTest extends TestCase {
     assertTrue("Should be able to delete zip that was created from directory", dir.delete());
   }
 
-  public void unexplodeWithException(File file, String message) {
+  private void unexplodeWithException(File file, String message) {
     boolean ok = false;
     try {
       ZipUtil.unexplode(file);
@@ -123,5 +123,9 @@ public class ZipUtilTest extends TestCase {
       ok = true;
     }
     assertTrue(message, ok);
+  }
+  
+  public void testPackFile() {
+    
   }
 }
