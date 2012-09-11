@@ -115,7 +115,7 @@ public class ZipUtilTest extends TestCase {
     assertTrue("Should be able to delete zip that was created from directory", dir.delete());
   }
 
-  public void testPackFile() throws Exception {
+  public void testPackEntry() throws Exception {
     File fileToPack = new File(getClass().getResource("TestFile.txt").getPath());
     File dest = File.createTempFile("temp", null);
     ZipUtil.packEntry(fileToPack, dest);
@@ -126,6 +126,22 @@ public class ZipUtilTest extends TestCase {
     // if fails then maybe somebody changed the file contents and did not update
     // the test
     assertEquals(108, (new File(dest, "TestFile.txt")).length());
+  }
+  
+  public void testPackEntries() throws Exception {
+    File fileToPack = new File(getClass().getResource("TestFile.txt").getPath());
+    File fileToPackII = new File(getClass().getResource("TestFile-II.txt").getPath());
+    File dest = File.createTempFile("temp", null);
+    ZipUtil.packEntries(new File[]{fileToPack, fileToPackII}, dest);
+    assertTrue(dest.exists());
+
+    ZipUtil.explode(dest);
+    assertTrue((new File(dest, "TestFile.txt")).exists());
+    assertTrue((new File(dest, "TestFile-II.txt")).exists());
+    // if fails then maybe somebody changed the file contents and did not update
+    // the test
+    assertEquals(108, (new File(dest, "TestFile.txt")).length());
+    assertEquals(103, (new File(dest, "TestFile-II.txt")).length());
   }
 
   private void unexplodeWithException(File file, String message) {
