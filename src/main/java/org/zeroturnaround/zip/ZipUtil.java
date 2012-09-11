@@ -707,8 +707,10 @@ public final class ZipUtil {
     log.debug("Compressing '{}' into '{}'.", fileToPack, destZipFile);
 
     ZipOutputStream out = null;
+    FileOutputStream fos = null;
     try {
-      out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destZipFile)));
+      fos = new FileOutputStream(destZipFile);
+      out = new ZipOutputStream(new BufferedOutputStream(fos));
       ZipEntry zipEntry = new ZipEntry(fileToPack.getName());
       zipEntry.setSize(fileToPack.length());
       zipEntry.setTime(fileToPack.lastModified());
@@ -720,6 +722,7 @@ public final class ZipUtil {
       throw rethrow(e);
     }
     finally {
+      IOUtils.closeQuietly(fos);
       IOUtils.closeQuietly(out);
     }
   }
