@@ -118,7 +118,7 @@ public class ZipUtilTest extends TestCase {
   public void testPackFile() throws Exception {
     File fileToPack = new File(getClass().getResource("TestFile.txt").getPath());
     File dest = File.createTempFile("temp", null);
-    ZipUtil.packFile(fileToPack, dest);
+    ZipUtil.packEntry(fileToPack, dest);
     assertTrue(dest.exists());
 
     ZipUtil.explode(dest);

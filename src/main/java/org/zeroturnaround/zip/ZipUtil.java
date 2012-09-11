@@ -703,7 +703,7 @@ public final class ZipUtil {
    * @param destZipFile
    *          ZIP file that will be created or overwritten.
    */
-  public static void packFile(File fileToPack, File destZipFile) {
+  public static void packEntry(File fileToPack, File destZipFile) {
     log.debug("Compressing '{}' into '{}'.", fileToPack, destZipFile);
 
     ZipOutputStream out = null;
