@@ -722,8 +722,8 @@ public final class ZipUtil {
       throw rethrow(e);
     }
     finally {
-      IOUtils.closeQuietly(fos);
       IOUtils.closeQuietly(out);
+      IOUtils.closeQuietly(fos);
     }
   }
 
