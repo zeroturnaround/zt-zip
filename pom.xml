@@ -14,15 +14,15 @@
 
   <distributionManagement>
     <repository>
-      <id>zt-releases</id>
-      <name>ZeroTurnaround Releases</name>
-      <url>dav:http://repos.zeroturnaround.com/nexus/content/repositories/zt-public-releases</url>
+      <id>sonatype-nexus-staging</id>
+      <name>Sonatype OSS Staging</name>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
       <layout>default</layout>
     </repository>
     <snapshotRepository>
-      <id>zt-snapshots</id>
-      <name>ZeroTurnaround Snapshots</name>
-      <url>dav:http://repos.zeroturnaround.com/nexus/content/repositories/zt-public-snapshots</url>
+      <id>sonatype-nexus-snapshots</id>
+      <name>Sonatype OSS Snapshots</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
       <layout>default</layout>
     </snapshotRepository>
   </distributionManagement>
