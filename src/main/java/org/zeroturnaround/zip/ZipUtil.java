@@ -685,8 +685,8 @@ public final class ZipUtil {
   /**
    * Compresses the given directory and all its sub-directories into a ZIP file.
    * <p>
-   * The ZIP file must not be a directory and its parent directory must exist. Will
-   * not include the root directory name in the archive.
+   * The ZIP file must not be a directory and its parent directory must exist.
+   * Will not include the root directory name in the archive.
    * 
    * @param File
    *          root directory.
@@ -696,12 +696,12 @@ public final class ZipUtil {
   public static void pack(File rootDir, File zip) {
     pack(rootDir, zip, IdentityNameMapper.INSTANCE);
   }
-  
+
   /**
    * Compresses the given directory and all its sub-directories into a ZIP file.
    * <p>
-   * The ZIP file must not be a directory and its parent directory must exist. Will
-   * not include the root directory name in the archive.
+   * The ZIP file must not be a directory and its parent directory must exist.
+   * Will not include the root directory name in the archive.
    * 
    * @param sourceFolder
    *          root directory.
@@ -712,9 +712,9 @@ public final class ZipUtil {
     if (preserveRoot) {
       pack(sourceFolder, targetZipFile, new NameMapper() {
         public String map(String name) {
-            return sourceFolder.getName() + "/" + name;
+          return sourceFolder.getName() + "/" + name;
         }
-    });
+      });
     }
     else
       pack(sourceFolder, targetZipFile);
