@@ -9,7 +9,6 @@ import java.util.zip.ZipEntry;
 import junit.framework.TestCase;
 
 import org.apache.commons.io.IOUtils;
-import org.zeroturnaround.zip.transform.ByteArrayZipEntryTransformer;
 import org.zeroturnaround.zip.transform.StringZipEntryTransformer;
 
 public final class MainExamplesTest extends TestCase {
@@ -78,10 +77,11 @@ public final class MainExamplesTest extends TestCase {
 
   public static void listClasses() {
     ZipUtil.iterate(new File("/tmp/demo.zip"), new ZipInfoCallback() {
-      public void process(ZipEntry zipEntry) throws IOException {
+      public boolean process(ZipEntry zipEntry) throws IOException {
         if (zipEntry.getName().endsWith(".class")) {
           System.out.println("Found " + zipEntry.getName());
         }
+        return true;
       }
     });
   }

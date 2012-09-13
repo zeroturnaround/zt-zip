@@ -32,6 +32,6 @@ public interface ZipInfoCallback {
    * 
    * @param zipEntry ZIP entry.
    */
-  void process(ZipEntry zipEntry) throws IOException;
+  boolean process(ZipEntry zipEntry) throws IOException;
   
 }
