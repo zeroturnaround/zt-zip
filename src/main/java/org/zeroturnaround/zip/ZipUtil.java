@@ -703,21 +703,22 @@ public final class ZipUtil {
    * The ZIP file must not be a directory and its parent directory must exist.
    * Will not include the root directory name in the archive.
    * 
-   * @param sourceFolder
+   * @param sourceDir
    *          root directory.
    * @param targetZipFile
    *          ZIP file that will be created or overwritten.
    */
-  public static void pack(final File sourceFolder, final File targetZipFile, boolean preserveRoot) {
+  public static void pack(final File sourceDir, final File targetZipFile, boolean preserveRoot) {
     if (preserveRoot) {
-      pack(sourceFolder, targetZipFile, new NameMapper() {
+      final String parentName = sourceDir.getName();
+      pack(sourceDir, targetZipFile, new NameMapper() {
         public String map(String name) {
-          return sourceFolder.getName() + "/" + name;
+          return parentName + "/" + name;
         }
       });
     }
     else
-      pack(sourceFolder, targetZipFile);
+      pack(sourceDir, targetZipFile);
   }
 
   /**
@@ -778,28 +779,28 @@ public final class ZipUtil {
    * <p>
    * The ZIP file must not be a directory and its parent directory must exist.
    * 
-   * @param File
+   * @param sourceDir
    *          root directory.
-   * @param zip
+   * @param targetZip
    *          ZIP file that will be created or overwritten.
    */
-  public static void pack(File rootDir, File zip, NameMapper mapper) {
-    log.debug("Compressing '{}' into '{}'.", rootDir, zip);
+  public static void pack(File sourceDir, File targetZip, NameMapper mapper) {
+    log.debug("Compressing '{}' into '{}'.", sourceDir, targetZip);
 
-    File[] listFiles = rootDir.listFiles();
+    File[] listFiles = sourceDir.listFiles();
     if (listFiles == null) {
-      if (!rootDir.exists()) {
-        throw new ZipException("Given file '" + rootDir + "' doesn't exist!");
+      if (!sourceDir.exists()) {
+        throw new ZipException("Given file '" + sourceDir + "' doesn't exist!");
       }
-      throw new ZipException("Given file '" + rootDir + "' is not a directory!");
+      throw new ZipException("Given file '" + sourceDir + "' is not a directory!");
     }
     else if (listFiles.length == 0) {
-      throw new ZipException("Given directory '" + rootDir + "' doesn't contain any files!");
+      throw new ZipException("Given directory '" + sourceDir + "' doesn't contain any files!");
     }
     ZipOutputStream out = null;
     try {
-      out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zip)));
-      pack(rootDir, out, mapper, "");
+      out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(targetZip)));
+      pack(sourceDir, out, mapper, "");
     }
     catch (IOException e) {
       throw rethrow(e);

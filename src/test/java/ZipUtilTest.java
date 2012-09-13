@@ -24,6 +24,7 @@ import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.zeroturnaround.zip.ZipEntrySource;
+import org.zeroturnaround.zip.ZipException;
 import org.zeroturnaround.zip.ZipUtil;
 
 public class ZipUtilTest extends TestCase {
@@ -127,12 +128,12 @@ public class ZipUtilTest extends TestCase {
     // the test
     assertEquals(108, (new File(dest, "TestFile.txt")).length());
   }
-  
+
   public void testPackEntries() throws Exception {
     File fileToPack = new File(getClass().getResource("TestFile.txt").getPath());
     File fileToPackII = new File(getClass().getResource("TestFile-II.txt").getPath());
     File dest = File.createTempFile("temp", null);
-    ZipUtil.packEntries(new File[]{fileToPack, fileToPackII}, dest);
+    ZipUtil.packEntries(new File[] { fileToPack, fileToPackII }, dest);
     assertTrue(dest.exists());
 
     ZipUtil.explode(dest);
@@ -142,6 +143,25 @@ public class ZipUtilTest extends TestCase {
     // the test
     assertEquals(108, (new File(dest, "TestFile.txt")).length());
     assertEquals(103, (new File(dest, "TestFile-II.txt")).length());
+  }
+
+  public void testZipException() {
+    boolean exceptionThrown = false;
+    try {
+      ZipUtil.pack(new File("nonExistent"), new File("weeheha"));
+    }
+    catch (ZipException e) {
+      exceptionThrown = true;
+    }
+    assertTrue(exceptionThrown);
+  }
+
+  public void testPreserveRoot() throws Exception {
+    File dest = File.createTempFile("temp", null);
+    File parent = new File(getClass().getResource("TestFile.txt").getPath()).getParentFile();
+    ZipUtil.pack(parent, dest, true);
+    ZipUtil.explode(dest);
+    assertTrue((new File(dest, parent.getName())).exists());
   }
 
   private void unexplodeWithException(File file, String message) {
