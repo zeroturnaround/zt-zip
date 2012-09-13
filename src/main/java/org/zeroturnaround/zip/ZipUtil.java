@@ -708,7 +708,7 @@ public final class ZipUtil {
    * @param targetZipFile
    *          ZIP file that will be created or overwritten.
    */
-  public static void pack(final File sourceDir, final File targetZipFile, boolean preserveRoot) {
+  public static void pack(final File sourceDir, final File targetZipFile, final boolean preserveRoot) {
     if (preserveRoot) {
       final String parentName = sourceDir.getName();
       pack(sourceDir, targetZipFile, new NameMapper() {
