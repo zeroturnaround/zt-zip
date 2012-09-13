@@ -789,12 +789,12 @@ public final class ZipUtil {
     File[] listFiles = rootDir.listFiles();
     if (listFiles == null) {
       if (!rootDir.exists()) {
-        throw new RuntimeException("Given file '" + rootDir + "' doesn't exist!");
+        throw new ZipException("Given file '" + rootDir + "' doesn't exist!");
       }
-      throw new RuntimeException("Given file '" + rootDir + "' is not a directory!");
+      throw new ZipException("Given file '" + rootDir + "' is not a directory!");
     }
     else if (listFiles.length == 0) {
-      throw new RuntimeException("Given directory '" + rootDir + "' doesn't contain any files!");
+      throw new ZipException("Given directory '" + rootDir + "' doesn't contain any files!");
     }
     ZipOutputStream out = null;
     try {
@@ -1729,8 +1729,8 @@ public final class ZipUtil {
   /**
    * Rethrow the given exception as a runtime exception.
    */
-  private static RuntimeException rethrow(IOException e) {
-    throw new RuntimeException(e);
+  private static ZipException rethrow(IOException e) {
+    throw new ZipException(e);
   }
 
 }
