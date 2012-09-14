@@ -334,7 +334,8 @@ public final class ZipUtil {
   /**
    * Reads the given ZIP file and executes the given action for each entry.
    * <p>
-   * For each entry the corresponding input stream is also passed to the action.
+   * For each entry the corresponding input stream is also passed to the action. If you want to stop the loop
+   * then throw a ZipBreakException.
    * 
    * @param zip
    *          input ZIP file.
@@ -414,7 +415,8 @@ public final class ZipUtil {
   /**
    * Reads the given ZIP stream and executes the given action for each entry.
    * <p>
-   * For each entry the corresponding input stream is also passed to the action.
+   * For each entry the corresponding input stream is also passed to the action. If you want to stop the loop
+   * then throw a ZipBreakException.
    * 
    * @param is
    *          input ZIP stream (it will not be closed automatically).
