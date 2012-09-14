@@ -12,27 +12,16 @@ usage is also supported.
 
 ### Installation
 
-The project artifact can be downloaded from the
-[snapshot](http://repos.zeroturnaround.com/nexus/content/repositories/zt-public-snapshots/) or [release](http://repos.zeroturnaround.com/nexus/content/repositories/zt-public-releases/) maven repository.
+The project artifacts are available in [Maven Central Repository](http://search.maven.org/#browse%7C895841167).
 
-To include it in your maven project then you need to define the repository and the dependency.
+To include it in your maven project then you have to specify the dependency.
 
 ```xml
-<repositories>
-    <repository>
-      <id>zt-public-releases</id>
-      <url>http://repos.zeroturnaround.com/nexus/content/groups/zt-public/</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-</repositories>
-
 ...
 <dependency>
     <groupId>org.zeroturnaround</groupId>
     <artifactId>zt-zip</artifactId>
-    <version>1.1</version>
+    <version>1.5</version>
     <type>jar</type>
     <scope>provided</scope>
 </dependency>
