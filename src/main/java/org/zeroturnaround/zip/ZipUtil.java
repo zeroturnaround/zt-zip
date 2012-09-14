@@ -928,28 +928,14 @@ public final class ZipUtil {
    *          compression level.
    */
   public static void repack(File srcZip, File dstZip, int compressionLevel) {
-    
+
     log.debug("Repacking '{}' into '{}'.", srcZip, dstZip);
     
-    try {
-      final ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(dstZip)));
-      try {
-        out.setLevel(compressionLevel);
-
-        iterate(srcZip, new ZipEntryCallback() {
-
-          public void process(InputStream in, ZipEntry zipEntry) throws IOException {
-            copyEntry(zipEntry, in, out);
-          }
-        });
-      }
-      finally {
-        IOUtils.closeQuietly(out);
-      }
-    } 
-    catch (IOException e) {
-      throw rethrow(e);
-    }
+    RepackZipEntryCallback callback = new RepackZipEntryCallback(dstZip, compressionLevel);
+    
+    iterate(srcZip, callback);
+    
+    callback.closeStream();
   }
   
   /**
@@ -967,25 +953,11 @@ public final class ZipUtil {
     
     log.debug("Repacking from input stream into '{}'.", dstZip);
     
-    try {
-      final ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(dstZip)));
-      try {
-        out.setLevel(compressionLevel);
-
-        iterate(is, new ZipEntryCallback() {
-
-          public void process(InputStream in, ZipEntry zipEntry) throws IOException {
-            copyEntry(zipEntry, in, out);
-          }
-        });
-      }
-      finally {
-        IOUtils.closeQuietly(out);
-      }
-    } 
-    catch (IOException e) {
-      throw rethrow(e);
-    }
+    RepackZipEntryCallback callback = new RepackZipEntryCallback(dstZip, compressionLevel);
+    
+    iterate(is, callback);
+    
+    callback.closeStream();
   }
   
   /**
@@ -997,7 +969,7 @@ public final class ZipUtil {
    * @param compressionLevel
    *          compression level.
    */
-  public static void repackAndReplace(File zip, int compressionLevel) {
+  public static void repack(File zip, int compressionLevel) {
     try {
       File tmpZip = FileUtil.getTempFileFor(zip);
 
@@ -1013,6 +985,35 @@ public final class ZipUtil {
     }
     catch (IOException e) {
       throw rethrow(e);
+    }
+  }
+  
+  /**
+   * RepackZipEntryCallback used in repacking methods.
+   * 
+   * @author Pavel Grigorenko
+   */
+  private static class RepackZipEntryCallback implements ZipEntryCallback {
+
+    private ZipOutputStream out;
+    
+    private RepackZipEntryCallback(File dstZip, int compressionLevel) {
+      try {
+        this.out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(dstZip)));
+        this.out.setLevel(compressionLevel);
+      }
+      catch (IOException e) {
+        rethrow(e);
+      }
+    }
+    
+    public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+      copyEntry(zipEntry, in, out);
+    }
+    
+    private void closeStream() {
+      IOUtils.closeQuietly(out);
+      out = null;
     }
   }
   
