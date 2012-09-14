@@ -933,9 +933,12 @@ public final class ZipUtil {
     
     RepackZipEntryCallback callback = new RepackZipEntryCallback(dstZip, compressionLevel);
     
-    iterate(srcZip, callback);
-    
-    callback.closeStream();
+    try {
+      iterate(srcZip, callback);
+    }
+    finally {
+      callback.closeStream();
+    }
   }
   
   /**
@@ -954,10 +957,13 @@ public final class ZipUtil {
     log.debug("Repacking from input stream into '{}'.", dstZip);
     
     RepackZipEntryCallback callback = new RepackZipEntryCallback(dstZip, compressionLevel);
-    
-    iterate(is, callback);
-    
-    callback.closeStream();
+
+    try {
+      iterate(is, callback);
+    }
+    finally {
+      callback.closeStream();
+    }
   }
   
   /**
@@ -1013,7 +1019,6 @@ public final class ZipUtil {
     
     private void closeStream() {
       IOUtils.closeQuietly(out);
-      out = null;
     }
   }
   
