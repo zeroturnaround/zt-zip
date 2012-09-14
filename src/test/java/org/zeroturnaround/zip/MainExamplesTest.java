@@ -77,11 +77,10 @@ public final class MainExamplesTest extends TestCase {
 
   public static void listClasses() {
     ZipUtil.iterate(new File("/tmp/demo.zip"), new ZipInfoCallback() {
-      public boolean process(ZipEntry zipEntry) throws IOException {
+      public void process(ZipEntry zipEntry) throws IOException {
         if (zipEntry.getName().endsWith(".class")) {
           System.out.println("Found " + zipEntry.getName());
         }
-        return true;
       }
     });
   }

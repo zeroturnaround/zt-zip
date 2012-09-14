@@ -374,7 +374,7 @@ public final class ZipUtil {
    * Scans the given ZIP file and executes the given action for each entry.
    * <p>
    * Only the meta-data without the actual data is read. If you want to stop the loop
-   * then return false from the process method.
+   * then throw a ZipBreakException.
    * 
    * @param zip
    *          input ZIP file.
@@ -392,9 +392,12 @@ public final class ZipUtil {
       Enumeration en = zf.entries();
       while (en.hasMoreElements()) {
         ZipEntry e = (ZipEntry) en.nextElement();
-        boolean rtrn = action.process(e);
-        if (!rtrn)
+        try {
+          action.process(e);
+        }
+        catch (ZipBreakException ex) {
           break;
+        }
       }
     }
     catch (IOException e) {
