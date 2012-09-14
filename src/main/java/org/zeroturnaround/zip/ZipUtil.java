@@ -357,6 +357,9 @@ public final class ZipUtil {
         try {
           action.process(is, e);
         }
+        catch (ZipBreakException ex) {
+          break;
+        }
         finally {
           IOUtils.closeQuietly(is);
         }
@@ -426,7 +429,12 @@ public final class ZipUtil {
       ZipInputStream in = new ZipInputStream(new BufferedInputStream(is));
       ZipEntry entry;
       while ((entry = in.getNextEntry()) != null) {
-        action.process(in, entry);
+        try {
+          action.process(in, entry);
+        }
+        catch (ZipBreakException ex) {
+          break;
+        }
       }
     }
     catch (IOException e) {
