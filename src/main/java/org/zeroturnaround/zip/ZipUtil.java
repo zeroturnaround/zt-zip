@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -56,6 +57,9 @@ import org.zeroturnaround.zip.transform.ZipEntryTransformerEntry;
  */
 public final class ZipUtil {
 
+  /** Default compression level */
+  public static final int DEFAULT_COMPRESSION_LEVEL = Deflater.DEFAULT_COMPRESSION;
+  
   private static final Logger log = LoggerFactory.getLogger(ZipUtil.class);
 
   private ZipUtil() {
@@ -710,7 +714,24 @@ public final class ZipUtil {
    *          ZIP file that will be created or overwritten.
    */
   public static void pack(File rootDir, File zip) {
-    pack(rootDir, zip, IdentityNameMapper.INSTANCE);
+    pack(rootDir, zip, DEFAULT_COMPRESSION_LEVEL);
+  }
+  
+  /**
+   * Compresses the given directory and all its sub-directories into a ZIP file.
+   * <p>
+   * The ZIP file must not be a directory and its parent directory must exist.
+   * Will not include the root directory name in the archive.
+   * 
+   * @param File
+   *          root directory.
+   * @param zip
+   *          ZIP file that will be created or overwritten.
+   * @param compressionLevel
+   *          compression level
+   */
+  public static void pack(File rootDir, File zip, int compressionLevel) {
+    pack(rootDir, zip, IdentityNameMapper.INSTANCE, compressionLevel);
   }
 
   /**
@@ -801,6 +822,22 @@ public final class ZipUtil {
    *          ZIP file that will be created or overwritten.
    */
   public static void pack(File sourceDir, File targetZip, NameMapper mapper) {
+    pack(sourceDir, targetZip, mapper, DEFAULT_COMPRESSION_LEVEL);
+  }
+  
+  /**
+   * Compresses the given directory and all its sub-directories into a ZIP file.
+   * <p>
+   * The ZIP file must not be a directory and its parent directory must exist.
+   * 
+   * @param sourceDir
+   *          root directory.
+   * @param targetZip
+   *          ZIP file that will be created or overwritten.
+   * @param compressionLevel
+   *          compression level
+   */
+  public static void pack(File sourceDir, File targetZip, NameMapper mapper, int compressionLevel) {
     log.debug("Compressing '{}' into '{}'.", sourceDir, targetZip);
 
     File[] listFiles = sourceDir.listFiles();
@@ -816,6 +853,7 @@ public final class ZipUtil {
     ZipOutputStream out = null;
     try {
       out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(targetZip)));
+      out.setLevel(compressionLevel);
       pack(sourceDir, out, mapper, "");
     }
     catch (IOException e) {
@@ -879,6 +917,112 @@ public final class ZipUtil {
   }
 
   /**
+   * Repacks a provided ZIP file into a new ZIP with a given compression level.
+   * <p>
+   * 
+   * @param srcZip
+   *          source ZIP file.
+   * @param dstZip
+   *          destination ZIP file.
+   * @param compressionLevel
+   *          compression level.
+   */
+  public static void repack(File srcZip, File dstZip, int compressionLevel) {
+
+    log.debug("Repacking '{}' into '{}'.", srcZip, dstZip);
+    
+    RepackZipEntryCallback callback = new RepackZipEntryCallback(dstZip, compressionLevel);
+    
+    try {
+      iterate(srcZip, callback);
+    }
+    finally {
+      callback.closeStream();
+    }
+  }
+  
+  /**
+   * Repacks a provided ZIP input stream into a ZIP file with a given compression level.
+   * <p>
+   * 
+   * @param is
+   *          ZIP input stream.
+   * @param dstZip
+   *          destination ZIP file.
+   * @param compressionLevel
+   *          compression level.
+   */
+  public static void repack(InputStream is, File dstZip, int compressionLevel) {
+    
+    log.debug("Repacking from input stream into '{}'.", dstZip);
+    
+    RepackZipEntryCallback callback = new RepackZipEntryCallback(dstZip, compressionLevel);
+
+    try {
+      iterate(is, callback);
+    }
+    finally {
+      callback.closeStream();
+    }
+  }
+  
+  /**
+   * Repacks a provided ZIP file and replaces old file with the new one.
+   * <p>
+   * 
+   * @param zip
+   *          source ZIP file to be repacked and replaced.
+   * @param compressionLevel
+   *          compression level.
+   */
+  public static void repack(File zip, int compressionLevel) {
+    try {
+      File tmpZip = FileUtil.getTempFileFor(zip);
+
+      repack(zip, tmpZip, compressionLevel);
+
+      // Delete original zip
+      if (!zip.delete()) {
+        throw new IOException("Unable to delete the file: " + zip);
+      }
+
+      // Rename the archive
+      FileUtils.moveFile(tmpZip, zip);
+    }
+    catch (IOException e) {
+      throw rethrow(e);
+    }
+  }
+  
+  /**
+   * RepackZipEntryCallback used in repacking methods.
+   * 
+   * @author Pavel Grigorenko
+   */
+  private static class RepackZipEntryCallback implements ZipEntryCallback {
+
+    private ZipOutputStream out;
+    
+    private RepackZipEntryCallback(File dstZip, int compressionLevel) {
+      try {
+        this.out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(dstZip)));
+        this.out.setLevel(compressionLevel);
+      }
+      catch (IOException e) {
+        rethrow(e);
+      }
+    }
+    
+    public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+      copyEntry(zipEntry, in, out);
+    }
+    
+    private void closeStream() {
+      IOUtils.closeQuietly(out);
+    }
+  }
+  
+  /**
    * Compresses a given directory in its own location.
    * <p>
    * A ZIP file will be first created with a temporary name. After the
@@ -891,12 +1035,30 @@ public final class ZipUtil {
    * @see #pack(File, File)
    */
   public static void unexplode(File dir) {
+    unexplode(dir, DEFAULT_COMPRESSION_LEVEL);
+  }
+  
+  /**
+   * Compresses a given directory in its own location.
+   * <p>
+   * A ZIP file will be first created with a temporary name. After the
+   * compressing the directory will be deleted and the ZIP file will be renamed
+   * as the original directory.
+   * 
+   * @param dir
+   *          input directory as well as the target ZIP file.
+   * @param compressionLevel
+   *          compression level
+   * 
+   * @see #pack(File, File)
+   */
+  public static void unexplode(File dir, int compressionLevel) {
     try {
       // Find a new unique name is the same directory
       File zip = FileUtil.getTempFileFor(dir);
 
       // Pack it
-      pack(dir, zip);
+      pack(dir, zip, compressionLevel);
 
       // Delete the directory
       FileUtils.deleteDirectory(dir);
