@@ -23,7 +23,6 @@ To include it in your maven project then you have to specify the dependency.
     <artifactId>zt-zip</artifactId>
     <version>1.5</version>
     <type>jar</type>
-    <scope>provided</scope>
 </dependency>
 ...
 ```
