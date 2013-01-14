@@ -59,8 +59,9 @@ public final class ZipUtil {
 
   /** Default compression level */
   public static final int DEFAULT_COMPRESSION_LEVEL = Deflater.DEFAULT_COMPRESSION;
-  
-  private static final Logger log = LoggerFactory.getLogger(ZipUtil.class);
+
+  // Use / instead of . to work around an issue with Maven Shade Plugin
+  private static final Logger log = LoggerFactory.getLogger("org/zeroturnaround/zip/ZipUtil".replace('/', '.'));
 
   private ZipUtil() {
   }
