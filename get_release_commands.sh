@@ -75,4 +75,9 @@ echo "10) push to GitHub"
 echo "git push"
 echo "git push --tags"
 
+echo ""
+echo "11) clean local repo"
+echo "git clean -f"
+
+
 
