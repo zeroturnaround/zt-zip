@@ -14,10 +14,11 @@ if ! [[ "$1" =~ ^[0-9]*\.?[0-9]*$ ]] || [[ "$1z" = "z" ]]; then
 fi
 
 version=$1
-version_str_length=${#version}-1
 
-last_digit=${version:(-1)}
-incr_last_digit=$((${last_digit}+1))
+version_after_dot=${version##*.}
+version_str_length=${#version}-${#version_after_dot}
+
+incr_last_digit=$((${version_after_dot}+1))
 
 version_without_last_digit=${version: 0:${version_str_length}}
 new_version="${version_without_last_digit}${incr_last_digit}-SNAPSHOT"
