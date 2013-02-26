@@ -174,4 +174,39 @@ public class ZipUtilTest extends TestCase {
     }
     assertTrue(message, ok);
   }
+
+  public void testRemoveEntry() throws IOException {
+    File src = new File(getClass().getResource("demo.zip").getPath());
+
+    File dest = File.createTempFile("temp", null);
+    try {
+      ZipUtil.removeEntry(src, "bar.txt", dest);
+      assertTrue("Result zip misses entry 'foo.txt'", ZipUtil.containsEntry(dest, "foo.txt"));
+      assertTrue("Result zip misses entry 'foo1.txt'", ZipUtil.containsEntry(dest, "foo1.txt"));
+      assertTrue("Result zip misses entry 'foo2.txt'", ZipUtil.containsEntry(dest, "foo2.txt"));
+      assertFalse("Result zip still contains 'bar.txt'", ZipUtil.containsEntry(dest, "bar.txt"));
+    }
+    finally {
+      FileUtils.deleteQuietly(dest);
+    }
+  }
+
+  public void testRemoveDirs() throws IOException {
+    File src = new File(getClass().getResource("demo-dirs.zip").getPath());
+
+    File dest = File.createTempFile("temp", null);
+    try {
+      ZipUtil.removeEntries(src, new String[] { "bar.txt", "a/b" }, dest);
+
+      assertFalse("Result zip still contains 'bar.txt'", ZipUtil.containsEntry(dest, "bar.txt"));
+      assertFalse("Result zip still contains dir 'a/b'", ZipUtil.containsEntry(dest, "a/b"));
+      assertTrue("Result doesn't containt 'attic'", ZipUtil.containsEntry(dest, "attic/treasure.txt"));
+      assertTrue("Entry whose prefix is dir name is removed too: 'b.txt'", ZipUtil.containsEntry(dest, "a/b.txt"));
+      assertFalse("Entry in a removed dir is still there: 'a/b/c.txt'", ZipUtil.containsEntry(dest, "a/b/c.txt"));
+
+    }
+    finally {
+      FileUtils.deleteQuietly(dest);
+    }
+  }
 }
