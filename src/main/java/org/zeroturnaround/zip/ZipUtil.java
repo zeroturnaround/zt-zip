@@ -580,8 +580,8 @@ public final class ZipUtil {
    * <p>
    * The output directory must not be a file.
    *
-   * @param zip
-   *          input ZIP file.
+   * @param is
+   *          inputstream for ZIP file.
    * @param outputDir
    *          output directory (created automatically if not found).
    */
@@ -594,8 +594,8 @@ public final class ZipUtil {
    * <p>
    * The output directory must not be a file.
    *
-   * @param zip
-   *          input ZIP file.
+   * @param is
+   *          inputstream for ZIP file.
    * @param outputDir
    *          output directory (created automatically if not found).
    */
@@ -711,7 +711,7 @@ public final class ZipUtil {
    * The ZIP file must not be a directory and its parent directory must exist.
    * Will not include the root directory name in the archive.
    *
-   * @param File
+   * @param rootDir
    *          root directory.
    * @param zip
    *          ZIP file that will be created or overwritten.
@@ -726,7 +726,7 @@ public final class ZipUtil {
    * The ZIP file must not be a directory and its parent directory must exist.
    * Will not include the root directory name in the archive.
    *
-   * @param File
+   * @param rootDir
    *          root directory.
    * @param zip
    *          ZIP file that will be created or overwritten.
@@ -766,7 +766,7 @@ public final class ZipUtil {
    * <p>
    * The ZIP file must not be a directory and its parent directory must exist.
    *
-   * @param File
+   * @param fileToPack
    *          file that needs to be zipped.
    * @param destZipFile
    *          ZIP file that will be created or overwritten.
@@ -780,7 +780,7 @@ public final class ZipUtil {
    * <p>
    * The ZIP file must not be a directory and its parent directory must exist.
    *
-   * @param File
+   * @param filesToPack
    *          files that needs to be zipped.
    * @param destZipFile
    *          ZIP file that will be created or overwritten.
