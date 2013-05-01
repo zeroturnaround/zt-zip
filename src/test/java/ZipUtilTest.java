@@ -174,6 +174,17 @@ public class ZipUtilTest extends TestCase {
     }
     assertTrue(message, ok);
   }
+  
+  public void testAddEntry() throws IOException {
+    File src = new File(getClass().getResource("demo.zip").getPath());
+    final String fileName = "TestFile.txt";
+    assertFalse(ZipUtil.containsEntry(src, fileName));
+    File newEntry = new File(getClass().getResource(fileName).getPath());
+    File dest = File.createTempFile("temp.zip", null);
+
+    ZipUtil.addEntry(src, fileName, newEntry, dest);
+    assertTrue(ZipUtil.containsEntry(dest, fileName));
+  }
 
   public void testRemoveEntry() throws IOException {
     File src = new File(getClass().getResource("demo.zip").getPath());
