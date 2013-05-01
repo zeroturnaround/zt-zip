@@ -175,6 +175,12 @@ public class ZipUtilTest extends TestCase {
     assertTrue(message, ok);
   }
 
+  public void testArchiveEquals() {
+    File src = new File(getClass().getResource("demo.zip").getPath());
+    File src2 = new File(getClass().getResource("demo-copy.zip").getPath());
+    assertTrue(ZipUtil.archiveEquals(src, src2));
+  }
+
   public void testContainsAnyEntry() throws IOException {
     File src = new File(getClass().getResource("demo.zip").getPath());
     boolean exists = ZipUtil.containsAnyEntry(src, new String[] { "foo.txt", "bar.txt" });
@@ -182,7 +188,7 @@ public class ZipUtilTest extends TestCase {
 
     exists = ZipUtil.containsAnyEntry(src, new String[] { "foo.txt", "does-not-exist.txt" });
     assertTrue(exists);
-    
+
     exists = ZipUtil.containsAnyEntry(src, new String[] { "does-not-exist-I.txt", "does-not-exist-II.txt" });
     assertFalse(exists);
   }
