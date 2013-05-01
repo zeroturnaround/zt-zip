@@ -177,8 +177,13 @@ public class ZipUtilTest extends TestCase {
 
   public void testArchiveEquals() {
     File src = new File(getClass().getResource("demo.zip").getPath());
+    // byte-by-byte copy
     File src2 = new File(getClass().getResource("demo-copy.zip").getPath());
     assertTrue(ZipUtil.archiveEquals(src, src2));
+    
+    // entry by entry copy
+    File src3 = new File(getClass().getResource("demo-copy-II.zip").getPath());
+    assertTrue(ZipUtil.archiveEquals(src, src3));
   }
 
   public void testContainsAnyEntry() throws IOException {
