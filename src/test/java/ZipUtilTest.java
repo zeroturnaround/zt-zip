@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -37,6 +38,30 @@ import org.zeroturnaround.zip.ZipUtil;
 
 public class ZipUtilTest extends TestCase {
 
+  public void testPackEntryStream() {
+    File src = new File(getClass().getResource("TestFile.txt").getPath());
+    byte[] bytes = ZipUtil.packEntry(src);
+    boolean processed = ZipUtil.handle(new ByteArrayInputStream(bytes), "TestFile.txt", new ZipEntryCallback() {
+      
+      public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+      }
+    });
+    assertTrue(processed);
+  }
+  
+  public void testPackEntryFile() throws Exception {
+    File fileToPack = new File(getClass().getResource("TestFile.txt").getPath());
+    File dest = File.createTempFile("temp", null);
+    ZipUtil.packEntry(fileToPack, dest);
+    assertTrue(dest.exists());
+
+    ZipUtil.explode(dest);
+    assertTrue((new File(dest, "TestFile.txt")).exists());
+    // if fails then maybe somebody changed the file contents and did not update
+    // the test
+    assertEquals(108, (new File(dest, "TestFile.txt")).length());
+  }
+  
   public void testUnpackEntryFromFile() throws IOException {
     final String name = "foo";
     final byte[] contents = "bar".getBytes();
@@ -186,19 +211,6 @@ public class ZipUtilTest extends TestCase {
     assertTrue("zip file should exist with the same name as the directory that was unexploded", dir.exists());
     assertTrue("unexploding input directory should have produced zip file with the same name", !dir.isDirectory());
     assertTrue("Should be able to delete zip that was created from directory", dir.delete());
-  }
-
-  public void testPackEntry() throws Exception {
-    File fileToPack = new File(getClass().getResource("TestFile.txt").getPath());
-    File dest = File.createTempFile("temp", null);
-    ZipUtil.packEntry(fileToPack, dest);
-    assertTrue(dest.exists());
-
-    ZipUtil.explode(dest);
-    assertTrue((new File(dest, "TestFile.txt")).exists());
-    // if fails then maybe somebody changed the file contents and did not update
-    // the test
-    assertEquals(108, (new File(dest, "TestFile.txt")).length());
   }
 
   public void testPackEntries() throws Exception {
