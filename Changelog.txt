@@ -3,3 +3,4 @@
 ********************************************
 1.6-SNAPSHOT
 * Started to write a changelog 
+* Added public CI, https://travis-ci.org/
