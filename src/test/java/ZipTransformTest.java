@@ -31,6 +31,7 @@ import org.zeroturnaround.zip.ZipUtil;
 import org.zeroturnaround.zip.transform.ByteArrayZipEntryTransformer;
 import org.zeroturnaround.zip.transform.FileZipEntryTransformer;
 import org.zeroturnaround.zip.transform.StreamZipEntryTransformer;
+import org.zeroturnaround.zip.transform.StringZipEntryTransformer;
 
 public class ZipTransformTest extends TestCase {
 
@@ -238,6 +239,53 @@ public class ZipTransformTest extends TestCase {
       byte[] actual = ZipUtil.unpackEntry(file2, name);
       assertNotNull(actual);
       assertEquals("CAFEBABE", new String(actual));
+    }
+    finally {
+      FileUtils.deleteQuietly(file1);
+      FileUtils.deleteQuietly(file2);
+    }
+  }
+  
+  public void testStringZipEntryTransformerInStream() throws IOException {
+    final String name = "foo";
+    String FILE_CONTENTS = "bar";
+    final byte[] contents = FILE_CONTENTS.getBytes();
+
+    File file1 = File.createTempFile("temp", null);
+    File file2 = File.createTempFile("temp", null);
+    try {
+      // Create the ZIP file
+      ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(file1));
+      try {
+        zos.putNextEntry(new ZipEntry(name));
+        zos.write(contents);
+        zos.closeEntry();
+      }
+      finally {
+        IOUtils.closeQuietly(zos);
+      }
+
+      // Transform the ZIP file
+      FileInputStream in = null;
+      FileOutputStream out = null;
+      try {
+        in = new FileInputStream(file1);
+        out = new FileOutputStream(file2);
+        
+        ZipUtil.transformEntry(in, name, new StringZipEntryTransformer("UTF-8") {
+          protected String transform(ZipEntry zipEntry, String input) throws IOException {
+            return input.toUpperCase();
+          }
+        } , out);
+      }
+      finally {
+        IOUtils.closeQuietly(in);
+        IOUtils.closeQuietly(out);
+      }
+
+      // Test the ZipUtil
+      byte[] actual = ZipUtil.unpackEntry(file2, name);
+      assertEquals(FILE_CONTENTS.toUpperCase(), new String(actual));
     }
     finally {
       FileUtils.deleteQuietly(file1);
