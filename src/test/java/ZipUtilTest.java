@@ -32,6 +32,7 @@ import org.zeroturnaround.zip.ZipBreakException;
 import org.zeroturnaround.zip.ZipEntryCallback;
 import org.zeroturnaround.zip.ZipEntrySource;
 import org.zeroturnaround.zip.ZipException;
+import org.zeroturnaround.zip.ZipInfoCallback;
 import org.zeroturnaround.zip.ZipUtil;
 
 public class ZipUtilTest extends TestCase {
@@ -322,6 +323,41 @@ public class ZipUtilTest extends TestCase {
     finally {
       FileUtils.deleteQuietly(dest);
     }
+  }
+  
+  public void testHandle() {
+    File src = new File(getClass().getResource("demo.zip").getPath());
+    
+    boolean entryFound = ZipUtil.handle(src, "foo.txt", new ZipEntryCallback() {
+      public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+        assertEquals("foo.txt", zipEntry.getName());
+      }
+    });
+    assertTrue(entryFound);
+    
+    entryFound = ZipUtil.handle(src, "non-existent-file.txt", new ZipEntryCallback() {
+      public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+        throw new RuntimeException("This should not happen!");
+      }
+    });
+    assertFalse(entryFound);
+  }
+  
+  public void testIterate() {
+    File src = new File(getClass().getResource("demo.zip").getPath());
+    final Set files = new HashSet();
+    files.add("foo.txt");
+    files.add("bar.txt");
+    files.add("foo1.txt");
+    files.add("foo2.txt");
+    
+    ZipUtil.iterate(src, new ZipInfoCallback() {
+      
+      public void process(ZipEntry zipEntry) throws IOException {
+        files.remove(zipEntry.getName());
+      }
+    });
+    assertEquals(0, files.size());
   }
 
   public void testIterateAndBreak() {
