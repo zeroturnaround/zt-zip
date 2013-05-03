@@ -17,8 +17,10 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -26,6 +28,8 @@ import junit.framework.TestCase;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.zeroturnaround.zip.ZipBreakException;
+import org.zeroturnaround.zip.ZipEntryCallback;
 import org.zeroturnaround.zip.ZipEntrySource;
 import org.zeroturnaround.zip.ZipException;
 import org.zeroturnaround.zip.ZipUtil;
@@ -58,7 +62,7 @@ public class ZipUtilTest extends TestCase {
       FileUtils.deleteQuietly(file);
     }
   }
-  
+
   public void testUnpackEntryFromStreamToFile() throws IOException {
     final String name = "foo";
     final byte[] contents = "bar".getBytes();
@@ -82,19 +86,19 @@ public class ZipUtilTest extends TestCase {
 
       boolean result = ZipUtil.unpackEntry(fis, name, outputFile);
       assertTrue(result);
-      
+
       BufferedInputStream bis = new BufferedInputStream(new FileInputStream(outputFile));
       byte[] actual = new byte[1024];
       int read = bis.read(actual);
       bis.close();
-      
+
       assertEquals(new String(contents), new String(actual, 0, read));
     }
     finally {
       FileUtils.deleteQuietly(file);
     }
   }
-  
+
   public void testUnpackEntryFromStream() throws IOException {
     final String name = "foo";
     final byte[] contents = "bar".getBytes();
@@ -247,12 +251,12 @@ public class ZipUtilTest extends TestCase {
     // byte-by-byte copy
     File src2 = new File(getClass().getResource("demo-copy.zip").getPath());
     assertTrue(ZipUtil.archiveEquals(src, src2));
-    
+
     // entry by entry copy
     File src3 = new File(getClass().getResource("demo-copy-II.zip").getPath());
     assertTrue(ZipUtil.archiveEquals(src, src3));
   }
-  
+
   public void testRepackArchive() throws IOException {
     File src = new File(getClass().getResource("demo.zip").getPath());
     File dest = File.createTempFile("temp", null);
@@ -261,7 +265,6 @@ public class ZipUtilTest extends TestCase {
 
     assertTrue(ZipUtil.archiveEquals(src, dest));
   }
-
 
   public void testContainsAnyEntry() throws IOException {
     File src = new File(getClass().getResource("demo.zip").getPath());
@@ -319,5 +322,22 @@ public class ZipUtilTest extends TestCase {
     finally {
       FileUtils.deleteQuietly(dest);
     }
+  }
+
+  public void testIterateAndBreak() {
+    File src = new File(getClass().getResource("demo.zip").getPath());
+    final Set files = new HashSet();
+    files.add("foo.txt");
+    files.add("bar.txt");
+    files.add("foo1.txt");
+    files.add("foo2.txt");
+    
+    ZipUtil.iterate(src, new ZipEntryCallback() {
+      public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+        files.remove(zipEntry.getName());
+        throw new ZipBreakException();
+      }
+    });
+    assertEquals(3, files.size());
   }
 }
