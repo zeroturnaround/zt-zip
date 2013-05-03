@@ -13,9 +13,11 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -51,6 +53,42 @@ public class ZipUtilTest extends TestCase {
       byte[] actual = ZipUtil.unpackEntry(file, name);
       assertNotNull(actual);
       assertEquals(new String(contents), new String(actual));
+    }
+    finally {
+      FileUtils.deleteQuietly(file);
+    }
+  }
+  
+  public void testUnpackEntryFromStreamToFile() throws IOException {
+    final String name = "foo";
+    final byte[] contents = "bar".getBytes();
+
+    File file = File.createTempFile("temp", null);
+    try {
+      // Create the ZIP file
+      ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(file));
+      try {
+        zos.putNextEntry(new ZipEntry(name));
+        zos.write(contents);
+        zos.closeEntry();
+      }
+      finally {
+        IOUtils.closeQuietly(zos);
+      }
+
+      FileInputStream fis = new FileInputStream(file);
+
+      File outputFile = File.createTempFile("temp-output", null);
+
+      boolean result = ZipUtil.unpackEntry(fis, name, outputFile);
+      assertTrue(result);
+      
+      BufferedInputStream bis = new BufferedInputStream(new FileInputStream(outputFile));
+      byte[] actual = new byte[1024];
+      int read = bis.read(actual);
+      bis.close();
+      
+      assertEquals(new String(contents), new String(actual, 0, read));
     }
     finally {
       FileUtils.deleteQuietly(file);
