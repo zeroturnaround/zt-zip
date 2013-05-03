@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.zip.ZipEntry;
@@ -29,7 +30,7 @@ import org.zeroturnaround.zip.ZipUtil;
 
 public class ZipUtilTest extends TestCase {
 
-  public void testUnpackEntry() throws IOException {
+  public void testUnpackEntryFromFile() throws IOException {
     final String name = "foo";
     final byte[] contents = "bar".getBytes();
 
@@ -48,6 +49,34 @@ public class ZipUtilTest extends TestCase {
 
       // Test the ZipUtil
       byte[] actual = ZipUtil.unpackEntry(file, name);
+      assertNotNull(actual);
+      assertEquals(new String(contents), new String(actual));
+    }
+    finally {
+      FileUtils.deleteQuietly(file);
+    }
+  }
+  
+  public void testUnpackEntryFromStream() throws IOException {
+    final String name = "foo";
+    final byte[] contents = "bar".getBytes();
+
+    File file = File.createTempFile("temp", null);
+    try {
+      // Create the ZIP file
+      ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(file));
+      try {
+        zos.putNextEntry(new ZipEntry(name));
+        zos.write(contents);
+        zos.closeEntry();
+      }
+      finally {
+        IOUtils.closeQuietly(zos);
+      }
+
+      FileInputStream fis = new FileInputStream(file);
+      // Test the ZipUtil
+      byte[] actual = ZipUtil.unpackEntry(fis, name);
       assertNotNull(actual);
       assertEquals(new String(contents), new String(actual));
     }
@@ -185,6 +214,16 @@ public class ZipUtilTest extends TestCase {
     File src3 = new File(getClass().getResource("demo-copy-II.zip").getPath());
     assertTrue(ZipUtil.archiveEquals(src, src3));
   }
+  
+  public void testRepackArchive() throws IOException {
+    File src = new File(getClass().getResource("demo.zip").getPath());
+    File dest = File.createTempFile("temp", null);
+
+    ZipUtil.repack(src, dest, 1);
+
+    assertTrue(ZipUtil.archiveEquals(src, dest));
+  }
+
 
   public void testContainsAnyEntry() throws IOException {
     File src = new File(getClass().getResource("demo.zip").getPath());
