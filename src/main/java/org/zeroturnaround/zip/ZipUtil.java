@@ -382,6 +382,51 @@ public final class ZipUtil {
   }
 
   /**
+   * Reads the given ZIP file and executes the given action for each given entry.
+   * <p>
+   * For each given entry the corresponding input stream is also passed to the action. If you want to stop the loop then throw a ZipBreakException.
+   *
+   * @param zip
+   *          input ZIP file.
+   * @param entryNames
+   *          names of entries to iterate
+   * @param action
+   *          action to be called for each entry.
+   *
+   * @see ZipEntryCallback
+   * @see #iterate(File, String[], ZipInfoCallback)
+   */
+  public static void iterate(File zip, String[] entryNames, ZipEntryCallback action) {
+    ZipFile zf = null;
+    try {
+      zf = new ZipFile(zip);
+
+      for (int i = 0; i < entryNames.length; i++) {
+        ZipEntry e = zf.getEntry(entryNames[i]);
+        if (e == null) {
+          continue;
+        }
+        InputStream is = zf.getInputStream(e);
+        try {
+          action.process(is, e);
+        }
+        catch (ZipBreakException ex) {
+          break;
+        }
+        finally {
+          IOUtils.closeQuietly(is);
+        }
+      }
+    }
+    catch (IOException e) {
+      throw rethrow(e);
+    }
+    finally {
+      closeQuietly(zf);
+    }
+  }
+
+  /**
    * Scans the given ZIP file and executes the given action for each entry.
    * <p>
    * Only the meta-data without the actual data is read. If you want to stop the loop
@@ -420,6 +465,47 @@ public final class ZipUtil {
   }
 
   /**
+   * Scans the given ZIP file and executes the given action for each given entry.
+   * <p>
+   * Only the meta-data without the actual data is read. If you want to stop the loop then throw a ZipBreakException.
+   *
+   * @param zip
+   *          input ZIP file.
+   * @param entryNames
+   *          names of entries to iterate
+   * @param action
+   *          action to be called for each entry.
+   *
+   * @see ZipInfoCallback
+   * @see #iterate(File, String[], ZipEntryCallback)
+   */
+  public static void iterate(File zip, String[] entryNames, ZipInfoCallback action) {
+    ZipFile zf = null;
+    try {
+      zf = new ZipFile(zip);
+
+      for (int i = 0; i < entryNames.length; i++) {
+        ZipEntry e = zf.getEntry(entryNames[i]);
+        if (e == null) {
+          continue;
+        }
+        try {
+          action.process(e);
+        }
+        catch (ZipBreakException ex) {
+          break;
+        }
+      }
+    }
+    catch (IOException e) {
+      throw rethrow(e);
+    }
+    finally {
+      closeQuietly(zf);
+    }
+  }
+
+  /**
    * Reads the given ZIP stream and executes the given action for each entry.
    * <p>
    * For each entry the corresponding input stream is also passed to the action. If you want to stop the loop
@@ -438,6 +524,47 @@ public final class ZipUtil {
       ZipInputStream in = new ZipInputStream(new BufferedInputStream(is));
       ZipEntry entry;
       while ((entry = in.getNextEntry()) != null) {
+        try {
+          action.process(in, entry);
+        }
+        catch (ZipBreakException ex) {
+          break;
+        }
+      }
+    }
+    catch (IOException e) {
+      throw rethrow(e);
+    }
+  }
+
+  /**
+   * Reads the given ZIP stream and executes the given action for each given entry.
+   * <p>
+   * For each given entry the corresponding input stream is also passed to the action. If you want to stop the loop then throw a ZipBreakException.
+   *
+   * @param is
+   *          input ZIP stream (it will not be closed automatically).
+   * @param entryNames
+   *          names of entries to iterate
+   * @param action
+   *          action to be called for each entry.
+   *
+   * @see ZipEntryCallback
+   * @see #iterate(File, String[], ZipEntryCallback)
+   */
+  public static void iterate(InputStream is, String[] entryNames, ZipEntryCallback action) {
+    Set namesSet = new HashSet();
+    for (int i = 0; i < entryNames.length; i++) {
+      namesSet.add(entryNames[i]);
+    }
+    try {
+      ZipInputStream in = new ZipInputStream(new BufferedInputStream(is));
+      ZipEntry entry;
+      while ((entry = in.getNextEntry()) != null) {
+        if (!namesSet.contains(entry.getName())) {
+          // skip the unnecessary entry
+          continue;
+        }
         try {
           action.process(in, entry);
         }
@@ -1245,7 +1372,7 @@ public final class ZipUtil {
 
   /**
    * Copies all entries from one ZIP file to another, ignoring entries with path in ignoredEntries
-   * 
+   *
    * @param zip
    *          source ZIP file.
    * @param out
