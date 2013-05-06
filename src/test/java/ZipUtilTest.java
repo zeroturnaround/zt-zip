@@ -42,13 +42,13 @@ public class ZipUtilTest extends TestCase {
     File src = new File(getClass().getResource("TestFile.txt").getPath());
     byte[] bytes = ZipUtil.packEntry(src);
     boolean processed = ZipUtil.handle(new ByteArrayInputStream(bytes), "TestFile.txt", new ZipEntryCallback() {
-      
+
       public void process(InputStream in, ZipEntry zipEntry) throws IOException {
       }
     });
     assertTrue(processed);
   }
-  
+
   public void testPackEntryFile() throws Exception {
     File fileToPack = new File(getClass().getResource("TestFile.txt").getPath());
     File dest = File.createTempFile("temp", null);
@@ -61,7 +61,7 @@ public class ZipUtilTest extends TestCase {
     // the test
     assertEquals(108, (new File(dest, "TestFile.txt")).length());
   }
-  
+
   public void testUnpackEntryFromFile() throws IOException {
     final String name = "foo";
     final byte[] contents = "bar".getBytes();
@@ -336,17 +336,17 @@ public class ZipUtilTest extends TestCase {
       FileUtils.deleteQuietly(dest);
     }
   }
-  
+
   public void testHandle() {
     File src = new File(getClass().getResource("demo.zip").getPath());
-    
+
     boolean entryFound = ZipUtil.handle(src, "foo.txt", new ZipEntryCallback() {
       public void process(InputStream in, ZipEntry zipEntry) throws IOException {
         assertEquals("foo.txt", zipEntry.getName());
       }
     });
     assertTrue(entryFound);
-    
+
     entryFound = ZipUtil.handle(src, "non-existent-file.txt", new ZipEntryCallback() {
       public void process(InputStream in, ZipEntry zipEntry) throws IOException {
         throw new RuntimeException("This should not happen!");
@@ -354,7 +354,7 @@ public class ZipUtilTest extends TestCase {
     });
     assertFalse(entryFound);
   }
-  
+
   public void testIterate() {
     File src = new File(getClass().getResource("demo.zip").getPath());
     final Set files = new HashSet();
@@ -362,14 +362,32 @@ public class ZipUtilTest extends TestCase {
     files.add("bar.txt");
     files.add("foo1.txt");
     files.add("foo2.txt");
-    
+
     ZipUtil.iterate(src, new ZipInfoCallback() {
-      
+
       public void process(ZipEntry zipEntry) throws IOException {
         files.remove(zipEntry.getName());
       }
     });
     assertEquals(0, files.size());
+  }
+
+  public void testIterateGivenEntries() {
+    File src = new File(getClass().getResource("demo.zip").getPath());
+    final Set files = new HashSet();
+    files.add("foo.txt");
+    files.add("bar.txt");
+    files.add("foo1.txt");
+    files.add("foo2.txt");
+
+    ZipUtil.iterate(src, new String[] { "foo.txt", "foo1.txt", "foo2.txt" }, new ZipInfoCallback() {
+
+      public void process(ZipEntry zipEntry) throws IOException {
+        files.remove(zipEntry.getName());
+      }
+    });
+    assertEquals(1, files.size());
+    assertTrue("Wrong entry hasn't beed iterated", files.contains("bar.txt"));
   }
 
   public void testIterateAndBreak() {
@@ -379,7 +397,7 @@ public class ZipUtilTest extends TestCase {
     files.add("bar.txt");
     files.add("foo1.txt");
     files.add("foo2.txt");
-    
+
     ZipUtil.iterate(src, new ZipEntryCallback() {
       public void process(InputStream in, ZipEntry zipEntry) throws IOException {
         files.remove(zipEntry.getName());
