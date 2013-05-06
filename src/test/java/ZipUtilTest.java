@@ -17,6 +17,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -388,6 +389,30 @@ public class ZipUtilTest extends TestCase {
     });
     assertEquals(1, files.size());
     assertTrue("Wrong entry hasn't beed iterated", files.contains("bar.txt"));
+  }
+
+  public void testIterateGivenEntriesFromStream() throws IOException {
+    File src = new File(getClass().getResource("demo.zip").getPath());
+    final Set files = new HashSet();
+    files.add("foo.txt");
+    files.add("bar.txt");
+    files.add("foo1.txt");
+    files.add("foo2.txt");
+
+    FileInputStream inputStream = null;
+    try {
+      inputStream = new FileInputStream(src);
+      ZipUtil.iterate(inputStream, new String[] { "foo.txt", "foo1.txt", "foo2.txt" }, new ZipEntryCallback() {
+        public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+          files.remove(zipEntry.getName());
+        }
+      });
+      assertEquals(1, files.size());
+      assertTrue("Wrong entry hasn't beed iterated", files.contains("bar.txt"));
+    }
+    finally {
+      inputStream.close();
+    }
   }
 
   public void testIterateAndBreak() {
