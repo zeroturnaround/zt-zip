@@ -705,9 +705,11 @@ public final class ZipUtil {
 
   /**
    * Unwraps a ZIP file to the given directory shaving of root dir.
+   * If there are multiple root dirs or entries in the root of zip,
+   * ZipException is thrown.
    * <p>
    * The output directory must not be a file.
-   *
+   * 
    * @param zip
    *          input ZIP file.
    * @param outputDir
@@ -719,9 +721,11 @@ public final class ZipUtil {
 
   /**
    * Unwraps a ZIP file to the given directory shaving of root dir.
+   * If there are multiple root dirs or entries in the root of zip,
+   * ZipException is thrown.
    * <p>
    * The output directory must not be a file.
-   *
+   * 
    * @param zip
    *          input ZIP file.
    * @param outputDir
@@ -763,9 +767,11 @@ public final class ZipUtil {
 
   /**
    * Unwraps a ZIP file to the given directory shaving of root dir.
+   * If there are multiple root dirs or entries in the root of zip,
+   * ZipException is thrown.
    * <p>
    * The output directory must not be a file.
-   *
+   * 
    * @param is
    *          inputstream for ZIP file.
    * @param outputDir
@@ -777,9 +783,11 @@ public final class ZipUtil {
 
   /**
    * Unwraps a ZIP file to the given directory shaving of root dir.
+   * If there are multiple root dirs or entries in the root of zip,
+   * ZipException is thrown.
    * <p>
    * The output directory must not be a file.
-   *
+   * 
    * @param is
    *          inputstream for ZIP file.
    * @param outputDir
