@@ -39,6 +39,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -703,6 +704,35 @@ public final class ZipUtil {
   }
 
   /**
+   * Unwraps a ZIP file to the given directory shaving of root dir.
+   * <p>
+   * The output directory must not be a file.
+   *
+   * @param zip
+   *          input ZIP file.
+   * @param outputDir
+   *          output directory (created automatically if not found).
+   */
+  public static void unwrap(File zip, final File outputDir) {
+    unwrap(zip, outputDir, IdentityNameMapper.INSTANCE);
+  }
+
+  /**
+   * Unwraps a ZIP file to the given directory shaving of root dir.
+   * <p>
+   * The output directory must not be a file.
+   *
+   * @param zip
+   *          input ZIP file.
+   * @param outputDir
+   *          output directory (created automatically if not found).
+   */
+  public static void unwrap(File zip, File outputDir, NameMapper mapper) {
+    log.debug("Unwraping '{}' into '{}'.", zip, outputDir);
+    iterate(zip, new Unwraper(outputDir, mapper));
+  }
+
+  /**
    * Unpacks a ZIP stream to the given directory.
    * <p>
    * The output directory must not be a file.
@@ -729,6 +759,35 @@ public final class ZipUtil {
   public static void unpack(InputStream is, File outputDir, NameMapper mapper) {
     log.debug("Extracting {} into '{}'.", is, outputDir);
     iterate(is, new Unpacker(outputDir, mapper));
+  }
+
+  /**
+   * Unwraps a ZIP file to the given directory shaving of root dir.
+   * <p>
+   * The output directory must not be a file.
+   *
+   * @param is
+   *          inputstream for ZIP file.
+   * @param outputDir
+   *          output directory (created automatically if not found).
+   */
+  public static void unwrap(InputStream is, File outputDir) {
+    unwrap(is, outputDir, IdentityNameMapper.INSTANCE);
+  }
+
+  /**
+   * Unwraps a ZIP file to the given directory shaving of root dir.
+   * <p>
+   * The output directory must not be a file.
+   *
+   * @param is
+   *          inputstream for ZIP file.
+   * @param outputDir
+   *          output directory (created automatically if not found).
+   */
+  public static void unwrap(InputStream is, File outputDir, NameMapper mapper) {
+    log.debug("Unwraping {} into '{}'.", is, outputDir);
+    iterate(is, new Unwraper(outputDir, mapper));
   }
 
   /**
@@ -764,7 +823,64 @@ public final class ZipUtil {
         }
       }
     }
+  }
 
+  /**
+   * Unwraps entries excluding a single parent dir. If there are multiple roots
+   * ZipException is thrown.
+   *
+   * @author Oleg Shelajev
+   */
+  private static class Unwraper implements ZipEntryCallback {
+
+    private final File outputDir;
+    private final NameMapper mapper;
+    private String rootDir;
+
+    public Unwraper(File outputDir, NameMapper mapper) {
+      this.outputDir = outputDir;
+      this.mapper = mapper;
+    }
+
+    public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+      String root = getRootName(zipEntry.getName());
+      if (rootDir == null) {
+        rootDir = root;
+      }
+      else if (!rootDir.equals(root)) {
+        throw new ZipException("Unwrapping with multiple roots is not supported, roots: " + rootDir + ", " + root);
+      }
+
+      String name = mapper.map(getUnrootedName(root, zipEntry.getName()));
+      if (name != null) {
+        File file = new File(outputDir, name);
+        if (zipEntry.isDirectory()) {
+          FileUtils.forceMkdir(file);
+        }
+        else {
+          FileUtils.forceMkdir(file.getParentFile());
+
+          if (log.isDebugEnabled() && file.exists()) {
+            log.debug("Overwriting file '{}'.", zipEntry.getName());
+          }
+
+          FileUtil.copy(in, file);
+        }
+      }
+    }
+
+    private String getUnrootedName(String root, String name) {
+      return name.substring(root.length());
+    }
+
+    private String getRootName(String name) {
+      name = name.substring(FilenameUtils.getPrefixLength(name));
+      int idx = name.indexOf(PATH_SEPARATOR);
+      if (idx < 0) {
+        throw new ZipException("Entry " + name + " from the root of the zip is not supported");
+      }
+      return name.substring(0, name.indexOf(PATH_SEPARATOR));
+    }
   }
 
   /**

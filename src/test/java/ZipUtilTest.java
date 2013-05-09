@@ -431,4 +431,107 @@ public class ZipUtilTest extends TestCase {
     });
     assertEquals(3, files.size());
   }
+
+  public void testUnwrapFile() throws Exception {
+    File dest = File.createTempFile("temp", null);
+    File destDir = File.createTempFile("tempDir", null);
+    try {
+      destDir.delete();
+      destDir.mkdir();
+      String child = "TestFile.txt";
+      File parent = new File(getClass().getResource(child).getPath()).getParentFile();
+      ZipUtil.pack(parent, dest, true);
+      ZipUtil.unwrap(dest, destDir);
+      assertTrue((new File(destDir, child)).exists());
+    }
+    finally {
+      FileUtils.forceDelete(destDir);
+    }
+  }
+
+  public void testUnwrapStream() throws Exception {
+    File dest = File.createTempFile("temp", null);
+    File destDir = File.createTempFile("tempDir", null);
+    InputStream is = null;
+    try {
+      destDir.delete();
+      destDir.mkdir();
+      String child = "TestFile.txt";
+      File parent = new File(getClass().getResource(child).getPath()).getParentFile();
+      ZipUtil.pack(parent, dest, true);
+      is = new FileInputStream(dest);
+      ZipUtil.unwrap(is, destDir);
+      assertTrue((new File(destDir, child)).exists());
+    }
+    finally {
+      IOUtils.closeQuietly(is);
+      FileUtils.forceDelete(destDir);
+    }
+  }
+
+  public void testUnwrapEntriesInRoot() throws Exception {
+    File src = new File(getClass().getResource("demo.zip").getPath());
+    File destDir = File.createTempFile("tempDir", null);
+    try {
+      destDir.delete();
+      destDir.mkdir();
+      ZipUtil.unwrap(src, destDir);
+      fail("expected a ZipException, unwraping with multiple roots is not supproted");
+    }
+    catch (ZipException e) {
+      // this is normal outcome
+    }
+    finally {
+      FileUtils.forceDelete(destDir);
+    }
+  }
+
+  public void testUnwrapMultipleRoots() throws Exception {
+    File src = new File(getClass().getResource("demo-dirs-only.zip").getPath());
+    File destDir = File.createTempFile("tempDir", null);
+    try {
+      destDir.delete();
+      destDir.mkdir();
+      ZipUtil.unwrap(src, destDir);
+      fail("expected a ZipException, unwraping with multiple roots is not supproted");
+    }
+    catch (ZipException e) {
+      // this is normal outcome
+    }
+    finally {
+      FileUtils.forceDelete(destDir);
+    }
+  }
+
+  public void testUnwrapSingleRootWithStructure() throws Exception {
+    File src = new File(getClass().getResource("demo-single-root-dir.zip").getPath());
+    File destDir = File.createTempFile("tempDir", null);
+    try {
+      destDir.delete();
+      destDir.mkdir();
+      ZipUtil.unwrap(src, destDir);
+      assertTrue((new File(destDir, "b.txt")).exists());
+      assertTrue((new File(destDir, "bad.txt")).exists());
+      assertTrue((new File(destDir, "b")).exists());
+      assertTrue((new File(new File(destDir, "b"), "c.txt")).exists());
+    }
+    finally {
+      FileUtils.forceDelete(destDir);
+    }
+  }
+
+  public void testUnwrapEmptyRootDir() throws Exception {
+    File src = new File(getClass().getResource("demo-single-empty-root-dir.zip").getPath());
+    File destDir = File.createTempFile("tempDir", null);
+    try {
+      destDir.delete();
+      destDir.mkdir();
+      ZipUtil.unwrap(src, destDir);
+      assertTrue("Dest dir should be empty, root dir was shaved", destDir.list().length == 0);
+    }
+    finally {
+      FileUtils.forceDelete(destDir);
+    }
+  }
+
 }
