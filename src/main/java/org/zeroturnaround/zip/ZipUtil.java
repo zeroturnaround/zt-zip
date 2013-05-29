@@ -709,7 +709,7 @@ public final class ZipUtil {
    * ZipException is thrown.
    * <p>
    * The output directory must not be a file.
-   * 
+   *
    * @param zip
    *          input ZIP file.
    * @param outputDir
@@ -725,7 +725,7 @@ public final class ZipUtil {
    * ZipException is thrown.
    * <p>
    * The output directory must not be a file.
-   * 
+   *
    * @param zip
    *          input ZIP file.
    * @param outputDir
@@ -771,7 +771,7 @@ public final class ZipUtil {
    * ZipException is thrown.
    * <p>
    * The output directory must not be a file.
-   * 
+   *
    * @param is
    *          inputstream for ZIP file.
    * @param outputDir
@@ -787,7 +787,7 @@ public final class ZipUtil {
    * ZipException is thrown.
    * <p>
    * The output directory must not be a file.
-   * 
+   *
    * @param is
    *          inputstream for ZIP file.
    * @param outputDir
@@ -1368,6 +1368,25 @@ public final class ZipUtil {
   }
 
   /**
+   * Changes a zip file, adds one new entry in-place.
+   *
+   * @param zip
+   *          an existing ZIP file (only read).
+   * @param path
+   *          new ZIP entry path.
+   * @param file
+   *          new entry to be added.
+   */
+  public static void addEntry(final File zip, final String path, final File file) {
+    operateInPlace(zip, new InPlaceAction() {
+      public boolean act() {
+        addEntry(zip, path, file, this.tmpFile);
+        return true;
+      }
+    });
+  }
+
+  /**
    * Copies an existing ZIP file and appends it with one new entry.
    *
    * @param zip
@@ -1384,6 +1403,25 @@ public final class ZipUtil {
   }
 
   /**
+   * Changes a zip file, adds one new entry in-place.
+   *
+   * @param zip
+   *          an existing ZIP file (only read).
+   * @param path
+   *          new ZIP entry path.
+   * @param bytes
+   *          new entry bytes (or <code>null</code> if directory).
+   */
+  public static void addEntry(final File zip, final String path, final byte[] bytes) {
+    operateInPlace(zip, new InPlaceAction() {
+      public boolean act() {
+        addEntry(zip, path, bytes, this.tmpFile);
+        return true;
+      }
+    });
+  }
+
+  /**
    * Copies an existing ZIP file and appends it with one new entry.
    *
    * @param zip
@@ -1395,6 +1433,25 @@ public final class ZipUtil {
    */
   public static void addEntry(File zip, ZipEntrySource entry, File destZip) {
     addEntries(zip, new ZipEntrySource[] { entry }, destZip);
+  }
+
+  /**
+   * Changes a zip file, adds one new entry in-place.
+   *
+   * @param zip
+   *          an existing ZIP file (only read).
+   * @param entry
+   *          new ZIP entry appended.
+   * @param bytes
+   *          new entry bytes (or <code>null</code> if directory).
+   */
+  public static void addEntry(final File zip, final ZipEntrySource entry) {
+    operateInPlace(zip, new InPlaceAction() {
+      public boolean act() {
+        addEntry(zip, entry, this.tmpFile);
+        return true;
+      }
+    });
   }
 
   /**
@@ -1429,6 +1486,23 @@ public final class ZipUtil {
   }
 
   /**
+   * Changes a zip file it with with new entries. in-place.
+   *
+   * @param zip
+   *          an existing ZIP file (only read).
+   * @param entries
+   *          new ZIP entries appended.
+   */
+  public static void addEntries(final File zip, final ZipEntrySource[] entries) {
+    operateInPlace(zip, new InPlaceAction() {
+      public boolean act() {
+        addEntries(zip, entries, this.tmpFile);
+        return true;
+      }
+    });
+  }
+
+  /**
    * Copies an existing ZIP file and removes entry with a given path.
    *
    * @param zip
@@ -1440,6 +1514,23 @@ public final class ZipUtil {
    */
   public static void removeEntry(File zip, String path, File destZip) {
     removeEntries(zip, new String[] { path }, destZip);
+  }
+
+  /**
+   * Changes an existing ZIP file: removes entry with a given path.
+   *
+   * @param zip
+   *          an existing ZIP file (only read).
+   * @param path
+   *          path of the entry to omit.
+   */
+  public static void removeEntry(final File zip, final String path) {
+    operateInPlace(zip, new InPlaceAction() {
+      public boolean act() {
+        removeEntry(zip, path, this.tmpFile);
+        return true;
+      }
+    });
   }
 
   /**
@@ -1468,6 +1559,24 @@ public final class ZipUtil {
     finally {
       IOUtils.closeQuietly(out);
     }
+  }
+
+  /**
+   * Changes an existing ZIP file: removes entries with given paths.
+   *
+   * @param zip
+   *          an existing ZIP file (only read).
+   * @param paths
+   *          paths of the entries to omit.
+   *          s
+   */
+  public static void removeEntries(final File zip, final String[] paths) {
+    operateInPlace(zip, new InPlaceAction() {
+      public boolean act() {
+        removeEntries(zip, paths, this.tmpFile);
+        return true;
+      }
+    });
   }
 
   /**
@@ -1587,6 +1696,25 @@ public final class ZipUtil {
   }
 
   /**
+   * Changes an existing ZIP file: replaces a given entry in it.
+   *
+   * @param zip
+   *          an existing ZIP file.
+   * @param path
+   *          new ZIP entry path.
+   * @param file
+   *          new entry.
+   * @return <code>true</code> if the entry was replaced.
+   */
+  public static boolean replaceEntry(final File zip, final String path, final File file) {
+    return operateInPlace(zip, new InPlaceAction() {
+      public boolean act() {
+        return replaceEntry(zip, new FileSource(path, file), this.tmpFile);
+      }
+    });
+  }
+
+  /**
    * Copies an existing ZIP file and replaces a given entry in it.
    *
    * @param zip
@@ -1604,6 +1732,25 @@ public final class ZipUtil {
   }
 
   /**
+   * Changes an existing ZIP file: replaces a given entry in it.
+   *
+   * @param zip
+   *          an existing ZIP file.
+   * @param path
+   *          new ZIP entry path.
+   * @param bytes
+   *          new entry bytes (or <code>null</code> if directory).
+   * @return <code>true</code> if the entry was replaced.
+   */
+  public static boolean replaceEntry(final File zip, final String path, final byte[] bytes) {
+    return operateInPlace(zip, new InPlaceAction() {
+      public boolean act() {
+        return replaceEntry(zip, new ByteSource(path, bytes), this.tmpFile);
+      }
+    });
+  }
+
+  /**
    * Copies an existing ZIP file and replaces a given entry in it.
    *
    * @param zip
@@ -1616,6 +1763,23 @@ public final class ZipUtil {
    */
   public static boolean replaceEntry(File zip, ZipEntrySource entry, File destZip) {
     return replaceEntries(zip, new ZipEntrySource[] { entry }, destZip);
+  }
+
+  /**
+   * Changes an existing ZIP file: replaces a given entry in it.
+   *
+   * @param zip
+   *          an existing ZIP file.
+   * @param entry
+   *          new ZIP entry.
+   * @return <code>true</code> if the entry was replaced.
+   */
+  public static boolean replaceEntry(final File zip, final ZipEntrySource entry) {
+    return operateInPlace(zip, new InPlaceAction() {
+      public boolean act() {
+        return replaceEntry(zip, entry, this.tmpFile);
+      }
+    });
   }
 
   /**
@@ -1665,6 +1829,23 @@ public final class ZipUtil {
       throw rethrow(e);
     }
     return entryByPath.size() < entryCount;
+  }
+
+  /**
+   * Changes an existing ZIP file: replaces a given entry in it.
+   *
+   * @param zip
+   *          an existing ZIP file.
+   * @param entries
+   *          new ZIP entries to be replaced with.
+   * @return <code>true</code> if at least one entry was replaced.
+   */
+  public static boolean replaceEntries(final File zip, final ZipEntrySource[] entries) {
+    return operateInPlace(zip, new InPlaceAction() {
+      public boolean act() {
+        return replaceEntries(zip, entries, this.tmpFile);
+      }
+    });
   }
 
   /**
@@ -1721,6 +1902,23 @@ public final class ZipUtil {
   }
 
   /**
+   * Changes a ZIP file: adds/replaces the given entries in it.
+   *
+   * @param zip
+   *          an existing ZIP file (only read).
+   * @param entries
+   *          ZIP entries to be replaced or added.
+   */
+  public static void addOrReplaceEntries(final File zip, final ZipEntrySource[] entries) {
+    operateInPlace(zip, new InPlaceAction() {
+      public boolean act() {
+        addOrReplaceEntries(zip, entries, this.tmpFile);
+        return true;
+      }
+    });
+  }
+
+  /**
    * @return given entries indexed by path.
    */
   private static Map byPath(ZipEntrySource[] entries) {
@@ -1750,6 +1948,25 @@ public final class ZipUtil {
   }
 
   /**
+   * Changes an existing ZIP file: transforms a given entry in it.
+   *
+   * @param zip
+   *          an existing ZIP file (only read).
+   * @param path
+   *          new ZIP entry path.
+   * @param transformer
+   *          transformer for the given ZIP entry.
+   * @return <code>true</code> if the entry was replaced.
+   */
+  public static boolean transformEntry(final File zip, final String path, final ZipEntryTransformer transformer) {
+    return operateInPlace(zip, new InPlaceAction() {
+      public boolean act() {
+        return transformEntry(zip, path, transformer, this.tmpFile);
+      }
+    });
+  }
+
+  /**
    * Copies an existing ZIP file and transforms a given entry in it.
    *
    * @param zip
@@ -1762,6 +1979,23 @@ public final class ZipUtil {
    */
   public static boolean transformEntry(File zip, ZipEntryTransformerEntry entry, File destZip) {
     return transformEntries(zip, new ZipEntryTransformerEntry[] { entry }, destZip);
+  }
+
+  /**
+   * Changes an existing ZIP file: transforms a given entry in it.
+   *
+   * @param zip
+   *          an existing ZIP file (only read).
+   * @param entry
+   *          transformer for a ZIP entry.
+   * @return <code>true</code> if the entry was replaced.
+   */
+  public static boolean transformEntry(final File zip, final ZipEntryTransformerEntry entry) {
+    return operateInPlace(zip, new InPlaceAction() {
+      public boolean act() {
+        return transformEntry(zip, entry, this.tmpFile);
+      }
+    });
   }
 
   /**
@@ -1793,6 +2027,23 @@ public final class ZipUtil {
     catch (IOException e) {
       throw rethrow(e);
     }
+  }
+
+  /**
+   * Changes an existing ZIP file: transforms a given entries in it.
+   * 
+   * @param zip
+   *          an existing ZIP file (only read).
+   * @param entries
+   *          ZIP entry transformers.
+   * @return <code>true</code> if the entry was replaced.
+   */
+  public static boolean transformEntries(final File zip, final ZipEntryTransformerEntry[] entries) {
+    return operateInPlace(zip, new InPlaceAction() {
+      public boolean act() {
+        return transformEntries(zip, entries, this.tmpFile);
+      }
+    });
   }
 
   /**
@@ -2283,6 +2534,51 @@ public final class ZipUtil {
    */
   private static ZipException rethrow(IOException e) {
     throw new ZipException(e);
+  }
+
+  /**
+   * Simple helper to make inplace operation easier
+   *
+   * @author shelajev
+   */
+  private static abstract class InPlaceAction {
+    protected File tmpFile;
+
+    /**
+     * @return true if something has been changed during the action.
+     */
+    abstract boolean act();
+  }
+
+  /**
+   *
+   * This method provides a general infrastructure for in-place operations.
+   * It creates temp file as a destination, then invokes the action on source and destination.
+   * Then it copies the result back into src file.
+   *
+   * @param src - source zip file we want to modify
+   * @param action - action which actually modifies the archives
+   *
+   * @return result of the action
+   */
+  private static boolean operateInPlace(File src, InPlaceAction action) {
+    File tmp = null;
+    try {
+      tmp = File.createTempFile("zt-zip-tmp", ".zip");
+      action.tmpFile = tmp;
+      boolean result = action.act();
+      if (result) { // else nothing changes
+        FileUtils.forceDelete(src);
+        FileUtils.moveFile(tmp, src);
+      }
+      return result;
+    }
+    catch (IOException e) {
+      throw rethrow(e);
+    }
+    finally {
+      FileUtils.deleteQuietly(tmp);
+    }
   }
 
 }
