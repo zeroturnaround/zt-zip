@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -1650,7 +1651,7 @@ public final class ZipUtil {
    * @return Set<String> names of entries that are dirs.
    *
    */
-  private static Set filterDirEntries(File zip, Set names) {
+  static Set filterDirEntries(File zip, Collection names) {
     Set dirs = new HashSet();
     ZipFile zf = null;
     try {
@@ -1921,7 +1922,7 @@ public final class ZipUtil {
   /**
    * @return given entries indexed by path.
    */
-  private static Map byPath(ZipEntrySource[] entries) {
+  static Map byPath(ZipEntrySource[] entries) {
     Map result = new HashMap();
     for (int i = 0; i < entries.length; i++) {
       ZipEntrySource source = entries[i];
@@ -2031,7 +2032,7 @@ public final class ZipUtil {
 
   /**
    * Changes an existing ZIP file: transforms a given entries in it.
-   * 
+   *
    * @param zip
    *          an existing ZIP file (only read).
    * @param entries
@@ -2161,7 +2162,7 @@ public final class ZipUtil {
    * @param out
    *          target ZIP stream.
    */
-  private static void addEntry(ZipEntrySource entry, ZipOutputStream out) throws IOException {
+  static void addEntry(ZipEntrySource entry, ZipOutputStream out) throws IOException {
     out.putNextEntry(entry.getEntry());
     InputStream in = entry.getInputStream();
     if (in != null) {
@@ -2185,7 +2186,7 @@ public final class ZipUtil {
    * @param out
    *          target ZIP stream.
    */
-  private static void addEntry(ZipEntry zipEntry, InputStream in, ZipOutputStream out) throws IOException {
+  static void addEntry(ZipEntry zipEntry, InputStream in, ZipOutputStream out) throws IOException {
     out.putNextEntry(zipEntry);
     if (in != null) {
       IOUtils.copy(in, out);
@@ -2203,7 +2204,7 @@ public final class ZipUtil {
    * @param out
    *          target ZIP stream.
    */
-  private static void copyEntry(ZipEntry zipEntry, InputStream in, ZipOutputStream out) throws IOException {
+  static void copyEntry(ZipEntry zipEntry, InputStream in, ZipOutputStream out) throws IOException {
     ZipEntry copy = new ZipEntry(zipEntry.getName());
     copy.setTime(zipEntry.getTime());
     addEntry(copy, new BufferedInputStream(in), out);
@@ -2532,7 +2533,7 @@ public final class ZipUtil {
   /**
    * Rethrow the given exception as a runtime exception.
    */
-  private static ZipException rethrow(IOException e) {
+  static ZipException rethrow(IOException e) {
     throw new ZipException(e);
   }
 
