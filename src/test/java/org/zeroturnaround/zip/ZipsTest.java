@@ -236,9 +236,13 @@ public class ZipsTest extends TestCase {
       Zips.process(src).charset(charset).addEntry(new FileSource(entryName, newEntry)).destination(dest).process();
     }
     catch (IllegalArgumentException e) {
-      if (e.getMessage().equals("Using constructor ZipFile(File, Charset) has failed")) {
-        // this is acceptable if java doesn't have charset constructor
+      if (e.getMessage().equals("Using constructor ZipFile(File, Charset) has failed") ||
+          e.getMessage().equals("Using constructor ZipOutputStream(OutputStream, Charset) has failed")) {
+        // this is acceptable when old java doesn't have charset constructor
         return;
+      }
+      else {
+        System.out.println("'" + e.getMessage() + "'");
       }
     }
 
