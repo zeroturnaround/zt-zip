@@ -26,6 +26,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -37,6 +38,7 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
 /**
@@ -50,7 +52,7 @@ public class Zips {
   /**
    * Source archive. TODO: make it work on streams
    */
-  private File src;
+  private final File src;
 
   /**
    * Optional destination archive, if null, src will be overwrittene
@@ -83,13 +85,22 @@ public class Zips {
 
   /**
    * Static factory method to obtain an instance of Zips.
-   * Source file is mandatory
    *
    * @param src zip file to process
    * @return instance of Zips
    */
   public static Zips process(File src) {
     return new Zips(src);
+  }
+
+  /**
+   * Static factory method to obtain an instance of Zips without source file.
+   * See {@link process(File src)}.
+   *
+   * @return instance of Zips
+   */
+  public static Zips get() {
+    return new Zips(null);
   }
 
   /**
@@ -114,6 +125,52 @@ public class Zips {
   public Zips addEntries(ZipEntrySource[] entries) {
     this.changedEntries.addAll(Arrays.asList(entries));
     return this;
+  }
+
+  /**
+   * Adds a file entry. If given file is a dir, adds it and all subfiles recursively.
+   * Adding takes precedence over removal of entries.
+   *
+   * @param File file ot add.
+   * @return this Zips for fluent api
+   */
+  public Zips addFile(File file) {
+    return addFile(file, false);
+  }
+
+  /**
+   * Adds a file entry. If given file is a dir, adds it and all subfiles recursively.
+   * Adding takes precedence over removal of entries.
+   * 
+   * @param File file ot add.
+   * @param preserveRoot if file is a directory, true indicates we want to preserve this dir in the zip.
+   *          otherwise children of the file are added directly under root.
+   * @return this Zips for fluent api
+   */
+  public Zips addFile(File file, boolean preserveRoot) {
+    if (!file.isDirectory()) {
+      this.changedEntries.add(new FileSource(file.getPath(), file));
+      return this;
+    }
+    Collection files = FileUtils.listFiles(file, null, true);
+    for (Iterator iter = files.iterator(); iter.hasNext();) {
+      File entryFile = (File) iter.next();
+      String entryPath = getRelativePath(file, entryFile);
+      if (preserveRoot) {
+        entryPath = file.getName() + "/" + entryPath;
+      }
+      this.changedEntries.add(new FileSource(entryPath, entryFile));
+    }
+    return this;
+  }
+
+  private String getRelativePath(File parent, File file) {
+    String parentPath = parent.getPath();
+    String filePath = file.getPath();
+    if (!filePath.startsWith(parentPath)) {
+      throw new IllegalArgumentException("File " + file + " is not a child of " + parent);
+    }
+    return filePath.substring(parentPath.length());
   }
 
   /**
@@ -196,6 +253,9 @@ public class Zips {
    * set parameters.
    */
   public synchronized void execute() {
+    if (src == null && dest == null) {
+      throw new IllegalArgumentException("Source and destination shouldn't be null together");
+    }
     final Map entryByPath = ZipUtil.byPath(getChangedEntriesArray());
     final Set dirNames = ZipUtil.filterDirEntries(src, removedEntries);
     File destinationZip = null;
@@ -267,6 +327,10 @@ public class Zips {
    * @see #iterate(File, ZipInfoCallback)
    */
   public void iterate(ZipEntryCallback zipEntryCallback) {
+    if (src == null) {
+      // if we don't have source specified, then we have nothing to iterate.
+      return;
+    }
     ZipFile zf = null;
     try {
       zf = getZipFile();
@@ -311,6 +375,10 @@ public class Zips {
    * @see #iterate(File, ZipEntryCallback)
    */
   public void iterate(ZipInfoCallback action) {
+    if (src == null) {
+      // if we don't have source specified, then we have nothing to iterate.
+      return;
+    }
     ZipFile zf = null;
     try {
       zf = getZipFile();
@@ -360,8 +428,9 @@ public class Zips {
   private ZipEntrySource[] getChangedEntriesArray() {
     ZipEntrySource[] result = new ZipEntrySource[changedEntries.size()];
     int idx = 0;
-    for(Iterator iter = changedEntries.iterator(); iter.hasNext();) {
-      result[idx] = (ZipEntrySource) iter.next();
+    Iterator iter = changedEntries.iterator();
+    while (iter.hasNext()) {
+      result[idx++] = (ZipEntrySource) iter.next();
     }
     return result;
   }

@@ -19,6 +19,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -215,11 +217,6 @@ public class ZipsTest extends TestCase {
     }
   }
 
-  /**
-   * This fails when run with
-   *
-   * @throws IOException
-   */
   public void testCharsetEntry() throws IOException {
     File src = new File(MainExamplesTest.DEMO_ZIP);
     final String fileName = "TestFile.txt";
@@ -247,6 +244,55 @@ public class ZipsTest extends TestCase {
     finally {
       ZipUtil.closeQuietly(zf);
     }
+  }
+
+  public void testIterateAndBreak() {
+    File src = new File("src/test/resources/demo.zip");
+    final Set files = new HashSet();
+    files.add("foo.txt");
+    files.add("bar.txt");
+    files.add("foo1.txt");
+    files.add("foo2.txt");
+
+    Zips.process(src).iterate(new ZipEntryCallback() {
+      public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+        files.remove(zipEntry.getName());
+        throw new ZipBreakException();
+      }
+    });
+    assertEquals(3, files.size());
+  }
+
+  public void testAddEntryFile() throws Exception {
+    String path = "src/test/resources/TestFile.txt";
+    File fileToPack = new File(path);
+    File dest = File.createTempFile("temp", null);
+    Zips.get().destination(dest).addFile(fileToPack).execute();
+    assertTrue(dest.exists());
+    ZipUtil.explode(dest);
+    assertTrue((new File(dest, path)).exists());
+    // if fails then maybe somebody changed the file contents and did not update
+    // the test
+    assertEquals(108, (new File(dest, path)).length());
+  }
+
+  public void testPreserveRoot() throws Exception {
+    File dest = File.createTempFile("temp", null);
+    File parent = new File("src/test/resources/TestFile.txt").getParentFile();
+    // System.out.println("Parent file is " + parent);
+    Zips.get().destination(dest).addFile(parent, true).execute();
+    ZipUtil.explode(dest);
+    assertTrue("Root dir is not preserved", (new File(dest, parent.getName())).exists());
+  }
+
+  public void testIgnoringRoot() throws Exception {
+    File dest = File.createTempFile("temp", null);
+    File parent = new File("src/test/resources/TestFile.txt").getParentFile();
+    // System.out.println("Parent file is " + parent);
+    Zips.get().destination(dest).addFile(parent).execute();
+    ZipUtil.explode(dest);
+    assertFalse("Root dir is preserved", (new File(dest, parent.getName())).exists());
+    assertTrue("Child file is missing", (new File(dest, "TestFile.txt")).exists());
   }
 
 }

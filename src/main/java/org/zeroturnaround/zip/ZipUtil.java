@@ -1653,6 +1653,9 @@ public final class ZipUtil {
    */
   static Set filterDirEntries(File zip, Collection names) {
     Set dirs = new HashSet();
+    if (zip == null) {
+      return dirs;
+    }
     ZipFile zf = null;
     try {
       zf = new ZipFile(zip);
