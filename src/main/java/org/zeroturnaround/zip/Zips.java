@@ -47,14 +47,35 @@ import org.apache.commons.io.IOUtils;
  */
 public class Zips {
 
+  /**
+   * Source archive. TODO: make it work on streams
+   */
   private File src;
+
+  /**
+   * Optional destination archive, if null, src will be overwrittene
+   */
   private File dest;
 
+  /**
+   * Charset to use for entry names
+   */
   private Charset charset;
+
+  /**
+   * Flag to carry timestamps of entries on.
+   */
   private boolean preserveTimestamps;
 
-  private List<ZipEntrySource> changedEntries = new ArrayList<ZipEntrySource>();
-  private List<ZipEntrySource> removedEntries = new ArrayList<ZipEntrySource>();
+  /**
+   * List<ZipEntrySource>
+   */
+  private List changedEntries = new ArrayList();
+
+  /**
+   * List<String>
+   */
+  private Set removedEntries = new HashSet();
 
   private Zips(File src) {
     this.src = src;
@@ -98,10 +119,10 @@ public class Zips {
   /**
    * Specifies an entry to remove to the output when this Zips executes.
    *
-   * @param entry entry to remove
+   * @param entry path of the entry to remove
    * @return this Zips for fluent api
    */
-  public Zips removeEntry(ZipEntrySource entry) {
+  public Zips removeEntry(String entry) {
     this.removedEntries.add(entry);
     return this;
   }
@@ -109,10 +130,10 @@ public class Zips {
   /**
    * Specifies entries to remove to the output when this Zips executes.
    *
-   * @param entries entries to remove
+   * @param entries paths of the entry to remove
    * @return this Zips for fluent api
    */
-  public Zips removeEntries(ZipEntrySource[] entries) {
+  public Zips removeEntries(String[] entries) {
     this.removedEntries.addAll(Arrays.asList(entries));
     return this;
   }
@@ -174,8 +195,8 @@ public class Zips {
    * Iterates through source Zip entries removing or changing them according to
    * set parameters.
    */
-  public void execute() {
-    final Map entryByPath = ZipUtil.byPath(changedEntries.toArray(new ZipEntrySource[changedEntries.size()]));
+  public synchronized void execute() {
+    final Map entryByPath = ZipUtil.byPath(getChangedEntriesArray());
     final Set dirNames = ZipUtil.filterDirEntries(src, removedEntries);
     File destinationZip = null;
     try {
@@ -231,32 +252,21 @@ public class Zips {
     }
   }
 
-  /**
-   * Checks if entry given by name resides inside of one of the dirs.
-   *
-   * @param dirNames dirs
-   * @param entryName entryPath
-   */
-  private boolean isEntryInDir(Set dirNames, String entryName) {
-    // this should be done with a trie, put dirNames in a trie and check if entryName leads to
-    // some node or not.
-    Iterator iter = dirNames.iterator();
-    while (iter.hasNext()) {
-      String dirName = (String) iter.next();
-      if (entryName.startsWith(dirName)) {
-        return true;
-      }
-    }
-    return false;
-  }
 
   /**
-   * Iterates through entries, running callback on them.
-   * Uses getZipFile(), so is charset aware.
+   * Reads the source ZIP file and executes the given action for each entry.
+   * <p>
+   * For each entry the corresponding input stream is also passed to the action. If you want to stop the loop then throw a ZipBreakException.
    *
-   * @param zipEntryCallback
+   * This method is charset aware and uses Zips.charset.
+   *
+   * @param action
+   *          action to be called for each entry.
+   *
+   * @see ZipEntryCallback
+   * @see #iterate(File, ZipInfoCallback)
    */
-  private void iterate(ZipEntryCallback zipEntryCallback) {
+  public void iterate(ZipEntryCallback zipEntryCallback) {
     ZipFile zf = null;
     try {
       zf = getZipFile();
@@ -286,6 +296,77 @@ public class Zips {
   }
 
   /**
+   * Scans the source ZIP file and executes the given action for each entry.
+   * <p>
+   * Only the meta-data without the actual data is read. If you want to stop the loop then throw a ZipBreakException.
+   *
+   * This method is charset aware and uses Zips.charset.
+   *
+   * @param zip
+   *          input ZIP file.
+   * @param action
+   *          action to be called for each entry.
+   *
+   * @see ZipInfoCallback
+   * @see #iterate(File, ZipEntryCallback)
+   */
+  public void iterate(ZipInfoCallback action) {
+    ZipFile zf = null;
+    try {
+      zf = getZipFile();
+
+      Enumeration en = zf.entries();
+      while (en.hasMoreElements()) {
+        ZipEntry e = (ZipEntry) en.nextElement();
+        try {
+          action.process(e);
+        }
+        catch (ZipBreakException ex) {
+          break;
+        }
+      }
+    }
+    catch (IOException e) {
+      throw ZipUtil.rethrow(e);
+    }
+    finally {
+      ZipUtil.closeQuietly(zf);
+    }
+  }
+
+  /**
+   * Checks if entry given by name resides inside of one of the dirs.
+   *
+   * @param dirNames dirs
+   * @param entryName entryPath
+   */
+  private boolean isEntryInDir(Set dirNames, String entryName) {
+    // this should be done with a trie, put dirNames in a trie and check if entryName leads to
+    // some node or not.
+    Iterator iter = dirNames.iterator();
+    while (iter.hasNext()) {
+      String dirName = (String) iter.next();
+      if (entryName.startsWith(dirName)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+
+  /**
+   * @return changed entries as array. Replace with .toArray, when we accept generics
+   */
+  private ZipEntrySource[] getChangedEntriesArray() {
+    ZipEntrySource[] result = new ZipEntrySource[changedEntries.size()];
+    int idx = 0;
+    for(Iterator iter = changedEntries.iterator(); iter.hasNext();) {
+      result[idx] = (ZipEntrySource) iter.next();
+    }
+    return result;
+  }
+
+  /**
    * Copies a given ZIP entry to a ZIP file. If this.preserveTimestamps is true, original timestamp
    * is carried over, otherwise uses current time.
    *
@@ -312,6 +393,10 @@ public class Zips {
    *
    */
   private ZipFile getZipFile() throws IOException {
+    return getZipFile(src, charset);
+  }
+
+  static ZipFile getZipFile(File src, Charset charset) throws IOException {
     if (charset == null) {
       return new ZipFile(src);
     }
