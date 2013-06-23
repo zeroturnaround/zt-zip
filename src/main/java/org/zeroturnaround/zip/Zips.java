@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
@@ -40,6 +41,8 @@ import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.zeroturnaround.zip.transform.ZipEntryTransformer;
+import org.zeroturnaround.zip.transform.ZipEntryTransformerEntry;
 
 /**
  * Fluent api for zip handling.
@@ -78,6 +81,11 @@ public class Zips {
    * List<String>
    */
   private Set removedEntries = new HashSet();
+
+  /**
+   * List<ZipEntryTransformerEntry>
+   */
+  private List transformers = new ArrayList();
 
   private Zips(File src) {
     this.src = src;
@@ -249,10 +257,22 @@ public class Zips {
   }
 
   /**
+   * Registers a transformer for a given entry.
+   *
+   * @param path entry to transform
+   * @param transformer transformer for the entry
+   * @return this Zips for fluent api
+   */
+  public Zips addTransformer(String path, ZipEntryTransformer transformer) {
+    this.transformers.add(new ZipEntryTransformerEntry(path, transformer));
+    return this;
+  }
+
+  /**
    * Iterates through source Zip entries removing or changing them according to
    * set parameters.
    */
-  public synchronized void execute() {
+  public synchronized void process() {
     if (src == null && dest == null) {
       throw new IllegalArgumentException("Source and destination shouldn't be null together");
     }
@@ -261,41 +281,16 @@ public class Zips {
     File destinationZip = null;
     try {
       destinationZip = isInPlace() ? File.createTempFile("zips", ".zip") : dest;
-      final ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destinationZip)));
+      final ZipOutputStream out = createZipOutputStream(new BufferedOutputStream(new FileOutputStream(destinationZip)));
       try {
         // Copy and replace entries
-        final Set names = new HashSet();
-        iterate(new ZipEntryCallback() {
-          public void process(InputStream in, ZipEntry zipEntry) throws IOException {
-            String entryName = zipEntry.getName();
-            if (names.add(entryName)) { // duplicate entries are ignored
-              if (removedEntries.contains(entryName) || isEntryInDir(removedDirs, entryName)) {
-                // this entry should be removed.
-                return;
-              }
-
-              ZipEntrySource entry = (ZipEntrySource) entryByPath.remove(entryName);
-              if (entry != null) {
-                // change entry
-                ZipUtil.addEntry(entry, out);
-              }
-              else {
-                // unchanged entry
-                copyEntry(zipEntry, in, out);
-              }
-            }
-          }
-        });
+        iterate(new RepackCallback(entryByPath, removedDirs, removedEntries, out));
         // Add new entries
         for (Iterator it = entryByPath.values().iterator(); it.hasNext();) {
           ZipUtil.addEntry((ZipEntrySource) it.next(), out);
         }
 
-        if (isInPlace()) {
-          // we operate in-place
-          FileUtils.forceDelete(src);
-          FileUtils.moveFile(destinationZip, src);
-        }
+        handleInPlaceActions(destinationZip);
       }
       finally {
         IOUtils.closeQuietly(out);
@@ -312,6 +307,46 @@ public class Zips {
     }
   }
 
+  public synchronized void transform() {
+    if (src == null) {
+      throw new IllegalArgumentException("Source cannot be null for transformation");
+    }
+    File destinationZip = null;
+    try {
+      destinationZip = isInPlace() ? File.createTempFile("zips", ".zip") : dest;
+      ZipOutputStream out = createZipOutputStream(new BufferedOutputStream(new FileOutputStream(destinationZip)));
+      try {
+        TransformerZipEntryCallback action = new TransformerZipEntryCallback(getTransformersArray(), out);
+        iterate(action);
+        handleInPlaceActions(destinationZip);
+      }
+      finally {
+        IOUtils.closeQuietly(out);
+      }
+    }
+    catch (IOException e) {
+      throw ZipUtil.rethrow(e);
+    }
+    finally {
+      if (isInPlace()) {
+        // destinationZip is a temporary file
+        FileUtils.deleteQuietly(destinationZip);
+      }
+    }
+  }
+
+  /**
+   * if we are doing something in place, move result file into src.
+   *
+   * @param result destination zip file
+   */
+  private void handleInPlaceActions(File result) throws IOException {
+    if (isInPlace()) {
+      // we operate in-place
+      FileUtils.forceDelete(src);
+      FileUtils.moveFile(result, src);
+    }
+  }
 
   /**
    * Reads the source ZIP file and executes the given action for each entry.
@@ -403,16 +438,6 @@ public class Zips {
   }
 
   /**
-   * Unpacks a ZIP file to its own location (using ZipUtil functionality)
-   */
-  public void explode() {
-    if (src == null) {
-      throw new IllegalStateException("Cannot explode, when source is null");
-    }
-    ZipUtil.explode(src);
-  }
-
-  /**
    * Checks if entry given by name resides inside of one of the dirs.
    *
    * @param dirNames dirs
@@ -441,6 +466,19 @@ public class Zips {
     Iterator iter = changedEntries.iterator();
     while (iter.hasNext()) {
       result[idx++] = (ZipEntrySource) iter.next();
+    }
+    return result;
+  }
+
+  /**
+   * @return transformers as array. Replace with .toArray, when we accept generics
+   */
+  private ZipEntryTransformerEntry[] getTransformersArray() {
+    ZipEntryTransformerEntry[] result = new ZipEntryTransformerEntry[transformers.size()];
+    int idx = 0;
+    Iterator iter = transformers.iterator();
+    while (iter.hasNext()) {
+      result[idx++] = (ZipEntryTransformerEntry) iter.next();
     }
     return result;
   }
@@ -499,5 +537,105 @@ public class Zips {
     catch (InvocationTargetException e) {
       throw new IllegalArgumentException("Using constructor ZipFile(File, Charset) has failed", e);
     }
+  }
+
+  private ZipOutputStream createZipOutputStream(BufferedOutputStream outStream) {
+    if (charset == null)
+      return new ZipOutputStream(outStream);
+
+    try {
+      Constructor constructor = ZipOutputStream.class.getConstructor(new Class[] { OutputStream.class, Charset.class });
+      return (ZipOutputStream) constructor.newInstance(new Object[] { outStream, charset });
+    }
+    catch (NoSuchMethodException e) {
+      throw new IllegalArgumentException("Using constructor ZipOutputStream(OutputStream, Charset) has failed", e);
+    }
+    catch (InstantiationException e) {
+      throw new IllegalArgumentException("Using constructor ZipOutputStream(OutputStream, Charset) has failed", e);
+    }
+    catch (IllegalAccessException e) {
+      throw new IllegalArgumentException("Using constructor ZipOutputStream(OutputStream, Charset) has failed", e);
+    }
+    catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("Using constructor ZipOutputStream(OutputStream, Charset) has failed", e);
+    }
+    catch (InvocationTargetException e) {
+      throw new IllegalArgumentException("Using constructor ZipOutputStream(OutputStream, Charset) has failed", e);
+    }
+  }
+
+  private final class RepackCallback implements ZipEntryCallback {
+    private final Map changedEntriesByPath;
+    private final Set removedDirNames;
+    private final Set removedEntries;
+    private final ZipOutputStream out;
+
+    // for duplicate entries
+    private final Set names;
+
+    private RepackCallback(Map changedEntriesByPath, Set removedDirNames, Set removedEntries, ZipOutputStream out) {
+      this.changedEntriesByPath = changedEntriesByPath;
+      this.removedDirNames = removedDirNames;
+      this.removedEntries = removedEntries;
+      this.out = out;
+      this.names = new HashSet();
+    }
+
+    public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+      String entryName = zipEntry.getName();
+      if (names.add(entryName)) { // duplicate entries are ignored
+        if (removedEntries.contains(entryName) || isEntryInDir(removedDirNames, entryName)) {
+          // this entry should be removed.
+          return;
+        }
+
+        ZipEntrySource entry = (ZipEntrySource) changedEntriesByPath.remove(entryName);
+        if (entry != null) {
+          // change entry
+          ZipUtil.addEntry(entry, out);
+        }
+        else {
+          // unchanged entry
+          copyEntry(zipEntry, in, out);
+        }
+      }
+    }
+  }
+
+  /**
+   * We need this class because of private timestamp-aware copyEntry.
+   *
+   * @author shelajev
+   *
+   */
+  private final class TransformerZipEntryCallback implements ZipEntryCallback {
+    private final Map entryByPath;
+    private final int entryCount;
+    private final ZipOutputStream out;
+    private final Set names = new HashSet();
+
+    public TransformerZipEntryCallback(ZipEntryTransformerEntry[] entries, ZipOutputStream out) {
+      entryByPath = ZipUtil.byPath(entries);
+      entryCount = entryByPath.size();
+      this.out = out;
+    }
+
+    public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+      if (names.add(zipEntry.getName())) {
+        ZipEntryTransformer entry = (ZipEntryTransformer) entryByPath.remove(zipEntry.getName());
+        if (entry != null)
+          entry.transform(in, zipEntry, out);
+        else
+          copyEntry(zipEntry, in, out);
+      }
+    }
+
+    /**
+     * @return <code>true</code> if at least one entry was replaced.
+     */
+    public boolean found() {
+      return entryByPath.size() < entryCount;
+    }
+
   }
 }

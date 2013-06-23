@@ -2148,7 +2148,7 @@ public final class ZipUtil {
   /**
    * @return transformers by path.
    */
-  private static Map byPath(ZipEntryTransformerEntry[] entries) {
+  static Map byPath(ZipEntryTransformerEntry[] entries) {
     Map result = new HashMap();
     for (int i = 0; i < entries.length; i++) {
       ZipEntryTransformerEntry entry = entries[i];
