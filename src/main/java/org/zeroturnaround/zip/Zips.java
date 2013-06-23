@@ -141,7 +141,7 @@ public class Zips {
   /**
    * Adds a file entry. If given file is a dir, adds it and all subfiles recursively.
    * Adding takes precedence over removal of entries.
-   * 
+   *
    * @param File file ot add.
    * @param preserveRoot if file is a directory, true indicates we want to preserve this dir in the zip.
    *          otherwise children of the file are added directly under root.
@@ -149,7 +149,7 @@ public class Zips {
    */
   public Zips addFile(File file, boolean preserveRoot) {
     if (!file.isDirectory()) {
-      this.changedEntries.add(new FileSource(file.getPath(), file));
+      this.changedEntries.add(new FileSource(file.getName(), file));
       return this;
     }
     Collection files = FileUtils.listFiles(file, null, true);
@@ -257,7 +257,7 @@ public class Zips {
       throw new IllegalArgumentException("Source and destination shouldn't be null together");
     }
     final Map entryByPath = ZipUtil.byPath(getChangedEntriesArray());
-    final Set dirNames = ZipUtil.filterDirEntries(src, removedEntries);
+    final Set removedDirs = ZipUtil.filterDirEntries(src, removedEntries);
     File destinationZip = null;
     try {
       destinationZip = isInPlace() ? File.createTempFile("zips", ".zip") : dest;
@@ -269,7 +269,7 @@ public class Zips {
           public void process(InputStream in, ZipEntry zipEntry) throws IOException {
             String entryName = zipEntry.getName();
             if (names.add(entryName)) { // duplicate entries are ignored
-              if (removedEntries.contains(entryName) || isEntryInDir(dirNames, entryName)) {
+              if (removedEntries.contains(entryName) || isEntryInDir(removedDirs, entryName)) {
                 // this entry should be removed.
                 return;
               }
@@ -403,6 +403,16 @@ public class Zips {
   }
 
   /**
+   * Unpacks a ZIP file to its own location (using ZipUtil functionality)
+   */
+  public void explode() {
+    if (src == null) {
+      throw new IllegalStateException("Cannot explode, when source is null");
+    }
+    ZipUtil.explode(src);
+  }
+
+  /**
    * Checks if entry given by name resides inside of one of the dirs.
    *
    * @param dirNames dirs
@@ -490,5 +500,4 @@ public class Zips {
       throw new IllegalArgumentException("Using constructor ZipFile(File, Charset) has failed", e);
     }
   }
-
 }
