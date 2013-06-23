@@ -390,8 +390,6 @@ public class ZipsTest extends TestCase {
           assertEquals(new String(contents), s);
           return s.toUpperCase().getBytes();
         }
-
-        @Override
         protected boolean preserveTimestamps() {
           // transformed entries preserve timestamps thanks to this.
           return true;
