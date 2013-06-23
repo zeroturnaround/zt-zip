@@ -359,4 +359,67 @@ public class ZipsTest extends TestCase {
       FileUtils.deleteQuietly(destination);
     }
   }
+
+  public void testTransformationPreservesTimestamps() throws IOException {
+    final String name = "foo";
+    final byte[] contents = "bar".getBytes();
+
+    File source = File.createTempFile("temp", ".zip");
+    File destination = File.createTempFile("temp", ".zip");
+    try {
+      // Create the ZIP file
+      ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(source));
+      try {
+        for (int i = 0; i < 2; i++) {
+          // we need many entries, some are transformed, some just copied.
+          ZipEntry e = new ZipEntry(name + (i == 0 ? "" : "" + i));
+          // 5 seconds ago.
+          e.setTime(System.currentTimeMillis() - 5000);
+          zos.putNextEntry(e);
+          zos.write(contents);
+          zos.closeEntry();
+        }
+      }
+      finally {
+        IOUtils.closeQuietly(zos);
+      }
+      // Transform the ZIP file
+      ZipEntryTransformer transformer = new ByteArrayZipEntryTransformer() {
+        protected byte[] transform(ZipEntry zipEntry, byte[] input) throws IOException {
+          String s = new String(input);
+          assertEquals(new String(contents), s);
+          return s.toUpperCase().getBytes();
+        }
+
+        @Override
+        protected boolean preserveTimestamps() {
+          // transformed entries preserve timestamps thanks to this.
+          return true;
+        }
+      };
+      Zips.process(source).destination(destination).preserveTimestamps().addTransformer(name, transformer).transform();
+
+      final ZipFile zf = new ZipFile(source);
+      try {
+        Zips.process(destination).iterate(new ZipEntryCallback() {
+          public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+            String name = zipEntry.getName();
+            assertEquals("Timestapms differ at entry " + name, zf.getEntry(name).getTime(), zipEntry.getTime());
+          }
+        });
+      }
+      finally {
+        ZipUtil.closeQuietly(zf);
+      }
+      // Test the ZipUtil
+      byte[] actual = ZipUtil.unpackEntry(destination, name);
+      assertNotNull(actual);
+      assertEquals(new String(contents).toUpperCase(), new String(actual));
+    }
+    finally {
+      FileUtils.deleteQuietly(source);
+      FileUtils.deleteQuietly(destination);
+    }
+
+  }
 }
