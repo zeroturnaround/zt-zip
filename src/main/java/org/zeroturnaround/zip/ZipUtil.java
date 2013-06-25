@@ -1380,8 +1380,8 @@ public final class ZipUtil {
    */
   public static void addEntry(final File zip, final String path, final File file) {
     operateInPlace(zip, new InPlaceAction() {
-      public boolean act() {
-        addEntry(zip, path, file, this.tmpFile);
+      public boolean act(File tmpFile) {
+        addEntry(zip, path, file, tmpFile);
         return true;
       }
     });
@@ -1415,8 +1415,8 @@ public final class ZipUtil {
    */
   public static void addEntry(final File zip, final String path, final byte[] bytes) {
     operateInPlace(zip, new InPlaceAction() {
-      public boolean act() {
-        addEntry(zip, path, bytes, this.tmpFile);
+      public boolean act(File tmpFile) {
+        addEntry(zip, path, bytes, tmpFile);
         return true;
       }
     });
@@ -1448,8 +1448,8 @@ public final class ZipUtil {
    */
   public static void addEntry(final File zip, final ZipEntrySource entry) {
     operateInPlace(zip, new InPlaceAction() {
-      public boolean act() {
-        addEntry(zip, entry, this.tmpFile);
+      public boolean act(File tmpFile) {
+        addEntry(zip, entry, tmpFile);
         return true;
       }
     });
@@ -1496,8 +1496,8 @@ public final class ZipUtil {
    */
   public static void addEntries(final File zip, final ZipEntrySource[] entries) {
     operateInPlace(zip, new InPlaceAction() {
-      public boolean act() {
-        addEntries(zip, entries, this.tmpFile);
+      public boolean act(File tmpFile) {
+        addEntries(zip, entries, tmpFile);
         return true;
       }
     });
@@ -1527,8 +1527,8 @@ public final class ZipUtil {
    */
   public static void removeEntry(final File zip, final String path) {
     operateInPlace(zip, new InPlaceAction() {
-      public boolean act() {
-        removeEntry(zip, path, this.tmpFile);
+      public boolean act(File tmpFile) {
+        removeEntry(zip, path, tmpFile);
         return true;
       }
     });
@@ -1573,8 +1573,8 @@ public final class ZipUtil {
    */
   public static void removeEntries(final File zip, final String[] paths) {
     operateInPlace(zip, new InPlaceAction() {
-      public boolean act() {
-        removeEntries(zip, paths, this.tmpFile);
+      public boolean act(File tmpFile) {
+        removeEntries(zip, paths, tmpFile);
         return true;
       }
     });
@@ -1712,8 +1712,8 @@ public final class ZipUtil {
    */
   public static boolean replaceEntry(final File zip, final String path, final File file) {
     return operateInPlace(zip, new InPlaceAction() {
-      public boolean act() {
-        return replaceEntry(zip, new FileSource(path, file), this.tmpFile);
+      public boolean act(File tmpFile) {
+        return replaceEntry(zip, new FileSource(path, file), tmpFile);
       }
     });
   }
@@ -1748,8 +1748,8 @@ public final class ZipUtil {
    */
   public static boolean replaceEntry(final File zip, final String path, final byte[] bytes) {
     return operateInPlace(zip, new InPlaceAction() {
-      public boolean act() {
-        return replaceEntry(zip, new ByteSource(path, bytes), this.tmpFile);
+      public boolean act(File tmpFile) {
+        return replaceEntry(zip, new ByteSource(path, bytes), tmpFile);
       }
     });
   }
@@ -1780,8 +1780,8 @@ public final class ZipUtil {
    */
   public static boolean replaceEntry(final File zip, final ZipEntrySource entry) {
     return operateInPlace(zip, new InPlaceAction() {
-      public boolean act() {
-        return replaceEntry(zip, entry, this.tmpFile);
+      public boolean act(File tmpFile) {
+        return replaceEntry(zip, entry, tmpFile);
       }
     });
   }
@@ -1846,8 +1846,8 @@ public final class ZipUtil {
    */
   public static boolean replaceEntries(final File zip, final ZipEntrySource[] entries) {
     return operateInPlace(zip, new InPlaceAction() {
-      public boolean act() {
-        return replaceEntries(zip, entries, this.tmpFile);
+      public boolean act(File tmpFile) {
+        return replaceEntries(zip, entries, tmpFile);
       }
     });
   }
@@ -1915,8 +1915,8 @@ public final class ZipUtil {
    */
   public static void addOrReplaceEntries(final File zip, final ZipEntrySource[] entries) {
     operateInPlace(zip, new InPlaceAction() {
-      public boolean act() {
-        addOrReplaceEntries(zip, entries, this.tmpFile);
+      public boolean act(File tmpFile) {
+        addOrReplaceEntries(zip, entries, tmpFile);
         return true;
       }
     });
@@ -1964,8 +1964,8 @@ public final class ZipUtil {
    */
   public static boolean transformEntry(final File zip, final String path, final ZipEntryTransformer transformer) {
     return operateInPlace(zip, new InPlaceAction() {
-      public boolean act() {
-        return transformEntry(zip, path, transformer, this.tmpFile);
+      public boolean act(File tmpFile) {
+        return transformEntry(zip, path, transformer, tmpFile);
       }
     });
   }
@@ -1996,8 +1996,8 @@ public final class ZipUtil {
    */
   public static boolean transformEntry(final File zip, final ZipEntryTransformerEntry entry) {
     return operateInPlace(zip, new InPlaceAction() {
-      public boolean act() {
-        return transformEntry(zip, entry, this.tmpFile);
+      public boolean act(File tmpFile) {
+        return transformEntry(zip, entry, tmpFile);
       }
     });
   }
@@ -2044,8 +2044,8 @@ public final class ZipUtil {
    */
   public static boolean transformEntries(final File zip, final ZipEntryTransformerEntry[] entries) {
     return operateInPlace(zip, new InPlaceAction() {
-      public boolean act() {
-        return transformEntries(zip, entries, this.tmpFile);
+      public boolean act(File tmpFile) {
+        return transformEntries(zip, entries, tmpFile);
       }
     });
   }
@@ -2546,12 +2546,11 @@ public final class ZipUtil {
    * @author shelajev
    */
   private static abstract class InPlaceAction {
-    protected File tmpFile;
 
     /**
      * @return true if something has been changed during the action.
      */
-    abstract boolean act();
+    abstract boolean act(File tmpFile);
   }
 
   /**
@@ -2569,8 +2568,7 @@ public final class ZipUtil {
     File tmp = null;
     try {
       tmp = File.createTempFile("zt-zip-tmp", ".zip");
-      action.tmpFile = tmp;
-      boolean result = action.act();
+      boolean result = action.act(tmp);
       if (result) { // else nothing changes
         FileUtils.forceDelete(src);
         FileUtils.moveFile(tmp, src);
