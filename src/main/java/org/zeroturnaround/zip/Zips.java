@@ -164,7 +164,7 @@ public class Zips {
       File entryFile = (File) iter.next();
       String entryPath = getRelativePath(file, entryFile);
       if (preserveRoot) {
-        entryPath = file.getName() + "/" + entryPath;
+        entryPath = file.getName() + entryPath;
       }
       this.changedEntries.add(new FileSource(entryPath, entryFile));
     }
