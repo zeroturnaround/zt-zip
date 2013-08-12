@@ -96,17 +96,17 @@ public class Zips {
    * @param src zip file to process
    * @return instance of Zips
    */
-  public static Zips process(File src) {
+  public static Zips get(File src) {
     return new Zips(src);
   }
 
   /**
    * Static factory method to obtain an instance of Zips without source file.
-   * See {@link process(File src)}.
+   * See {@link get(File src)}.
    *
    * @return instance of Zips
    */
-  public static Zips get() {
+  public static Zips create() {
     return new Zips(null);
   }
 
@@ -522,19 +522,19 @@ public class Zips {
       return (ZipFile) constructor.newInstance(new Object[] { src, charset });
     }
     catch (NoSuchMethodException e) {
-      throw new IllegalArgumentException("Using constructor ZipFile(File, Charset) has failed", e);
+      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage());
     }
     catch (InstantiationException e) {
-      throw new IllegalArgumentException("Using constructor ZipFile(File, Charset) has failed", e);
+      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage());
     }
     catch (IllegalAccessException e) {
-      throw new IllegalArgumentException("Using constructor ZipFile(File, Charset) has failed", e);
+      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage());
     }
     catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException("Using constructor ZipFile(File, Charset) has failed", e);
+      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage());
     }
     catch (InvocationTargetException e) {
-      throw new IllegalArgumentException("Using constructor ZipFile(File, Charset) has failed", e);
+      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage());
     }
   }
 
@@ -547,19 +547,19 @@ public class Zips {
       return (ZipOutputStream) constructor.newInstance(new Object[] { outStream, charset });
     }
     catch (NoSuchMethodException e) {
-      throw new IllegalArgumentException("Using constructor ZipOutputStream(OutputStream, Charset) has failed", e);
+      throw new IllegalStateException("Using constructor ZipOutputStream(OutputStream, Charset) has failed: " + e.getMessage());
     }
     catch (InstantiationException e) {
-      throw new IllegalArgumentException("Using constructor ZipOutputStream(OutputStream, Charset) has failed", e);
+      throw new IllegalStateException("Using constructor ZipOutputStream(OutputStream, Charset) has failed: " + e.getMessage());
     }
     catch (IllegalAccessException e) {
-      throw new IllegalArgumentException("Using constructor ZipOutputStream(OutputStream, Charset) has failed", e);
+      throw new IllegalStateException("Using constructor ZipOutputStream(OutputStream, Charset) has failed: " + e.getMessage());
     }
     catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException("Using constructor ZipOutputStream(OutputStream, Charset) has failed", e);
+      throw new IllegalStateException("Using constructor ZipOutputStream(OutputStream, Charset) has failed: " + e.getMessage());
     }
     catch (InvocationTargetException e) {
-      throw new IllegalArgumentException("Using constructor ZipOutputStream(OutputStream, Charset) has failed", e);
+      throw new IllegalStateException("Using constructor ZipOutputStream(OutputStream, Charset) has failed: " + e.getMessage());
     }
   }
 
@@ -609,13 +609,11 @@ public class Zips {
    */
   private final class TransformerZipEntryCallback implements ZipEntryCallback {
     private final Map entryByPath;
-    private final int entryCount;
     private final ZipOutputStream out;
     private final Set names = new HashSet();
 
     public TransformerZipEntryCallback(ZipEntryTransformerEntry[] entries, ZipOutputStream out) {
       entryByPath = ZipUtil.byPath(entries);
-      entryCount = entryByPath.size();
       this.out = out;
     }
 
@@ -628,13 +626,5 @@ public class Zips {
           copyEntry(zipEntry, in, out);
       }
     }
-
-    /**
-     * @return <code>true</code> if at least one entry was replaced.
-     */
-    public boolean found() {
-      return entryByPath.size() < entryCount;
-    }
-
   }
 }

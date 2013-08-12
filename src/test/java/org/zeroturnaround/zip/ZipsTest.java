@@ -45,7 +45,7 @@ public class ZipsTest extends TestCase {
 
     File dest = File.createTempFile("temp", ".zip");
     try {
-      Zips.process(src).addEntries(new ZipEntrySource[0]).destination(dest).process();
+      Zips.get(src).addEntries(new ZipEntrySource[0]).destination(dest).process();
     }
     finally {
       FileUtils.deleteQuietly(dest);
@@ -60,7 +60,7 @@ public class ZipsTest extends TestCase {
     File newEntry = new File("src/test/resources/" + fileName);
     File dest = File.createTempFile("temp.zip", ".zip");
 
-    Zips.process(src).addEntry(new FileSource(fileName, newEntry)).destination(dest).process();
+    Zips.get(src).addEntry(new FileSource(fileName, newEntry)).destination(dest).process();
     assertTrue(ZipUtil.containsEntry(dest, fileName));
   }
 
@@ -69,7 +69,7 @@ public class ZipsTest extends TestCase {
 
     File dest = File.createTempFile("temp", ".zip");
     try {
-      Zips.process(src).removeEntry("bar.txt").destination(dest).process();
+      Zips.get(src).removeEntry("bar.txt").destination(dest).process();
       assertTrue("Result zip misses entry 'foo.txt'", ZipUtil.containsEntry(dest, "foo.txt"));
       assertTrue("Result zip misses entry 'foo1.txt'", ZipUtil.containsEntry(dest, "foo1.txt"));
       assertTrue("Result zip misses entry 'foo2.txt'", ZipUtil.containsEntry(dest, "foo2.txt"));
@@ -86,7 +86,7 @@ public class ZipsTest extends TestCase {
     File dest = File.createTempFile("temp", ".zip");
     try {
 
-      Zips.process(src).removeEntries(new String[] { "bar.txt", "a/b" }).destination(dest).process();
+      Zips.get(src).removeEntries(new String[] { "bar.txt", "a/b" }).destination(dest).process();
 
       assertFalse("Result zip still contains 'bar.txt'", ZipUtil.containsEntry(dest, "bar.txt"));
       assertFalse("Result zip still contains dir 'a/b'", ZipUtil.containsEntry(dest, "a/b"));
@@ -107,7 +107,7 @@ public class ZipsTest extends TestCase {
     File src = new File("src/test/resources/demo-dirs.zip");
     File dest = File.createTempFile("temp", ".zip");
     try {
-      Zips.process(src).addEntry(new FileSource(fileName, newEntry)).removeEntries(new String[] { "bar.txt", "a/b" }).destination(dest).process();
+      Zips.get(src).addEntry(new FileSource(fileName, newEntry)).removeEntries(new String[] { "bar.txt", "a/b" }).destination(dest).process();
 
       assertFalse("Result zip still contains 'bar.txt'", ZipUtil.containsEntry(dest, "bar.txt"));
       assertFalse("Result zip still contains dir 'a/b'", ZipUtil.containsEntry(dest, "a/b"));
@@ -132,7 +132,7 @@ public class ZipsTest extends TestCase {
       assertFalse(ZipUtil.containsEntry(dest, fileName));
       File newEntry = new File("src/test/resources/" + fileName);
 
-      Zips.process(dest).addEntry(new FileSource(fileName, newEntry)).process();
+      Zips.get(dest).addEntry(new FileSource(fileName, newEntry)).process();
       assertTrue(ZipUtil.containsEntry(dest, fileName));
     }
     finally {
@@ -148,7 +148,7 @@ public class ZipsTest extends TestCase {
     File workFile = File.createTempFile("temp", ".zip");
     try {
       FileUtils.copyFile(original, workFile);
-      Zips.process(workFile).addEntry(new FileSource(fileName, newEntry)).removeEntries(new String[] { "bar.txt", "a/b" }).process();
+      Zips.get(workFile).addEntry(new FileSource(fileName, newEntry)).removeEntries(new String[] { "bar.txt", "a/b" }).process();
       assertFalse("Result zip still contains 'bar.txt'", ZipUtil.containsEntry(workFile, "bar.txt"));
       assertFalse("Result zip still contains dir 'a/b'", ZipUtil.containsEntry(workFile, "a/b"));
       assertTrue("Result doesn't containt 'attic'", ZipUtil.containsEntry(workFile, "attic/treasure.txt"));
@@ -168,8 +168,8 @@ public class ZipsTest extends TestCase {
     File dest = File.createTempFile("temp", ".zip");
     final ZipFile zf = new ZipFile(src);
     try {
-      Zips.process(src).addEntries(new ZipEntrySource[0]).preserveTimestamps().destination(dest).process();
-      Zips.process(dest).iterate(new ZipEntryCallback() {
+      Zips.get(src).addEntries(new ZipEntrySource[0]).preserveTimestamps().destination(dest).process();
+      Zips.get(dest).iterate(new ZipEntryCallback() {
         public void process(InputStream in, ZipEntry zipEntry) throws IOException {
           String name = zipEntry.getName();
           assertEquals("Timestapms differ at entry " + name, zf.getEntry(name).getTime(), zipEntry.getTime());
@@ -188,8 +188,8 @@ public class ZipsTest extends TestCase {
     File dest = File.createTempFile("temp", ".zip");
     final ZipFile zf = new ZipFile(src);
     try {
-      Zips.process(src).addEntries(new ZipEntrySource[0]).destination(dest).process();
-      Zips.process(dest).iterate(new ZipEntryCallback() {
+      Zips.get(src).addEntries(new ZipEntrySource[0]).destination(dest).process();
+      Zips.get(dest).iterate(new ZipEntryCallback() {
         public void process(InputStream in, ZipEntry zipEntry) throws IOException {
           String name = zipEntry.getName();
           // original timestamp is believed to be earlier than test execution time.
@@ -210,7 +210,7 @@ public class ZipsTest extends TestCase {
 
     File dest = File.createTempFile("temp", ".zip");
     try {
-      Zips.process(src).addEntry(new FileSource(filename, newEntry)).removeEntry(filename).destination(dest).process();
+      Zips.get(src).addEntry(new FileSource(filename, newEntry)).removeEntry(filename).destination(dest).process();
       assertTrue("Result zip misses entry 'foo.txt'", ZipUtil.containsEntry(dest, "foo.txt"));
       assertTrue("Result zip misses entry 'foo1.txt'", ZipUtil.containsEntry(dest, "foo1.txt"));
       assertTrue("Result zip misses entry 'foo2.txt'", ZipUtil.containsEntry(dest, "foo2.txt"));
@@ -233,7 +233,7 @@ public class ZipsTest extends TestCase {
     Charset charset = Charset.forName("UTF-8");
     String entryName = "中文.txt";
     try {
-      Zips.process(src).charset(charset).addEntry(new FileSource(entryName, newEntry)).destination(dest).process();
+      Zips.get(src).charset(charset).addEntry(new FileSource(entryName, newEntry)).destination(dest).process();
     }
     catch (IllegalArgumentException e) {
       if (e.getMessage().equals("Using constructor ZipFile(File, Charset) has failed") ||
@@ -264,7 +264,7 @@ public class ZipsTest extends TestCase {
     files.add("foo1.txt");
     files.add("foo2.txt");
 
-    Zips.process(src).iterate(new ZipEntryCallback() {
+    Zips.get(src).iterate(new ZipEntryCallback() {
       public void process(InputStream in, ZipEntry zipEntry) throws IOException {
         files.remove(zipEntry.getName());
         throw new ZipBreakException();
@@ -276,7 +276,7 @@ public class ZipsTest extends TestCase {
   public void testAddEntryFile() throws Exception {
     File fileToPack = new File("src/test/resources/TestFile.txt");
     File dest = File.createTempFile("temp", ".zip");
-    Zips.get().destination(dest).addFile(fileToPack).process();
+    Zips.create().destination(dest).addFile(fileToPack).process();
     assertTrue(dest.exists());
     ZipUtil.explode(dest);
     assertTrue((new File(dest, "TestFile.txt")).exists());
@@ -289,7 +289,7 @@ public class ZipsTest extends TestCase {
     File fileToPack = new File("src/test/resources/TestFile.txt");
     File fileToPackII = new File("src/test/resources/TestFile-II.txt");
     File dest = File.createTempFile("temp", ".zip");
-    Zips.get().destination(dest).addFile(fileToPack).addFile(fileToPackII).process();
+    Zips.create().destination(dest).addFile(fileToPack).addFile(fileToPackII).process();
 
     assertTrue(dest.exists());
 
@@ -306,16 +306,16 @@ public class ZipsTest extends TestCase {
     File dest = File.createTempFile("temp", ".zip");
     File parent = new File("src/test/resources/TestFile.txt").getParentFile();
     // System.out.println("Parent file is " + parent);
-    Zips.get().destination(dest).addFile(parent, true).process();
+    Zips.create().destination(dest).addFile(parent, true).process();
     ZipUtil.explode(dest);
     assertTrue("Root dir is not preserved", (new File(dest, parent.getName())).exists());
   }
-  
+
   public void testPreserveRootWithSubdirectories() throws Exception {
 	    File dest = File.createTempFile("temp", ".zip");
 	    File parent = new File("src/test/resources/testDirectory");
 	    // System.out.println("Parent file is " + parent);
-	    Zips.get().destination(dest).addFile(parent, true).process();
+    Zips.create().destination(dest).addFile(parent, true).process();
 	    assertTrue("File in subdirectory at specified path not found.",ZipUtil.containsEntry(dest, "testDirectory/testSubdirectory/testFileInTestSubdirectory.txt"));
   }
 
@@ -323,7 +323,7 @@ public class ZipsTest extends TestCase {
     File dest = File.createTempFile("temp", ".zip");
     File parent = new File("src/test/resources/TestFile.txt").getParentFile();
     // System.out.println("Parent file is " + parent);
-    Zips.get().destination(dest).addFile(parent).process();
+    Zips.create().destination(dest).addFile(parent).process();
     ZipUtil.explode(dest);
     assertFalse("Root dir is preserved", (new File(dest, parent.getName())).exists());
     assertTrue("Child file is missing", (new File(dest, "TestFile.txt")).exists());
@@ -355,7 +355,7 @@ public class ZipsTest extends TestCase {
           return s.toUpperCase().getBytes();
         }
       };
-      Zips.process(source).destination(destination).addTransformer(name, transformer).transform();
+      Zips.get(source).destination(destination).addTransformer(name, transformer).transform();
 
       // Test the ZipUtil
       byte[] actual = ZipUtil.unpackEntry(destination, name);
@@ -403,11 +403,11 @@ public class ZipsTest extends TestCase {
           return true;
         }
       };
-      Zips.process(source).destination(destination).preserveTimestamps().addTransformer(name, transformer).transform();
+      Zips.get(source).destination(destination).preserveTimestamps().addTransformer(name, transformer).transform();
 
       final ZipFile zf = new ZipFile(source);
       try {
-        Zips.process(destination).iterate(new ZipEntryCallback() {
+        Zips.get(destination).iterate(new ZipEntryCallback() {
           public void process(InputStream in, ZipEntry zipEntry) throws IOException {
             String name = zipEntry.getName();
             assertEquals("Timestapms differ at entry " + name, zf.getEntry(name).getTime(), zipEntry.getTime());
