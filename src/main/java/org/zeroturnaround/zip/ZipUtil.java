@@ -1935,6 +1935,19 @@ public final class ZipUtil {
   }
 
   /**
+   * @return given entries indexed by path.
+   */
+  static Map byPath(Collection entries) {
+    Map result = new HashMap();
+    Iterator iter = entries.iterator();
+    while (iter.hasNext()) {
+      ZipEntrySource source = (ZipEntrySource) iter.next();
+      result.put(source.getPath(), source);
+    }
+    return result;
+  }
+
+  /**
    * Copies an existing ZIP file and transforms a given entry in it.
    *
    * @param zip

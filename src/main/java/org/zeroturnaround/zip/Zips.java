@@ -320,7 +320,6 @@ public class Zips {
    */
   public void iterate(ZipEntryCallback zipEntryCallback) {
     ZipEntryOrInfoAdapter zipEntryAdapter = new ZipEntryOrInfoAdapter(zipEntryCallback, null);
-
     iterateExistingExceptRemovedOrChanged(zipEntryAdapter);
     iterateChangedAndAdded(zipEntryAdapter);
   }
@@ -358,7 +357,7 @@ public class Zips {
       return;
     }
     final Set removedDirs = ZipUtil.filterDirEntries(src, removedEntries);
-
+    final Map changedOrAdded = ZipUtil.byPath(changedEntries);
     ZipFile zf = null;
     try {
       if (src != null) {
@@ -369,7 +368,7 @@ public class Zips {
         while (en.hasMoreElements()) {
           ZipEntry e = (ZipEntry) en.nextElement();
           String entryName = e.getName();
-          if (removedEntries.contains(entryName) || isEntryInDir(removedDirs, entryName)) {
+          if (removedEntries.contains(entryName) || changedOrAdded.containsKey(entryName) || isEntryInDir(removedDirs, entryName)) {
             // removed entries are
             continue;
           }
@@ -395,10 +394,7 @@ public class Zips {
   }
 
   private void iterateChangedAndAdded(ZipEntryOrInfoAdapter zipEntryCallback) {
-    // manage new entries
-    Map entriesByPath = ZipUtil.byPath(getChangedEntriesArray());
-
-    for (Iterator it = entriesByPath.values().iterator(); it.hasNext();) {
+    for (Iterator it = changedEntries.iterator(); it.hasNext();) {
       ZipEntrySource entrySource = (ZipEntrySource) it.next();
       try {
         zipEntryCallback.process(entrySource.getInputStream(), entrySource.getEntry());
@@ -442,20 +438,6 @@ public class Zips {
       }
     }
     return false;
-  }
-
-
-  /**
-   * @return changed entries as array. Replace with .toArray, when we accept generics
-   */
-  private ZipEntrySource[] getChangedEntriesArray() {
-    ZipEntrySource[] result = new ZipEntrySource[changedEntries.size()];
-    int idx = 0;
-    Iterator iter = changedEntries.iterator();
-    while (iter.hasNext()) {
-      result[idx++] = (ZipEntrySource) iter.next();
-    }
-    return result;
   }
 
   /**
