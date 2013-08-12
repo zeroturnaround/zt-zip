@@ -235,9 +235,9 @@ public class ZipsTest extends TestCase {
     try {
       Zips.get(src).charset(charset).addEntry(new FileSource(entryName, newEntry)).destination(dest).process();
     }
-    catch (IllegalArgumentException e) {
-      if (e.getMessage().equals("Using constructor ZipFile(File, Charset) has failed") ||
-          e.getMessage().equals("Using constructor ZipOutputStream(OutputStream, Charset) has failed")) {
+    catch (IllegalStateException e) {
+      if (e.getMessage().startsWith("Using constructor ZipFile(File, Charset) has failed") ||
+          e.getMessage().startsWith("Using constructor ZipOutputStream(OutputStream, Charset) has failed")) {
         // this is acceptable when old java doesn't have charset constructor
         return;
       }
