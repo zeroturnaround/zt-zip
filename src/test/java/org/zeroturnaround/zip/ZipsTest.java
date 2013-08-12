@@ -310,6 +310,14 @@ public class ZipsTest extends TestCase {
     ZipUtil.explode(dest);
     assertTrue("Root dir is not preserved", (new File(dest, parent.getName())).exists());
   }
+  
+  public void testPreserveRootWithSubdirectories() throws Exception {
+	    File dest = File.createTempFile("temp", ".zip");
+	    File parent = new File("src/test/resources/testDirectory");
+	    // System.out.println("Parent file is " + parent);
+	    Zips.get().destination(dest).addFile(parent, true).process();
+	    assertTrue("File in subdirectory at specified path not found.",ZipUtil.containsEntry(dest, "testDirectory/testSubdirectory/testFileInTestSubdirectory.txt"));
+  }
 
   public void testIgnoringRoot() throws Exception {
     File dest = File.createTempFile("temp", ".zip");
