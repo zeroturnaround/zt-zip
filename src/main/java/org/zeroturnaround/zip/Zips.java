@@ -271,7 +271,7 @@ public class Zips {
    * Iterates through source Zip entries removing or changing them according to
    * set parameters.
    */
-  public synchronized void process() {
+  public void process() {
     if (src == null && dest == null) {
       throw new IllegalArgumentException("Source and destination shouldn't be null together");
     }
@@ -306,7 +306,7 @@ public class Zips {
     }
   }
 
-  public synchronized void transform() {
+  public void transform() {
     if (src == null) {
       throw new IllegalArgumentException("Source cannot be null for transformation");
     }
