@@ -275,19 +275,18 @@ public class Zips {
     if (src == null && dest == null) {
       throw new IllegalArgumentException("Source and destination shouldn't be null together");
     }
-    final Map entryByPath = ZipUtil.byPath(getChangedEntriesArray());
-    final Set removedDirs = ZipUtil.filterDirEntries(src, removedEntries);
+
+    ZipEntryTransformerEntry[] transformersArray = getTransformersArray();
+
     File destinationZip = null;
     try {
       destinationZip = isInPlace() ? File.createTempFile("zips", ".zip") : dest;
       final ZipOutputStream out = createZipOutputStream(new BufferedOutputStream(new FileOutputStream(destinationZip)));
       try {
-        // Copy and replace entries
-        iterate(new RepackCallback(entryByPath, removedDirs, removedEntries, out));
-        // Add new entries
-        for (Iterator it = entryByPath.values().iterator(); it.hasNext();) {
-          ZipUtil.addEntry((ZipEntrySource) it.next(), out);
-        }
+
+        ZipEntryOrInfoAdapter zipEntryAdapter = new ZipEntryOrInfoAdapter(new CopyingCallback(transformersArray, out), null);
+        iterateExistingExceptRemovedOrChanged(zipEntryAdapter);
+        iterateChangedAndAdded(zipEntryAdapter);
 
         handleInPlaceActions(destinationZip);
       }
@@ -303,47 +302,6 @@ public class Zips {
         // destinationZip is a temporary file
         FileUtils.deleteQuietly(destinationZip);
       }
-    }
-  }
-
-  public void transform() {
-    if (src == null) {
-      throw new IllegalArgumentException("Source cannot be null for transformation");
-    }
-    File destinationZip = null;
-    try {
-      destinationZip = isInPlace() ? File.createTempFile("zips", ".zip") : dest;
-      ZipOutputStream out = createZipOutputStream(new BufferedOutputStream(new FileOutputStream(destinationZip)));
-      try {
-        TransformerZipEntryCallback action = new TransformerZipEntryCallback(getTransformersArray(), out);
-        iterate(action);
-        handleInPlaceActions(destinationZip);
-      }
-      finally {
-        IOUtils.closeQuietly(out);
-      }
-    }
-    catch (IOException e) {
-      throw ZipUtil.rethrow(e);
-    }
-    finally {
-      if (isInPlace()) {
-        // destinationZip is a temporary file
-        FileUtils.deleteQuietly(destinationZip);
-      }
-    }
-  }
-
-  /**
-   * if we are doing something in place, move result file into src.
-   *
-   * @param result destination zip file
-   */
-  private void handleInPlaceActions(File result) throws IOException {
-    if (isInPlace()) {
-      // we operate in-place
-      FileUtils.forceDelete(src);
-      FileUtils.moveFile(result, src);
     }
   }
 
@@ -358,39 +316,13 @@ public class Zips {
    *          action to be called for each entry.
    *
    * @see ZipEntryCallback
-   * @see #iterate(File, ZipInfoCallback)
+   *
    */
   public void iterate(ZipEntryCallback zipEntryCallback) {
-    if (src == null) {
-      // if we don't have source specified, then we have nothing to iterate.
-      return;
-    }
-    ZipFile zf = null;
-    try {
-      zf = getZipFile();
+    ZipEntryOrInfoAdapter zipEntryAdapter = new ZipEntryOrInfoAdapter(zipEntryCallback, null);
 
-      Enumeration en = zf.entries();
-      while (en.hasMoreElements()) {
-        ZipEntry e = (ZipEntry) en.nextElement();
-
-        InputStream is = zf.getInputStream(e);
-        try {
-          zipEntryCallback.process(is, e);
-        }
-        catch (ZipBreakException ex) {
-          break;
-        }
-        finally {
-          IOUtils.closeQuietly(is);
-        }
-      }
-    }
-    catch (IOException e) {
-      throw ZipUtil.rethrow(e);
-    }
-    finally {
-      ZipUtil.closeQuietly(zf);
-    }
+    iterateExistingExceptRemovedOrChanged(zipEntryAdapter);
+    iterateChangedAndAdded(zipEntryAdapter);
   }
 
   /**
@@ -409,22 +341,48 @@ public class Zips {
    * @see #iterate(File, ZipEntryCallback)
    */
   public void iterate(ZipInfoCallback action) {
+    ZipEntryOrInfoAdapter zipEntryAdapter = new ZipEntryOrInfoAdapter(null, action);
+
+    iterateExistingExceptRemovedOrChanged(zipEntryAdapter);
+    iterateChangedAndAdded(zipEntryAdapter);
+  }
+
+  // ///////////// private api ///////////////
+
+  /**
+   * Internal iterate.
+   */
+  private void iterateExistingExceptRemovedOrChanged(ZipEntryOrInfoAdapter zipEntryCallback) {
     if (src == null) {
       // if we don't have source specified, then we have nothing to iterate.
       return;
     }
+    final Set removedDirs = ZipUtil.filterDirEntries(src, removedEntries);
+
     ZipFile zf = null;
     try {
-      zf = getZipFile();
+      if (src != null) {
+        zf = getZipFile();
 
-      Enumeration en = zf.entries();
-      while (en.hasMoreElements()) {
-        ZipEntry e = (ZipEntry) en.nextElement();
-        try {
-          action.process(e);
-        }
-        catch (ZipBreakException ex) {
-          break;
+        // manage existing entries
+        Enumeration en = zf.entries();
+        while (en.hasMoreElements()) {
+          ZipEntry e = (ZipEntry) en.nextElement();
+          String entryName = e.getName();
+          if (removedEntries.contains(entryName) || isEntryInDir(removedDirs, entryName)) {
+            // removed entries are
+            continue;
+          }
+          InputStream is = zf.getInputStream(e);
+          try {
+            zipEntryCallback.process(is, e);
+          }
+          catch (ZipBreakException ex) {
+            break;
+          }
+          finally {
+            IOUtils.closeQuietly(is);
+          }
         }
       }
     }
@@ -433,6 +391,37 @@ public class Zips {
     }
     finally {
       ZipUtil.closeQuietly(zf);
+    }
+  }
+
+  private void iterateChangedAndAdded(ZipEntryOrInfoAdapter zipEntryCallback) {
+    // manage new entries
+    Map entriesByPath = ZipUtil.byPath(getChangedEntriesArray());
+
+    for (Iterator it = entriesByPath.values().iterator(); it.hasNext();) {
+      ZipEntrySource entrySource = (ZipEntrySource) it.next();
+      try {
+        zipEntryCallback.process(entrySource.getInputStream(), entrySource.getEntry());
+      }
+      catch (ZipBreakException ex) {
+        break;
+      }
+      catch (IOException e) {
+        throw ZipUtil.rethrow(e);
+      }
+    }
+  }
+
+  /**
+   * if we are doing something in place, move result file into src.
+   *
+   * @param result destination zip file
+   */
+  private void handleInPlaceActions(File result) throws IOException {
+    if (isInPlace()) {
+      // we operate in-place
+      FileUtils.forceDelete(src);
+      FileUtils.moveFile(result, src);
     }
   }
 
@@ -563,68 +552,61 @@ public class Zips {
     }
   }
 
-  private final class RepackCallback implements ZipEntryCallback {
-    private final Map changedEntriesByPath;
-    private final Set removedDirNames;
-    private final Set removedEntries;
+  private final class CopyingCallback implements ZipEntryCallback {
+
+    private final Map entryByPath;
     private final ZipOutputStream out;
+    private final Set visitedNames;
 
-    // for duplicate entries
-    private final Set names;
-
-    private RepackCallback(Map changedEntriesByPath, Set removedDirNames, Set removedEntries, ZipOutputStream out) {
-      this.changedEntriesByPath = changedEntriesByPath;
-      this.removedDirNames = removedDirNames;
-      this.removedEntries = removedEntries;
+    private CopyingCallback(ZipEntryTransformerEntry[] entries, ZipOutputStream out) {
       this.out = out;
-      this.names = new HashSet();
+      entryByPath = ZipUtil.byPath(entries);
+      visitedNames = new HashSet();
     }
 
     public void process(InputStream in, ZipEntry zipEntry) throws IOException {
       String entryName = zipEntry.getName();
-      if (names.add(entryName)) { // duplicate entries are ignored
-        if (removedEntries.contains(entryName) || isEntryInDir(removedDirNames, entryName)) {
-          // this entry should be removed.
-          return;
-        }
 
-        ZipEntrySource entry = (ZipEntrySource) changedEntriesByPath.remove(entryName);
-        if (entry != null) {
-          // change entry
-          ZipUtil.addEntry(entry, out);
-        }
-        else {
-          // unchanged entry
-          copyEntry(zipEntry, in, out);
-        }
+      if (visitedNames.contains(entryName)) {
+        return;
+      }
+      visitedNames.add(entryName);
+
+      ZipEntryTransformer transformer = (ZipEntryTransformer) entryByPath.remove(entryName);
+      if (transformer == null) { // no transformer
+        copyEntry(zipEntry, in, out);
+      }
+      else { // still transfom entry
+        transformer.transform(in, zipEntry, out);
       }
     }
   }
 
-  /**
-   * We need this class because of private timestamp-aware copyEntry.
-   *
-   * @author shelajev
-   *
-   */
-  private final class TransformerZipEntryCallback implements ZipEntryCallback {
-    private final Map entryByPath;
-    private final ZipOutputStream out;
-    private final Set names = new HashSet();
+  private class ZipEntryOrInfoAdapter implements ZipEntryCallback, ZipInfoCallback {
 
-    public TransformerZipEntryCallback(ZipEntryTransformerEntry[] entries, ZipOutputStream out) {
-      entryByPath = ZipUtil.byPath(entries);
-      this.out = out;
+    private final ZipEntryCallback entryCallback;
+    private final ZipInfoCallback infoCallback;
+
+    public ZipEntryOrInfoAdapter(ZipEntryCallback entryCallback, ZipInfoCallback infoCallback) {
+      if (entryCallback != null && infoCallback != null || entryCallback == null && infoCallback == null) {
+        throw new IllegalArgumentException("Only one of ZipEntryCallback and ZipInfoCallback must be specified together");
+      }
+      this.entryCallback = entryCallback;
+      this.infoCallback = infoCallback;
+    }
+
+    public void process(ZipEntry zipEntry) throws IOException {
+      infoCallback.process(zipEntry);
     }
 
     public void process(InputStream in, ZipEntry zipEntry) throws IOException {
-      if (names.add(zipEntry.getName())) {
-        ZipEntryTransformer entry = (ZipEntryTransformer) entryByPath.remove(zipEntry.getName());
-        if (entry != null)
-          entry.transform(in, zipEntry, out);
-        else
-          copyEntry(zipEntry, in, out);
+      if (entryCallback != null) {
+        entryCallback.process(in, zipEntry);
+      }
+      else {
+        process(zipEntry);
       }
     }
+
   }
 }

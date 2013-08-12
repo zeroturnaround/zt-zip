@@ -355,7 +355,7 @@ public class ZipsTest extends TestCase {
           return s.toUpperCase().getBytes();
         }
       };
-      Zips.get(source).destination(destination).addTransformer(name, transformer).transform();
+      Zips.get(source).destination(destination).addTransformer(name, transformer).process();
 
       // Test the ZipUtil
       byte[] actual = ZipUtil.unpackEntry(destination, name);
@@ -403,7 +403,7 @@ public class ZipsTest extends TestCase {
           return true;
         }
       };
-      Zips.get(source).destination(destination).preserveTimestamps().addTransformer(name, transformer).transform();
+      Zips.get(source).destination(destination).preserveTimestamps().addTransformer(name, transformer).process();
 
       final ZipFile zf = new ZipFile(source);
       try {
