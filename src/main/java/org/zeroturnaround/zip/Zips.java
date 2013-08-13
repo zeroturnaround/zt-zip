@@ -18,6 +18,7 @@ package org.zeroturnaround.zip;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,6 +41,7 @@ import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.filefilter.FileFileFilter;
 import org.zeroturnaround.zip.transform.ZipEntryTransformer;
 import org.zeroturnaround.zip.transform.ZipEntryTransformerEntry;
 
@@ -138,23 +140,49 @@ public class Zips {
    * Adds a file entry. If given file is a dir, adds it and all subfiles recursively.
    * Adding takes precedence over removal of entries.
    *
-   * @param File file ot add.
+   * @param File file to add.
    * @return this Zips for fluent api
    */
   public Zips addFile(File file) {
-    return addFile(file, false);
+    return addFile(file, false, null);
   }
 
   /**
    * Adds a file entry. If given file is a dir, adds it and all subfiles recursively.
    * Adding takes precedence over removal of entries.
    *
-   * @param File file ot add.
+   * @param File file to add.
    * @param preserveRoot if file is a directory, true indicates we want to preserve this dir in the zip.
    *          otherwise children of the file are added directly under root.
    * @return this Zips for fluent api
    */
   public Zips addFile(File file, boolean preserveRoot) {
+    return addFile(file, preserveRoot, null);
+  }
+
+  /**
+   * Adds a file entry. If given file is a dir, adds it and all subfiles recursively.
+   * Adding takes precedence over removal of entries.
+   *
+   * @param File file to add.
+   * @param filter a filter to accept files for adding, null means all files are accepted
+   * @return this Zips for fluent api
+   */
+  public Zips addFile(File file, FileFilter filter) {
+    return this.addFile(file, false, filter);
+  }
+
+  /**
+   * Adds a file entry. If given file is a dir, adds it and all subfiles recursively.
+   * Adding takes precedence over removal of entries.
+   *
+   * @param File file to add.
+   * @param preserveRoot if file is a directory, true indicates we want to preserve this dir in the zip.
+   *          otherwise children of the file are added directly under root.
+   * @param filter a filter to accept files for adding, null means all files are accepted
+   * @return this Zips for fluent api
+   */
+  public Zips addFile(File file, boolean preserveRoot, FileFilter filter) {
     if (!file.isDirectory()) {
       this.changedEntries.add(new FileSource(file.getName(), file));
       return this;
@@ -162,9 +190,15 @@ public class Zips {
     Collection files = FileUtils.listFiles(file, null, true);
     for (Iterator iter = files.iterator(); iter.hasNext();) {
       File entryFile = (File) iter.next();
+      if (filter != null && !filter.accept(entryFile)) {
+        continue;
+      }
       String entryPath = getRelativePath(file, entryFile);
       if (preserveRoot) {
         entryPath = file.getName() + entryPath;
+      }
+      if (entryPath.startsWith("/")) {
+        entryPath = entryPath.substring(1);
       }
       this.changedEntries.add(new FileSource(entryPath, entryFile));
     }

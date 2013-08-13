@@ -16,6 +16,7 @@ package org.zeroturnaround.zip;
  */
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +30,7 @@ import java.util.zip.ZipOutputStream;
 import junit.framework.TestCase;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.zeroturnaround.zip.FileSource;
 import org.zeroturnaround.zip.ZipEntryCallback;
@@ -282,6 +284,22 @@ public class ZipsTest extends TestCase {
     // if fails then maybe somebody changed the file contents and did not update
     // the test
     assertEquals(108, (new File(dest, "TestFile.txt")).length());
+  }
+
+  public void testAddEntryFilter() throws Exception {
+    File fileToPack = new File("src/test/resources");
+    File dest = File.createTempFile("temp", ".zip");
+    FileFilter filter = new FileFilter() {
+      public boolean accept(File pathname) {
+        return FilenameUtils.getName(pathname.getAbsolutePath()).startsWith("TestFile");
+      }
+    };
+
+    Zips.create().destination(dest).addFile(fileToPack, filter).process();
+    assertTrue(dest.exists());
+    assertTrue(ZipUtil.containsEntry(dest, "TestFile.txt"));
+    assertTrue(ZipUtil.containsEntry(dest, "TestFile-II.txt"));
+    assertFalse(ZipUtil.containsEntry(dest, "log4j.properties"));
   }
 
   public void testPackEntries() throws Exception {
