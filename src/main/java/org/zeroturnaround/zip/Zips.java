@@ -285,8 +285,8 @@ public class Zips {
       try {
 
         ZipEntryOrInfoAdapter zipEntryAdapter = new ZipEntryOrInfoAdapter(new CopyingCallback(transformersArray, out), null);
-        iterateExistingExceptRemovedOrChanged(zipEntryAdapter);
         iterateChangedAndAdded(zipEntryAdapter);
+        iterateExistingExceptRemoved(zipEntryAdapter);
 
         handleInPlaceActions(destinationZip);
       }
@@ -320,8 +320,8 @@ public class Zips {
    */
   public void iterate(ZipEntryCallback zipEntryCallback) {
     ZipEntryOrInfoAdapter zipEntryAdapter = new ZipEntryOrInfoAdapter(zipEntryCallback, null);
-    iterateExistingExceptRemovedOrChanged(zipEntryAdapter);
     iterateChangedAndAdded(zipEntryAdapter);
+    iterateExistingExceptRemoved(zipEntryAdapter);
   }
 
   /**
@@ -342,46 +342,46 @@ public class Zips {
   public void iterate(ZipInfoCallback action) {
     ZipEntryOrInfoAdapter zipEntryAdapter = new ZipEntryOrInfoAdapter(null, action);
 
-    iterateExistingExceptRemovedOrChanged(zipEntryAdapter);
     iterateChangedAndAdded(zipEntryAdapter);
+    iterateExistingExceptRemoved(zipEntryAdapter);
   }
 
   // ///////////// private api ///////////////
 
   /**
-   * Internal iterate.
+   * Iterate through source for not removed entries with a given callback
+   *
+   * @param zipEntryCallback callback to execute on entries or their info.
    */
-  private void iterateExistingExceptRemovedOrChanged(ZipEntryOrInfoAdapter zipEntryCallback) {
+  private void iterateExistingExceptRemoved(ZipEntryOrInfoAdapter zipEntryCallback) {
     if (src == null) {
       // if we don't have source specified, then we have nothing to iterate.
       return;
     }
     final Set removedDirs = ZipUtil.filterDirEntries(src, removedEntries);
-    final Map changedOrAdded = ZipUtil.byPath(changedEntries);
+
     ZipFile zf = null;
     try {
-      if (src != null) {
-        zf = getZipFile();
+      zf = getZipFile();
 
-        // manage existing entries
-        Enumeration en = zf.entries();
-        while (en.hasMoreElements()) {
-          ZipEntry e = (ZipEntry) en.nextElement();
-          String entryName = e.getName();
-          if (removedEntries.contains(entryName) || changedOrAdded.containsKey(entryName) || isEntryInDir(removedDirs, entryName)) {
-            // removed entries are
-            continue;
-          }
-          InputStream is = zf.getInputStream(e);
-          try {
-            zipEntryCallback.process(is, e);
-          }
-          catch (ZipBreakException ex) {
-            break;
-          }
-          finally {
-            IOUtils.closeQuietly(is);
-          }
+      // manage existing entries
+      Enumeration en = zf.entries();
+      while (en.hasMoreElements()) {
+        ZipEntry e = (ZipEntry) en.nextElement();
+        String entryName = e.getName();
+        if (removedEntries.contains(entryName) || isEntryInDir(removedDirs, entryName)) {
+          // removed entries are
+          continue;
+        }
+        InputStream is = zf.getInputStream(e);
+        try {
+          zipEntryCallback.process(is, e);
+        }
+        catch (ZipBreakException ex) {
+          break;
+        }
+        finally {
+          IOUtils.closeQuietly(is);
         }
       }
     }
@@ -393,6 +393,11 @@ public class Zips {
     }
   }
 
+  /**
+   * Iterate through ZipEntrySources for added or changed entries with a given callback
+   *
+   * @param zipEntryCallback callback to execute on entries or their info
+   */
   private void iterateChangedAndAdded(ZipEntryOrInfoAdapter zipEntryCallback) {
     for (Iterator it = changedEntries.iterator(); it.hasNext();) {
       ZipEntrySource entrySource = (ZipEntrySource) it.next();
