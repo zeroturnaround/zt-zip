@@ -41,7 +41,6 @@ import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.filefilter.FileFileFilter;
 import org.zeroturnaround.zip.transform.ZipEntryTransformer;
 import org.zeroturnaround.zip.transform.ZipEntryTransformerEntry;
 
