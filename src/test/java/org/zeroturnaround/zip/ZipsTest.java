@@ -85,7 +85,6 @@ public class ZipsTest extends TestCase {
 
     File dest = File.createTempFile("temp", ".zip");
     try {
-
       Zips.get(src).removeEntries(new String[] { "bar.txt", "a/b" }).destination(dest).process();
 
       assertFalse("Result zip still contains 'bar.txt'", ZipUtil.containsEntry(dest, "bar.txt"));
@@ -427,5 +426,39 @@ public class ZipsTest extends TestCase {
       FileUtils.deleteQuietly(destination);
     }
 
+  }
+
+  public void testTransformAddedEntries() throws IOException {
+    final String fileName = "TestFile.txt";
+    File newEntry = new File("src/test/resources/" + fileName);
+
+    File src = new File("src/test/resources/demo-dirs.zip");
+    File dest = File.createTempFile("temp", ".zip");
+    try {
+      ZipEntryTransformer transformer = new ByteArrayZipEntryTransformer() {
+        protected byte[] transform(ZipEntry zipEntry, byte[] input) throws IOException {
+          String s = new String(input);
+          return s.toUpperCase().getBytes();
+        }
+
+        protected boolean preserveTimestamps() {
+          // transformed entries preserve timestamps thanks to this.
+          return true;
+        }
+      };
+
+      Zips.get(src).addEntry(new FileSource(fileName, newEntry)).addTransformer(fileName, transformer).destination(dest).process();
+
+      assertTrue("Result doesn't containt 'attic'", ZipUtil.containsEntry(dest, "attic/treasure.txt"));
+      assertTrue("Entry whose prefix is dir name is removed too: 'b.txt'", ZipUtil.containsEntry(dest, "a/b.txt"));
+      assertTrue("Result doesn't contain added entry", ZipUtil.containsEntry(dest, fileName));
+
+      boolean contentIsUpper = new String(ZipUtil.unpackEntry(dest, fileName)).startsWith("I'M A TEST FILE");
+      assertTrue("Added entry is not transformed!", contentIsUpper);
+
+    }
+    finally {
+      FileUtils.deleteQuietly(dest);
+    }
   }
 }
