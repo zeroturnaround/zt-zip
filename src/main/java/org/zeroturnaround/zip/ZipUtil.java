@@ -1507,11 +1507,12 @@ public final class ZipUtil {
    * Copies an existing ZIP file and removes entry with a given path.
    *
    * @param zip
-   *          an existing ZIP file (only read).
+   *          an existing ZIP file (only read)
    * @param path
-   *          path of the entry to omit.
+   *          path of the entry to remove
    * @param destZip
    *          new ZIP file created.
+   * @since 1.7
    */
   public static void removeEntry(File zip, String path, File destZip) {
     removeEntries(zip, new String[] { path }, destZip);
@@ -1521,9 +1522,10 @@ public final class ZipUtil {
    * Changes an existing ZIP file: removes entry with a given path.
    *
    * @param zip
-   *          an existing ZIP file (only read).
+   *          an existing ZIP file
    * @param path
-   *          path of the entry to omit.
+   *          path of the entry to remove
+   * @since 1.7
    */
   public static void removeEntry(final File zip, final String path) {
     operateInPlace(zip, new InPlaceAction() {
@@ -1538,11 +1540,12 @@ public final class ZipUtil {
    * Copies an existing ZIP file and removes entries with given paths.
    *
    * @param zip
-   *          an existing ZIP file (only read).
+   *          an existing ZIP file (only read)
    * @param paths
-   *          paths of the entries to omit.
+   *          paths of the entries to remove
    * @param destZip
    *          new ZIP file created.
+   * @since 1.7
    */
   public static void removeEntries(File zip, String[] paths, File destZip) {
     if (log.isDebugEnabled()) {
@@ -1566,10 +1569,10 @@ public final class ZipUtil {
    * Changes an existing ZIP file: removes entries with given paths.
    *
    * @param zip
-   *          an existing ZIP file (only read).
+   *          an existing ZIP file
    * @param paths
-   *          paths of the entries to omit.
-   *          s
+   *          paths of the entries to remove
+   * @since 1.7
    */
   public static void removeEntries(final File zip, final String[] paths) {
     operateInPlace(zip, new InPlaceAction() {
