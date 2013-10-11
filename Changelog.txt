@@ -1,6 +1,9 @@
 ********************************************
   ZT Zip Changelog
 ********************************************
-1.6-SNAPSHOT
+1.7
+* added methods for removing entries from archives
+
+1.6
 * Started to write a changelog 
 * Added public CI, https://travis-ci.org/
