@@ -1443,8 +1443,6 @@ public final class ZipUtil {
    *          an existing ZIP file (only read).
    * @param entry
    *          new ZIP entry appended.
-   * @param bytes
-   *          new entry bytes (or <code>null</code> if directory).
    */
   public static void addEntry(final File zip, final ZipEntrySource entry) {
     operateInPlace(zip, new InPlaceAction() {
