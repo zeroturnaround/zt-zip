@@ -103,7 +103,7 @@ public class Zips {
 
   /**
    * Static factory method to obtain an instance of Zips without source file.
-   * See {@link get(File src)}.
+   * See {@link #get(File src)}.
    *
    * @return instance of Zips
    */
@@ -139,7 +139,7 @@ public class Zips {
    * Adds a file entry. If given file is a dir, adds it and all subfiles recursively.
    * Adding takes precedence over removal of entries.
    *
-   * @param File file to add.
+   * @param file file to add.
    * @return this Zips for fluent api
    */
   public Zips addFile(File file) {
@@ -150,7 +150,7 @@ public class Zips {
    * Adds a file entry. If given file is a dir, adds it and all subfiles recursively.
    * Adding takes precedence over removal of entries.
    *
-   * @param File file to add.
+   * @param file file to add.
    * @param preserveRoot if file is a directory, true indicates we want to preserve this dir in the zip.
    *          otherwise children of the file are added directly under root.
    * @return this Zips for fluent api
@@ -163,7 +163,7 @@ public class Zips {
    * Adds a file entry. If given file is a dir, adds it and all subfiles recursively.
    * Adding takes precedence over removal of entries.
    *
-   * @param File file to add.
+   * @param file file to add.
    * @param filter a filter to accept files for adding, null means all files are accepted
    * @return this Zips for fluent api
    */
@@ -175,7 +175,7 @@ public class Zips {
    * Adds a file entry. If given file is a dir, adds it and all subfiles recursively.
    * Adding takes precedence over removal of entries.
    *
-   * @param File file to add.
+   * @param file file to add.
    * @param preserveRoot if file is a directory, true indicates we want to preserve this dir in the zip.
    *          otherwise children of the file are added directly under root.
    * @param filter a filter to accept files for adding, null means all files are accepted
@@ -339,14 +339,14 @@ public class Zips {
   }
 
   /**
-   * Reads the source ZIP file and executes the given action for each entry.
+   * Reads the source ZIP file and executes the given callback for each entry.
    * <p>
-   * For each entry the corresponding input stream is also passed to the action. If you want to stop the loop then throw a ZipBreakException.
+   * For each entry the corresponding input stream is also passed to the callback. If you want to stop the loop then throw a ZipBreakException.
    *
    * This method is charset aware and uses Zips.charset.
    *
-   * @param action
-   *          action to be called for each entry.
+   * @param zipEntryCallback
+   *          callback to be called for each entry.
    *
    * @see ZipEntryCallback
    *
@@ -358,22 +358,20 @@ public class Zips {
   }
 
   /**
-   * Scans the source ZIP file and executes the given action for each entry.
+   * Scans the source ZIP file and executes the given callback for each entry.
    * <p>
    * Only the meta-data without the actual data is read. If you want to stop the loop then throw a ZipBreakException.
    *
    * This method is charset aware and uses Zips.charset.
    *
-   * @param zip
-   *          input ZIP file.
-   * @param action
-   *          action to be called for each entry.
+   * @param callback
+   *          callback to be called for each entry.
    *
    * @see ZipInfoCallback
-   * @see #iterate(File, ZipEntryCallback)
+   * @see #iterate(ZipEntryCallback)
    */
-  public void iterate(ZipInfoCallback action) {
-    ZipEntryOrInfoAdapter zipEntryAdapter = new ZipEntryOrInfoAdapter(null, action);
+  public void iterate(ZipInfoCallback callback) {
+    ZipEntryOrInfoAdapter zipEntryAdapter = new ZipEntryOrInfoAdapter(null, callback);
 
     iterateChangedAndAdded(zipEntryAdapter);
     iterateExistingExceptRemoved(zipEntryAdapter);
