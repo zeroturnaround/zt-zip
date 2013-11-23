@@ -1094,22 +1094,14 @@ public final class ZipUtil {
    */
   public static void pack(File sourceDir, File targetZip, NameMapper mapper, int compressionLevel) {
     log.debug("Compressing '{}' into '{}'.", sourceDir, targetZip);
-
-    File[] listFiles = sourceDir.listFiles();
-    if (listFiles == null) {
-      if (!sourceDir.exists()) {
-        throw new ZipException("Given file '" + sourceDir + "' doesn't exist!");
-      }
-      throw new ZipException("Given file '" + sourceDir + "' is not a directory!");
-    }
-    else if (listFiles.length == 0) {
-      throw new ZipException("Given directory '" + sourceDir + "' doesn't contain any files!");
+    if (!sourceDir.exists()) {
+      throw new ZipException("Given file '" + sourceDir + "' doesn't exist!");
     }
     ZipOutputStream out = null;
     try {
       out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(targetZip)));
       out.setLevel(compressionLevel);
-      pack(sourceDir, out, mapper, "");
+      pack(sourceDir, out, mapper, "", true);
     }
     catch (IOException e) {
       throw rethrow(e);
@@ -1130,15 +1122,25 @@ public final class ZipUtil {
    *          call-back for renaming the entries.
    * @param pathPrefix
    *          prefix to be used for the entries.
+   * @param mustHaveChildren
+   *          if true, but directory to pack doesn't have any files, throw an exception.
    */
-  private static void pack(File dir, ZipOutputStream out, NameMapper mapper, String pathPrefix) throws IOException {
-    File[] files = dir.listFiles();
-    if (files == null) {
+  private static void pack(File dir, ZipOutputStream out, NameMapper mapper, String pathPrefix, boolean mustHaveChildren) throws IOException {
+    String[] filenames = dir.list();
+    if (filenames == null) {
+      if (!dir.exists()) {
+        throw new ZipException("Given file '" + dir + "' doesn't exist!");
+      }
       throw new IOException("Given file is not a directory '" + dir + "'");
     }
 
-    for (int i = 0; i < files.length; i++) {
-      File file = files[i];
+    if (mustHaveChildren && filenames.length == 0) {
+      throw new ZipException("Given directory '" + dir + "' doesn't contain any files!");
+    }
+
+    for (int i = 0; i < filenames.length; i++) {
+      String filename = filenames[i];
+      File file = new File(dir, filename);
       boolean isDir = file.isDirectory();
       String path = pathPrefix + file.getName();
       if (isDir) {
@@ -1166,7 +1168,7 @@ public final class ZipUtil {
 
       // Traverse the directory
       if (isDir) {
-        pack(file, out, mapper, path);
+        pack(file, out, mapper, path, false);
       }
     }
   }

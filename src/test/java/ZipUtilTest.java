@@ -17,7 +17,6 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -232,12 +231,14 @@ public class ZipUtilTest extends TestCase {
 
   public void testZipException() {
     boolean exceptionThrown = false;
+    File target = new File("weeheha");
     try {
-      ZipUtil.pack(new File("nonExistent"), new File("weeheha"));
+      ZipUtil.pack(new File("nonExistent"), target);
     }
     catch (ZipException e) {
       exceptionThrown = true;
     }
+    assertFalse("Target file is created when source does not exist", target.exists());
     assertTrue(exceptionThrown);
   }
 
