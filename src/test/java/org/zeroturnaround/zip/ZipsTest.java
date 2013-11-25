@@ -32,11 +32,6 @@ import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.zeroturnaround.zip.FileSource;
-import org.zeroturnaround.zip.ZipEntryCallback;
-import org.zeroturnaround.zip.ZipEntrySource;
-import org.zeroturnaround.zip.ZipUtil;
-import org.zeroturnaround.zip.Zips;
 import org.zeroturnaround.zip.transform.ByteArrayZipEntryTransformer;
 import org.zeroturnaround.zip.transform.ZipEntryTransformer;
 
@@ -478,5 +473,46 @@ public class ZipsTest extends TestCase {
     finally {
       FileUtils.deleteQuietly(dest);
     }
+  }
+
+  public void testPackWithPrefixNameMapper() throws IOException {
+    File fileToPack = new File("src/test/resources/TestFile.txt");
+    File fileToPackII = new File("src/test/resources/TestFile-II.txt");
+    File dest = File.createTempFile("temp", ".zip");
+    Zips.create().destination(dest).nameMapper(new NameMapper() {
+      public String map(String name) {
+        return "doc/" + name;
+      }
+    }).addFile(fileToPack).addFile(fileToPackII).process();
+
+    assertTrue(dest.exists());
+
+    ZipUtil.explode(dest);
+    assertTrue((new File(new File(dest, "doc"), "TestFile.txt")).exists());
+    assertTrue((new File(new File(dest, "doc"), "TestFile-II.txt")).exists());
+    // if fails then maybe somebody changed the file contents and did not update
+    // the test
+    assertEquals(108, (new File(new File(dest, "doc"), "TestFile.txt")).length());
+    assertEquals(103, (new File(new File(dest, "doc"), "TestFile-II.txt")).length());
+  }
+
+  public void testPackWithSuffixOnlyNameMapper() throws IOException {
+    File fileToPack = new File("src/test/resources/TestFile.txt");
+    File fileToPackII = new File("src/test/resources/TestFile-II.txt");
+    File dest = File.createTempFile("temp", ".zip");
+    Zips.create().destination(dest).nameMapper(new NameMapper() {
+      public String map(String name) {
+        return name.endsWith("I.txt") ? name : null;
+      }
+    }).addFile(fileToPack).addFile(fileToPackII).process();
+
+    assertTrue(dest.exists());
+
+    ZipUtil.explode(dest);
+    assertFalse((new File(dest, "TestFile.txt")).exists());
+    assertTrue((new File(dest, "TestFile-II.txt")).exists());
+    // if fails then maybe somebody changed the file contents and did not update
+    // the test
+    assertEquals(103, (new File(dest, "TestFile-II.txt")).length());
   }
 }

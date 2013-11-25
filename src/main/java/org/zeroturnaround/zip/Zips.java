@@ -87,6 +87,13 @@ public class Zips {
    */
   private List transformers = new ArrayList();
 
+  /*
+   * If you want many name mappers here, you can create some compound instance that knows if
+   * it wants to stop after first successfull mapping or go through all transformations, if null means
+   * stop and ignore entry or that name mapper didn't know how to transform, etc.
+   */
+  private NameMapper nameMapper;
+
   private Zips(File src) {
     this.src = src;
   }
@@ -282,6 +289,16 @@ public class Zips {
   }
 
   /**
+   *
+   * @param nameMapper to use when processing entries
+   * @return this Zips for fluent api
+   */
+  public Zips nameMapper(NameMapper nameMapper) {
+    this.nameMapper = nameMapper;
+    return this;
+  }
+
+  /**
    * @return true if destination is not specified.
    */
   private boolean isInPlace() {
@@ -398,15 +415,27 @@ public class Zips {
       // manage existing entries
       Enumeration en = zf.entries();
       while (en.hasMoreElements()) {
-        ZipEntry e = (ZipEntry) en.nextElement();
-        String entryName = e.getName();
+        ZipEntry entry = (ZipEntry) en.nextElement();
+        String entryName = entry.getName();
         if (removedEntries.contains(entryName) || isEntryInDir(removedDirs, entryName)) {
           // removed entries are
           continue;
         }
-        InputStream is = zf.getInputStream(e);
+
+        if (nameMapper != null) {
+          String mappedName = nameMapper.map(entry.getName());
+          if (mappedName == null) {
+            continue; // we should ignore this entry
+          }
+          else if (!mappedName.equals(entry.getName())) {
+            // if name is different, do nothing
+            entry = rename(entry, mappedName);
+          }
+        }
+
+        InputStream is = zf.getInputStream(entry);
         try {
-          zipEntryCallback.process(is, e);
+          zipEntryCallback.process(is, entry);
         }
         catch (ZipBreakException ex) {
           break;
@@ -433,7 +462,18 @@ public class Zips {
     for (Iterator it = changedEntries.iterator(); it.hasNext();) {
       ZipEntrySource entrySource = (ZipEntrySource) it.next();
       try {
-        zipEntryCallback.process(entrySource.getInputStream(), entrySource.getEntry());
+        ZipEntry entry = entrySource.getEntry();
+        if (nameMapper != null) {
+          String mappedName = nameMapper.map(entry.getName());
+          if (mappedName == null) {
+            continue; // we should ignore this entry
+          }
+          else if (!mappedName.equals(entry.getName())) {
+            // if name is different, do nothing
+            entry = rename(entry, mappedName);
+          }
+        }
+        zipEntryCallback.process(entrySource.getInputStream(), entry);
       }
       catch (ZipBreakException ex) {
         break;
@@ -504,6 +544,34 @@ public class Zips {
     ZipEntry copy = new ZipEntry(zipEntry.getName());
     copy.setTime(preserveTimestamps ? zipEntry.getTime() : System.currentTimeMillis());
     ZipUtil.addEntry(copy, new BufferedInputStream(in), out);
+  }
+
+  /**
+   * Copy entry with another name.
+   *
+   * @param original - zipEntry to copy
+   * @param newName - new entry name
+   * @return copy of the original entry, but with the given name
+   */
+  private ZipEntry rename(ZipEntry original, String newName) {
+    ZipEntry copy = new ZipEntry(newName);
+    if (original.getCrc() != -1) {
+      copy.setCrc(original.getCrc());
+    }
+    if (original.getMethod() != -1) {
+      copy.setMethod(original.getMethod());
+    }
+    if (original.getSize() >= 0) {
+      copy.setSize(original.getSize());
+    }
+    if (original.getExtra() != null) {
+      copy.setExtra(original.getExtra());
+    }
+
+    copy.setComment(original.getComment());
+    copy.setCompressedSize(original.getCompressedSize());
+    copy.setTime(original.getTime());
+    return copy;
   }
 
   /**
