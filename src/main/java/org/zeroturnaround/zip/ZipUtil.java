@@ -2226,6 +2226,14 @@ public final class ZipUtil {
   static void copyEntry(ZipEntry zipEntry, InputStream in, ZipOutputStream out) throws IOException {
     ZipEntry copy = new ZipEntry(zipEntry.getName());
     copy.setTime(zipEntry.getTime());
+    switch (zipEntry.getMethod()) {
+        case ZipEntry.STORED:
+            copy.setSize(zipEntry.getSize());
+            copy.setCompressedSize(zipEntry.getCompressedSize());
+            copy.setCrc(zipEntry.getCrc());
+        case ZipEntry.DEFLATED:
+            copy.setMethod(zipEntry.getMethod());
+    }
     addEntry(copy, new BufferedInputStream(in), out);
   }
 
