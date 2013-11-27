@@ -429,7 +429,7 @@ public class Zips {
           }
           else if (!mappedName.equals(entry.getName())) {
             // if name is different, do nothing
-            entry = rename(entry, mappedName);
+            entry = copy(entry, mappedName);
           }
         }
 
@@ -470,7 +470,7 @@ public class Zips {
           }
           else if (!mappedName.equals(entry.getName())) {
             // if name is different, do nothing
-            entry = rename(entry, mappedName);
+            entry = copy(entry, mappedName);
           }
         }
         zipEntryCallback.process(entrySource.getInputStream(), entry);
@@ -541,20 +541,30 @@ public class Zips {
    *          target ZIP stream.
    */
   private void copyEntry(ZipEntry zipEntry, InputStream in, ZipOutputStream out) throws IOException {
-    ZipEntry copy = new ZipEntry(zipEntry.getName());
+    ZipEntry copy = copy(zipEntry);
     copy.setTime(preserveTimestamps ? zipEntry.getTime() : System.currentTimeMillis());
     ZipUtil.addEntry(copy, new BufferedInputStream(in), out);
+  }
+
+  /**
+   * Copy entry
+   *
+   * @param original - zipEntry to copy
+   * @return copy of the original entry
+   */
+  private ZipEntry copy(ZipEntry original) {
+    return copy(original, null);
   }
 
   /**
    * Copy entry with another name.
    *
    * @param original - zipEntry to copy
-   * @param newName - new entry name
+   * @param newName - new entry name, optional, if null, ogirinal's entry
    * @return copy of the original entry, but with the given name
    */
-  private ZipEntry rename(ZipEntry original, String newName) {
-    ZipEntry copy = new ZipEntry(newName);
+  private ZipEntry copy(ZipEntry original, String newName) {
+    ZipEntry copy = new ZipEntry(newName == null ? original.getName() : newName);
     if (original.getCrc() != -1) {
       copy.setCrc(original.getCrc());
     }
