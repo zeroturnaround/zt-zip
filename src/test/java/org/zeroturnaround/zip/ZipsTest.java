@@ -244,7 +244,7 @@ public class ZipsTest extends TestCase {
 
     ZipFile zf = null;
     try {
-      zf = Zips.getZipFile(dest, charset);
+      zf = ZipFileUtil.getZipFile(dest, charset);
       assertNotNull("Entry '" + entryName + "' was not added", zf.getEntry(entryName));
     }
     finally {

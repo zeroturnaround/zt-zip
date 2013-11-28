@@ -88,7 +88,7 @@ public final class ZipUtil {
       return zf.getEntry(name) != null;
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
     finally {
       closeQuietly(zf);
@@ -117,7 +117,7 @@ public final class ZipUtil {
       return false;
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
     finally {
       closeQuietly(zf);
@@ -140,7 +140,7 @@ public final class ZipUtil {
       return doUnpackEntry(zf, name);
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
     finally {
       closeQuietly(zf);
@@ -161,7 +161,7 @@ public final class ZipUtil {
       return doUnpackEntry(zf, name);
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
   }
 
@@ -243,7 +243,7 @@ public final class ZipUtil {
       return doUnpackEntry(zf, name, file);
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
     finally {
       closeQuietly(zf);
@@ -267,7 +267,7 @@ public final class ZipUtil {
       return doUnpackEntry(zf, name, file);
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
   }
 
@@ -376,7 +376,7 @@ public final class ZipUtil {
       }
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
     finally {
       closeQuietly(zf);
@@ -421,7 +421,7 @@ public final class ZipUtil {
       }
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
     finally {
       closeQuietly(zf);
@@ -459,7 +459,7 @@ public final class ZipUtil {
       }
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
     finally {
       closeQuietly(zf);
@@ -500,7 +500,7 @@ public final class ZipUtil {
       }
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
     finally {
       closeQuietly(zf);
@@ -535,7 +535,7 @@ public final class ZipUtil {
       }
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
   }
 
@@ -576,7 +576,7 @@ public final class ZipUtil {
       }
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
   }
 
@@ -614,7 +614,7 @@ public final class ZipUtil {
       return true;
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
     finally {
       closeQuietly(zf);
@@ -920,7 +920,7 @@ public final class ZipUtil {
       }
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
   }
 
@@ -942,7 +942,7 @@ public final class ZipUtil {
       entry.setTime(file.lastModified());
       InputStream in = new BufferedInputStream(new FileInputStream(file));
       try {
-        addEntry(entry, in, out);
+        ZipEntryUtil.addEntry(entry, in, out);
       }
       finally {
         IOUtils.closeQuietly(in);
@@ -950,7 +950,7 @@ public final class ZipUtil {
       out.close();
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
     return result.toByteArray();
   }
@@ -1058,7 +1058,7 @@ public final class ZipUtil {
       }
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
     finally {
       IOUtils.closeQuietly(out);
@@ -1104,7 +1104,7 @@ public final class ZipUtil {
       pack(sourceDir, out, mapper, "", true);
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
     finally {
       IOUtils.closeQuietly(out);
@@ -1247,7 +1247,7 @@ public final class ZipUtil {
       FileUtils.moveFile(tmpZip, zip);
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
   }
 
@@ -1266,12 +1266,12 @@ public final class ZipUtil {
         this.out.setLevel(compressionLevel);
       }
       catch (IOException e) {
-        rethrow(e);
+        ZipExceptionUtil.rethrow(e);
       }
     }
 
     public void process(InputStream in, ZipEntry zipEntry) throws IOException {
-      copyEntry(zipEntry, in, out);
+      ZipEntryUtil.copyEntry(zipEntry, in, out);
     }
 
     private void closeStream() {
@@ -1324,7 +1324,7 @@ public final class ZipUtil {
       FileUtils.moveFile(zip, dir);
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
   }
 
@@ -1347,7 +1347,7 @@ public final class ZipUtil {
       }
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
     finally {
       IOUtils.closeQuietly(out);
@@ -1479,7 +1479,7 @@ public final class ZipUtil {
       }
     }
     catch (IOException e) {
-      throw rethrow(e);
+      ZipExceptionUtil.rethrow(e);
     }
     finally {
       IOUtils.closeQuietly(out);
@@ -1558,7 +1558,7 @@ public final class ZipUtil {
       copyEntries(zip, out, new HashSet(Arrays.asList(paths)));
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
     finally {
       IOUtils.closeQuietly(out);
@@ -1598,7 +1598,7 @@ public final class ZipUtil {
       public void process(InputStream in, ZipEntry zipEntry) throws IOException {
         String entryName = zipEntry.getName();
         if (names.add(entryName)) {
-          copyEntry(zipEntry, in, out);
+          ZipEntryUtil.copyEntry(zipEntry, in, out);
         }
         else if (log.isDebugEnabled()) {
           log.debug("Duplicate entry: {}", entryName);
@@ -1636,7 +1636,7 @@ public final class ZipUtil {
         }
 
         if (names.add(entryName)) {
-          copyEntry(zipEntry, in, out);
+          ZipEntryUtil.copyEntry(zipEntry, in, out);
         }
         else if (log.isDebugEnabled()) {
           log.debug("Duplicate entry: {}", entryName);
@@ -1677,7 +1677,7 @@ public final class ZipUtil {
 
     }
     catch (IOException e) {
-      throw rethrow(e);
+      ZipExceptionUtil.rethrow(e);
     }
     finally {
       closeQuietly(zf);
@@ -1819,7 +1819,7 @@ public final class ZipUtil {
                 addEntry(entry, out);
               }
               else {
-                copyEntry(zipEntry, in, out);
+                ZipEntryUtil.copyEntry(zipEntry, in, out);
               }
             }
             else if (log.isDebugEnabled()) {
@@ -1833,7 +1833,7 @@ public final class ZipUtil {
       }
     }
     catch (IOException e) {
-      throw rethrow(e);
+      ZipExceptionUtil.rethrow(e);
     }
     return entryByPath.size() < entryCount;
   }
@@ -1885,7 +1885,7 @@ public final class ZipUtil {
                 addEntry(entry, out);
               }
               else {
-                copyEntry(zipEntry, in, out);
+                ZipEntryUtil.copyEntry(zipEntry, in, out);
               }
             }
             else if (log.isDebugEnabled()) {
@@ -1904,7 +1904,7 @@ public final class ZipUtil {
       }
     }
     catch (IOException e) {
-      throw rethrow(e);
+      ZipExceptionUtil.rethrow(e);
     }
   }
 
@@ -2045,7 +2045,7 @@ public final class ZipUtil {
       }
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
   }
 
@@ -2123,7 +2123,7 @@ public final class ZipUtil {
       return action.found();
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
   }
 
@@ -2146,7 +2146,7 @@ public final class ZipUtil {
         if (entry != null)
           entry.transform(in, zipEntry, out);
         else
-          copyEntry(zipEntry, in, out);
+          ZipEntryUtil.copyEntry(zipEntry, in, out);
       }
       else if (log.isDebugEnabled())
         log.debug("Duplicate entry: {}", zipEntry.getName());
@@ -2181,7 +2181,7 @@ public final class ZipUtil {
    * @param out
    *          target ZIP stream.
    */
-  static void addEntry(ZipEntrySource entry, ZipOutputStream out) throws IOException {
+  private static void addEntry(ZipEntrySource entry, ZipOutputStream out) throws IOException {
     out.putNextEntry(entry.getEntry());
     InputStream in = entry.getInputStream();
     if (in != null) {
@@ -2195,47 +2195,7 @@ public final class ZipUtil {
     out.closeEntry();
   }
 
-  /**
-   * Adds a given ZIP entry to a ZIP file.
-   *
-   * @param zipEntry
-   *          new ZIP entry.
-   * @param in
-   *          contents of the ZIP entry.
-   * @param out
-   *          target ZIP stream.
-   */
-  static void addEntry(ZipEntry zipEntry, InputStream in, ZipOutputStream out) throws IOException {
-    out.putNextEntry(zipEntry);
-    if (in != null) {
-      IOUtils.copy(in, out);
-    }
-    out.closeEntry();
-  }
 
-  /**
-   * Copies a given ZIP entry to a ZIP file.
-   *
-   * @param zipEntry
-   *          a ZIP entry from existing ZIP file.
-   * @param in
-   *          contents of the ZIP entry.
-   * @param out
-   *          target ZIP stream.
-   */
-  static void copyEntry(ZipEntry zipEntry, InputStream in, ZipOutputStream out) throws IOException {
-    ZipEntry copy = new ZipEntry(zipEntry.getName());
-    copy.setTime(zipEntry.getTime());
-    switch (zipEntry.getMethod()) {
-        case ZipEntry.STORED:
-            copy.setSize(zipEntry.getSize());
-            copy.setCompressedSize(zipEntry.getCompressedSize());
-            copy.setCrc(zipEntry.getCrc());
-        case ZipEntry.DEFLATED:
-            copy.setMethod(zipEntry.getMethod());
-    }
-    addEntry(copy, new BufferedInputStream(in), out);
-  }
 
   /* Comparing two ZIP files. */
 
@@ -2466,7 +2426,7 @@ public final class ZipUtil {
       return doEntryEquals(zf1, zf2, path1, path2);
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
     finally {
       closeQuietly(zf1);
@@ -2492,7 +2452,7 @@ public final class ZipUtil {
       return doEntryEquals(zf1, zf2, path1, path2);
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
   }
 
@@ -2558,13 +2518,6 @@ public final class ZipUtil {
   }
 
   /**
-   * Rethrow the given exception as a runtime exception.
-   */
-  static ZipException rethrow(IOException e) {
-    throw new ZipException(e);
-  }
-
-  /**
    * Simple helper to make inplace operation easier
    *
    * @author shelajev
@@ -2600,7 +2553,7 @@ public final class ZipUtil {
       return result;
     }
     catch (IOException e) {
-      throw rethrow(e);
+      throw ZipExceptionUtil.rethrow(e);
     }
     finally {
       FileUtils.deleteQuietly(tmp);

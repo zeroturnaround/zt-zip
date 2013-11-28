@@ -15,16 +15,12 @@
  */
 package org.zeroturnaround.zip;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -331,10 +327,10 @@ public class Zips {
     File destinationZip = null;
     try {
       destinationZip = isInPlace() ? File.createTempFile("zips", ".zip") : dest;
-      final ZipOutputStream out = createZipOutputStream(new BufferedOutputStream(new FileOutputStream(destinationZip)));
+      final ZipOutputStream out = ZipFileUtil.createZipOutputStream(new BufferedOutputStream(new FileOutputStream(destinationZip)), charset);
       try {
 
-        ZipEntryOrInfoAdapter zipEntryAdapter = new ZipEntryOrInfoAdapter(new CopyingCallback(transformersArray, out), null);
+        ZipEntryOrInfoAdapter zipEntryAdapter = new ZipEntryOrInfoAdapter(new CopyingCallback(transformersArray, out, preserveTimestamps), null);
         iterateChangedAndAdded(zipEntryAdapter);
         iterateExistingExceptRemoved(zipEntryAdapter);
 
@@ -345,7 +341,7 @@ public class Zips {
       }
     }
     catch (IOException e) {
-      throw ZipUtil.rethrow(e);
+      ZipExceptionUtil.rethrow(e);
     }
     finally {
       if (isInPlace()) {
@@ -429,7 +425,7 @@ public class Zips {
           }
           else if (!mappedName.equals(entry.getName())) {
             // if name is different, do nothing
-            entry = copy(entry, mappedName);
+            entry = ZipEntryUtil.copy(entry, mappedName);
           }
         }
 
@@ -446,7 +442,7 @@ public class Zips {
       }
     }
     catch (IOException e) {
-      throw ZipUtil.rethrow(e);
+      ZipExceptionUtil.rethrow(e);
     }
     finally {
       ZipUtil.closeQuietly(zf);
@@ -470,7 +466,7 @@ public class Zips {
           }
           else if (!mappedName.equals(entry.getName())) {
             // if name is different, do nothing
-            entry = copy(entry, mappedName);
+            entry = ZipEntryUtil.copy(entry, mappedName);
           }
         }
         zipEntryCallback.process(entrySource.getInputStream(), entry);
@@ -479,7 +475,7 @@ public class Zips {
         break;
       }
       catch (IOException e) {
-        throw ZipUtil.rethrow(e);
+        ZipExceptionUtil.rethrow(e);
       }
     }
   }
@@ -530,61 +526,6 @@ public class Zips {
   }
 
   /**
-   * Copies a given ZIP entry to a ZIP file. If this.preserveTimestamps is true, original timestamp
-   * is carried over, otherwise uses current time.
-   *
-   * @param zipEntry
-   *          a ZIP entry from existing ZIP file.
-   * @param in
-   *          contents of the ZIP entry.
-   * @param out
-   *          target ZIP stream.
-   */
-  private void copyEntry(ZipEntry zipEntry, InputStream in, ZipOutputStream out) throws IOException {
-    ZipEntry copy = copy(zipEntry);
-    copy.setTime(preserveTimestamps ? zipEntry.getTime() : System.currentTimeMillis());
-    ZipUtil.addEntry(copy, new BufferedInputStream(in), out);
-  }
-
-  /**
-   * Copy entry
-   *
-   * @param original - zipEntry to copy
-   * @return copy of the original entry
-   */
-  private ZipEntry copy(ZipEntry original) {
-    return copy(original, null);
-  }
-
-  /**
-   * Copy entry with another name.
-   *
-   * @param original - zipEntry to copy
-   * @param newName - new entry name, optional, if null, ogirinal's entry
-   * @return copy of the original entry, but with the given name
-   */
-  private ZipEntry copy(ZipEntry original, String newName) {
-    ZipEntry copy = new ZipEntry(newName == null ? original.getName() : newName);
-    if (original.getCrc() != -1) {
-      copy.setCrc(original.getCrc());
-    }
-    if (original.getMethod() != -1) {
-      copy.setMethod(original.getMethod());
-    }
-    if (original.getSize() >= 0) {
-      copy.setSize(original.getSize());
-    }
-    if (original.getExtra() != null) {
-      copy.setExtra(original.getExtra());
-    }
-
-    copy.setComment(original.getComment());
-    copy.setCompressedSize(original.getCompressedSize());
-    copy.setTime(original.getTime());
-    return copy;
-  }
-
-  /**
    * Creates a ZipFile from src and charset of this object. If a constructor with charset is
    * not available, throws an exception.
    *
@@ -594,68 +535,19 @@ public class Zips {
    *
    */
   private ZipFile getZipFile() throws IOException {
-    return getZipFile(src, charset);
+    return ZipFileUtil.getZipFile(src, charset);
   }
 
-  static ZipFile getZipFile(File src, Charset charset) throws IOException {
-    if (charset == null) {
-      return new ZipFile(src);
-    }
-
-    try {
-      Constructor constructor = ZipFile.class.getConstructor(new Class[] { File.class, Charset.class });
-      return (ZipFile) constructor.newInstance(new Object[] { src, charset });
-    }
-    catch (NoSuchMethodException e) {
-      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage());
-    }
-    catch (InstantiationException e) {
-      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage());
-    }
-    catch (IllegalAccessException e) {
-      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage());
-    }
-    catch (IllegalArgumentException e) {
-      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage());
-    }
-    catch (InvocationTargetException e) {
-      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage());
-    }
-  }
-
-  private ZipOutputStream createZipOutputStream(BufferedOutputStream outStream) {
-    if (charset == null)
-      return new ZipOutputStream(outStream);
-
-    try {
-      Constructor constructor = ZipOutputStream.class.getConstructor(new Class[] { OutputStream.class, Charset.class });
-      return (ZipOutputStream) constructor.newInstance(new Object[] { outStream, charset });
-    }
-    catch (NoSuchMethodException e) {
-      throw new IllegalStateException("Using constructor ZipOutputStream(OutputStream, Charset) has failed: " + e.getMessage());
-    }
-    catch (InstantiationException e) {
-      throw new IllegalStateException("Using constructor ZipOutputStream(OutputStream, Charset) has failed: " + e.getMessage());
-    }
-    catch (IllegalAccessException e) {
-      throw new IllegalStateException("Using constructor ZipOutputStream(OutputStream, Charset) has failed: " + e.getMessage());
-    }
-    catch (IllegalArgumentException e) {
-      throw new IllegalStateException("Using constructor ZipOutputStream(OutputStream, Charset) has failed: " + e.getMessage());
-    }
-    catch (InvocationTargetException e) {
-      throw new IllegalStateException("Using constructor ZipOutputStream(OutputStream, Charset) has failed: " + e.getMessage());
-    }
-  }
-
-  private final class CopyingCallback implements ZipEntryCallback {
+  private static class CopyingCallback implements ZipEntryCallback {
 
     private final Map entryByPath;
     private final ZipOutputStream out;
     private final Set visitedNames;
+    private final boolean preserveTimestapms;
 
-    private CopyingCallback(ZipEntryTransformerEntry[] entries, ZipOutputStream out) {
+    private CopyingCallback(ZipEntryTransformerEntry[] entries, ZipOutputStream out, boolean preserveTimestapms) {
       this.out = out;
+      this.preserveTimestapms = preserveTimestapms;
       entryByPath = ZipUtil.byPath(entries);
       visitedNames = new HashSet();
     }
@@ -670,7 +562,7 @@ public class Zips {
 
       ZipEntryTransformer transformer = (ZipEntryTransformer) entryByPath.remove(entryName);
       if (transformer == null) { // no transformer
-        copyEntry(zipEntry, in, out);
+        ZipEntryUtil.copyEntry(zipEntry, in, out, preserveTimestapms);
       }
       else { // still transfom entry
         transformer.transform(in, zipEntry, out);
@@ -678,7 +570,7 @@ public class Zips {
     }
   }
 
-  private class ZipEntryOrInfoAdapter implements ZipEntryCallback, ZipInfoCallback {
+  private static class ZipEntryOrInfoAdapter implements ZipEntryCallback, ZipInfoCallback {
 
     private final ZipEntryCallback entryCallback;
     private final ZipInfoCallback infoCallback;
