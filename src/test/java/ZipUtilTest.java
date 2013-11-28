@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import junit.framework.TestCase;
@@ -302,6 +303,20 @@ public class ZipUtilTest extends TestCase {
 
     ZipUtil.addEntry(src, fileName, newEntry, dest);
     assertTrue(ZipUtil.containsEntry(dest, fileName));
+  }
+  
+  public void testKeepEntriesState() throws IOException {
+    File src = new File(getClass().getResource("demo-keep-entries-state.zip").getPath());
+    final String existingEntryName = "TestFile.txt";
+    final String fileNameToAdd = "TestFile-II.txt";
+    assertFalse(ZipUtil.containsEntry(src, fileNameToAdd));
+    File newEntry = new File(getClass().getResource(fileNameToAdd).getPath());
+    File dest = File.createTempFile("temp.zip", null);
+    ZipUtil.addEntry(src, fileNameToAdd, newEntry, dest);
+    
+    ZipEntry srcEntry = new ZipFile(src).getEntry(existingEntryName);
+    ZipEntry destEntry = new ZipFile(dest).getEntry(existingEntryName);
+    assertTrue(srcEntry.getCompressedSize() == destEntry.getCompressedSize());
   }
 
   public void testRemoveEntry() throws IOException {
