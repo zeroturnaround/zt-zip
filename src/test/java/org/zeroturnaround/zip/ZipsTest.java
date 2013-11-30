@@ -515,4 +515,78 @@ public class ZipsTest extends TestCase {
     // the test
     assertEquals(103, (new File(dest, "TestFile-II.txt")).length());
   }
+
+  public void testUnpack() throws IOException {
+    File src = new File(MainExamplesTest.DEMO_ZIP);
+
+    final File dest = File.createTempFile("temp", null);
+
+    Zips.get(src).unpack().destination(dest).process();
+    assertTrue(dest.exists());
+    ZipUtil.iterate(src, new ZipInfoCallback() {
+      public void process(ZipEntry zipEntry) throws IOException {
+        assertTrue(new File(dest, zipEntry.getName()).exists());
+      }
+    });
+  }
+
+  public void testUnpackInPlace() throws IOException {
+    File original = new File(MainExamplesTest.DEMO_ZIP);
+    final File src = File.createTempFile("temp", null);
+    FileUtils.copyFile(original, src);
+    Zips.get(src).unpack().process();
+    assertTrue(src.isDirectory());
+    ZipUtil.iterate(original, new ZipInfoCallback() {
+      public void process(ZipEntry zipEntry) throws IOException {
+        assertTrue(new File(src, zipEntry.getName()).exists());
+      }
+    });
+  }
+
+  public void testUnpackImplicit() throws IOException {
+    File original = new File(MainExamplesTest.DEMO_ZIP);
+    final File dest = File.createTempFile("temp", null);
+    FileUtils.deleteQuietly(dest);
+    dest.mkdirs();
+    Zips.get(original).destination(dest).process();
+    assertTrue(dest.isDirectory());
+    ZipUtil.iterate(original, new ZipInfoCallback() {
+      public void process(ZipEntry zipEntry) throws IOException {
+        assertTrue(new File(dest, zipEntry.getName()).exists());
+      }
+    });
+  }
+
+  public void testUnpackWithTransofrmer() throws IOException {
+    final String fileName = "TestFile.txt";
+    File newEntry = new File("src/test/resources/" + fileName);
+
+    File src = new File("src/test/resources/demo-dirs.zip");
+    File dest = File.createTempFile("temp", ".zip");
+    try {
+      ZipEntryTransformer transformer = new ByteArrayZipEntryTransformer() {
+        protected byte[] transform(ZipEntry zipEntry, byte[] input) throws IOException {
+          String s = new String(input);
+          byte[] result = s.toUpperCase().getBytes();
+          return result;
+        }
+
+        protected boolean preserveTimestamps() {
+          // transformed entries preserve timestamps thanks to this.
+          return true;
+        }
+      };
+
+      Zips.get(src).unpack().addEntry(new FileSource(fileName, newEntry)).addTransformer(fileName, transformer).destination(dest).process();
+      assertTrue(dest.isDirectory());
+      assertTrue("Result doesn't containt 'attic'", new File(dest, "attic/treasure.txt").exists());
+      assertTrue("Result doesn't contain added entry", new File(dest, fileName).exists());
+
+      boolean contentIsUpper = new String(FileUtils.readFileToString(new File(dest, fileName))).startsWith("I'M A TEST FILE");
+      assertTrue("Added entry is not transformed!", contentIsUpper);
+    }
+    finally {
+      FileUtils.deleteQuietly(dest);
+    }
+  }
 }

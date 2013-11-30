@@ -21,6 +21,8 @@ import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,8 +33,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
@@ -89,6 +94,11 @@ public class Zips {
    * stop and ignore entry or that name mapper didn't know how to transform, etc.
    */
   private NameMapper nameMapper;
+
+  /**
+   * Flag to show that we want the final result to be unpacked
+   */
+  private boolean unpackedResult;
 
   private Zips(File src) {
     this.src = src;
@@ -294,11 +304,23 @@ public class Zips {
     return this;
   }
 
+  public Zips unpack() {
+    this.unpackedResult = true;
+    return this;
+  }
+
   /**
    * @return true if destination is not specified.
    */
   private boolean isInPlace() {
     return dest == null;
+  }
+
+  /**
+   * @return should the result of the processing be unpacked.
+   */
+  private boolean isUnpack() {
+    return unpackedResult || (dest != null && dest.isDirectory());
   }
 
   /**
@@ -324,17 +346,22 @@ public class Zips {
 
     ZipEntryTransformerEntry[] transformersArray = getTransformersArray();
 
-    File destinationZip = null;
+    File destinationFile = null;
     try {
-      destinationZip = isInPlace() ? File.createTempFile("zips", ".zip") : dest;
-      final ZipOutputStream out = ZipFileUtil.createZipOutputStream(new BufferedOutputStream(new FileOutputStream(destinationZip)), charset);
+      destinationFile = getDestinationFile();
+      ZipOutputStream out = null;
+      ZipEntryOrInfoAdapter zipEntryAdapter = null;
+
+      if (destinationFile.isFile()) {
+        out = ZipFileUtil.createZipOutputStream(new BufferedOutputStream(new FileOutputStream(destinationFile)), charset);
+        zipEntryAdapter = new ZipEntryOrInfoAdapter(new CopyingCallback(transformersArray, out, preserveTimestamps), null);
+      }
+      else { // directory
+        zipEntryAdapter = new ZipEntryOrInfoAdapter(new UnpackingCallback(transformersArray, destinationFile), null);
+      }
       try {
-
-        ZipEntryOrInfoAdapter zipEntryAdapter = new ZipEntryOrInfoAdapter(new CopyingCallback(transformersArray, out, preserveTimestamps), null);
-        iterateChangedAndAdded(zipEntryAdapter);
-        iterateExistingExceptRemoved(zipEntryAdapter);
-
-        handleInPlaceActions(destinationZip);
+        processAllEntries(zipEntryAdapter);
+        handleInPlaceActions(destinationFile);
       }
       finally {
         IOUtils.closeQuietly(out);
@@ -346,7 +373,47 @@ public class Zips {
     finally {
       if (isInPlace()) {
         // destinationZip is a temporary file
-        FileUtils.deleteQuietly(destinationZip);
+        FileUtils.deleteQuietly(destinationFile);
+      }
+    }
+  }
+
+  private void processAllEntries(ZipEntryOrInfoAdapter zipEntryAdapter) {
+    iterateChangedAndAdded(zipEntryAdapter);
+    iterateExistingExceptRemoved(zipEntryAdapter);
+  }
+
+  private File getDestinationFile() throws IOException {
+    if(isUnpack()) {
+      if(isInPlace()) {
+        File tempFile = File.createTempFile("zips", null);
+        FileUtils.deleteQuietly(tempFile);
+        tempFile.mkdirs(); // temp dir created
+        return tempFile;
+      }
+      else {
+        if (!dest.isDirectory()) {
+          // destination is a directory, actually we shouldn't be here, because this should mean we want an unpacked result.
+          FileUtils.deleteQuietly(dest);
+          File result = new File(dest.getAbsolutePath());
+          result.mkdirs(); // create a directory instead of dest file
+          return result;
+        }
+        return dest;
+      }
+    }
+    else {
+      // we need a file
+      if(isInPlace()) { // no destination specified, temp file
+        return File.createTempFile("zips", ".zip");
+      }
+      else {
+        if(dest.isDirectory()) {
+          // destination is a directory, actually we shouldn't be here, because this should mean we want an unpacked result.
+          FileUtils.deleteQuietly(dest);
+          return new File(dest.getAbsolutePath());
+        }
+        return dest;
       }
     }
   }
@@ -366,8 +433,7 @@ public class Zips {
    */
   public void iterate(ZipEntryCallback zipEntryCallback) {
     ZipEntryOrInfoAdapter zipEntryAdapter = new ZipEntryOrInfoAdapter(zipEntryCallback, null);
-    iterateChangedAndAdded(zipEntryAdapter);
-    iterateExistingExceptRemoved(zipEntryAdapter);
+    processAllEntries(zipEntryAdapter);
   }
 
   /**
@@ -386,8 +452,7 @@ public class Zips {
   public void iterate(ZipInfoCallback callback) {
     ZipEntryOrInfoAdapter zipEntryAdapter = new ZipEntryOrInfoAdapter(null, callback);
 
-    iterateChangedAndAdded(zipEntryAdapter);
-    iterateExistingExceptRemoved(zipEntryAdapter);
+    processAllEntries(zipEntryAdapter);
   }
 
   // ///////////// private api ///////////////
@@ -489,7 +554,12 @@ public class Zips {
     if (isInPlace()) {
       // we operate in-place
       FileUtils.forceDelete(src);
-      FileUtils.moveFile(result, src);
+      if (result.isFile()) {
+        FileUtils.moveFile(result, src);
+      }
+      else {
+        FileUtils.moveDirectory(result, src);
+      }
     }
   }
 
@@ -570,31 +640,83 @@ public class Zips {
     }
   }
 
-  private static class ZipEntryOrInfoAdapter implements ZipEntryCallback, ZipInfoCallback {
+  private static class UnpackingCallback implements ZipEntryCallback {
 
-    private final ZipEntryCallback entryCallback;
-    private final ZipInfoCallback infoCallback;
+    private final Map entryByPath;
+    private final Set visitedNames;
+    private final File destination;
 
-    public ZipEntryOrInfoAdapter(ZipEntryCallback entryCallback, ZipInfoCallback infoCallback) {
-      if (entryCallback != null && infoCallback != null || entryCallback == null && infoCallback == null) {
-        throw new IllegalArgumentException("Only one of ZipEntryCallback and ZipInfoCallback must be specified together");
-      }
-      this.entryCallback = entryCallback;
-      this.infoCallback = infoCallback;
-    }
-
-    public void process(ZipEntry zipEntry) throws IOException {
-      infoCallback.process(zipEntry);
+    private UnpackingCallback(ZipEntryTransformerEntry[] entries, File destination) {
+      this.destination = destination;
+      this.entryByPath = ZipUtil.byPath(entries);
+      visitedNames = new HashSet();
     }
 
     public void process(InputStream in, ZipEntry zipEntry) throws IOException {
-      if (entryCallback != null) {
-        entryCallback.process(in, zipEntry);
+      String entryName = zipEntry.getName();
+
+      if (visitedNames.contains(entryName)) {
+        return;
+      }
+      visitedNames.add(entryName);
+
+      File file = new File(destination, entryName);
+      if (zipEntry.isDirectory()) {
+        FileUtils.forceMkdir(file);
+        return;
       }
       else {
-        process(zipEntry);
+        FileUtils.forceMkdir(file.getParentFile());
+        file.createNewFile();
+      }
+
+      ZipEntryTransformer transformer = (ZipEntryTransformer) entryByPath.remove(entryName);
+      if (transformer == null) { // no transformer
+        FileUtil.copy(in, file);
+      }
+      else { // still transform entry
+        transformIntoFile(transformer, in, zipEntry, file);
       }
     }
 
+    private void transformIntoFile(final ZipEntryTransformer transformer, final InputStream entryIn, final ZipEntry zipEntry, final File destination) throws IOException {
+      final PipedInputStream pipedIn = new PipedInputStream();
+      final PipedOutputStream pipedOut = new PipedOutputStream(pipedIn);
+
+      final ZipOutputStream zipOut = new ZipOutputStream(pipedOut);
+      final ZipInputStream zipIn = new ZipInputStream(pipedIn);
+
+      ExecutorService newFixedThreadPool = Executors.newFixedThreadPool(1);
+
+      try {
+        newFixedThreadPool.execute(new Runnable() {
+          public void run() {
+            try {
+              transformer.transform(entryIn, zipEntry, zipOut);
+            }
+            catch (IOException e) {
+              ZipExceptionUtil.rethrow(e);
+            }
+          }
+        });
+        zipIn.getNextEntry();
+        FileUtil.copy(zipIn, destination);
+      }
+      finally {
+        try {
+          zipIn.closeEntry();
+        }
+        catch (IOException e) {
+          // closing quietly
+        }
+
+        newFixedThreadPool.shutdown();
+        IOUtils.closeQuietly(pipedIn);
+        IOUtils.closeQuietly(zipIn);
+        IOUtils.closeQuietly(pipedOut);
+        IOUtils.closeQuietly(zipOut);
+      }
+
+    }
   }
 }
