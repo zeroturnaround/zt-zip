@@ -59,7 +59,7 @@ public class Zips {
   private final File src;
 
   /**
-   * Optional destination archive, if null, src will be overwrittene
+   * Optional destination archive, if null, src will be overwritten
    */
   private File dest;
 
@@ -453,6 +453,26 @@ public class Zips {
     ZipEntryOrInfoAdapter zipEntryAdapter = new ZipEntryOrInfoAdapter(null, callback);
 
     processAllEntries(zipEntryAdapter);
+  }
+
+  /**
+   * Alias to ZipUtil.getEntry()
+   */
+  public byte[] getEntry(String name) {
+    if (src == null) {
+      throw new IllegalStateException("Source is not given");
+    }
+    return ZipUtil.unpackEntry(src, name);
+  }
+
+  /**
+   * Alias to ZipUtil.containsEntry()
+   */
+  public boolean containsEntry(String name) {
+    if (src == null) {
+      throw new IllegalStateException("Source is not given");
+    }
+    return ZipUtil.containsEntry(src, name);
   }
 
   // ///////////// private api ///////////////
