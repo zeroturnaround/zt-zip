@@ -178,6 +178,26 @@ public class ZipsTest extends TestCase {
     }
   }
 
+  public void testPreservingTimestampsSetter() throws IOException {
+    File src = new File(MainExamplesTest.DEMO_ZIP);
+
+    File dest = File.createTempFile("temp", ".zip");
+    final ZipFile zf = new ZipFile(src);
+    try {
+      Zips.get(src).addEntries(new ZipEntrySource[0]).setPreserveTimestamps(true).destination(dest).process();
+      Zips.get(dest).iterate(new ZipEntryCallback() {
+        public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+          String name = zipEntry.getName();
+          assertEquals("Timestapms differ at entry " + name, zf.getEntry(name).getTime(), zipEntry.getTime());
+        }
+      });
+    }
+    finally {
+      ZipUtil.closeQuietly(zf);
+      FileUtils.deleteQuietly(dest);
+    }
+  }
+
   public void testOverwritingTimestamps() throws IOException {
     File src = new File(MainExamplesTest.DEMO_ZIP);
 
