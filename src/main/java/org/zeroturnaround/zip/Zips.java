@@ -265,7 +265,7 @@ public class Zips {
    * @return this Zips for fluent api
    */
   public Zips setPreserveTimestamps(boolean preserve) {
-    this.preserveTimestamps = true;
+    this.preserveTimestamps = preserve;
     return this;
   }
 
