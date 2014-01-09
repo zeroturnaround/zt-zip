@@ -21,6 +21,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -336,19 +337,48 @@ public class ZipsTest extends TestCase {
 
   public void testPreserveRoot() throws Exception {
     File dest = File.createTempFile("temp", ".zip");
-    File parent = new File("src/test/resources/TestFile.txt").getParentFile();
+    File parent = new File("src/test/resources");
     // System.out.println("Parent file is " + parent);
     Zips.create().destination(dest).addFile(parent, true).process();
     ZipUtil.explode(dest);
-    assertTrue("Root dir is not preserved", (new File(dest, parent.getName())).exists());
+    File parentDir = new File(dest, parent.getName());
+    assertTrue("Root dir is not preserved", parentDir.exists());
+    assertTrue("File from the parent directory was not added", new File(parentDir, "TestFile.txt").exists());
   }
 
   public void testPreserveRootWithSubdirectories() throws Exception {
 	    File dest = File.createTempFile("temp", ".zip");
 	    File parent = new File("src/test/resources/testDirectory");
-	    // System.out.println("Parent file is " + parent);
     Zips.create().destination(dest).addFile(parent, true).process();
-	    assertTrue("File in subdirectory at specified path not found.",ZipUtil.containsEntry(dest, "testDirectory/testSubdirectory/testFileInTestSubdirectory.txt"));
+    String entryName = "testDirectory/testSubdirectory/testFileInTestSubdirectory.txt";
+    assertContainsEntryWithSeparatorrs(dest, entryName, "/"); // this failed on windows
+  }
+
+  private void assertContainsEntryWithSeparatorrs(File zip, String entryPath, String expectedSeparator) throws IOException {
+    char expectedSeparatorChar = expectedSeparator.charAt(0);
+    String osSpecificEntryPath = entryPath.replace('\\', expectedSeparatorChar).replace('/', expectedSeparatorChar);
+    ZipFile zf = new ZipFile(zip);
+    try {
+      if (zf.getEntry(osSpecificEntryPath) == null) {
+        char unexpectedSeparatorChar = expectedSeparatorChar == '/' ? '\\' : '/';
+        String nonOsSpecificEntryPath = entryPath.replace('\\', unexpectedSeparatorChar).replace('/', unexpectedSeparatorChar);
+        if (zf.getEntry(nonOsSpecificEntryPath) != null) {
+          fail(zip.getAbsolutePath() + " is not packed using directory separator '" + expectedSeparatorChar + "', found entry '" + nonOsSpecificEntryPath
+              + "', but not '" + osSpecificEntryPath + "'"); // used to fail with this message on windows
+        }
+        StringBuilder sb = new StringBuilder();
+        Enumeration entries = zf.entries();
+        while (entries.hasMoreElements()) {
+          ZipEntry ze = (ZipEntry) entries.nextElement();
+          sb.append(ze.getName()).append(",");
+        }
+        fail(zip.getAbsolutePath() + " doesn't contain entry '" + entryPath + "', but found following entries: " + sb.toString());
+      }
+    }
+    finally {
+      zf.close();
+    }
+    assertTrue("Didn't find entry '" + entryPath + "' from " + zip.getAbsolutePath(), ZipUtil.containsEntry(zip, entryPath));
   }
 
   public void testIgnoringRoot() throws Exception {
