@@ -206,6 +206,10 @@ public class Zips {
         continue;
       }
       String entryPath = getRelativePath(file, entryFile);
+      if (File.separator.equals("\\")) {
+        // replace directory separators on windows as at least 7zip packs zip with entries having "/" like on linux
+        entryPath = entryPath.replace('\\', '/');
+      }
       if (preserveRoot) {
         entryPath = file.getName() + entryPath;
       }
@@ -361,11 +365,11 @@ public class Zips {
       }
       try {
         processAllEntries(zipEntryAdapter);
-        handleInPlaceActions(destinationFile);
       }
       finally {
         IOUtils.closeQuietly(out);
       }
+        handleInPlaceActions(destinationFile);
     }
     catch (IOException e) {
       ZipExceptionUtil.rethrow(e);

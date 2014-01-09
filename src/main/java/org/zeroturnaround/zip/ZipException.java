@@ -8,4 +8,8 @@ public class ZipException extends RuntimeException {
   public ZipException(Exception e) {
     super(e);
   }
+
+  public ZipException(String msg, Throwable cause) {
+    super(msg, cause);
+  }
 }
