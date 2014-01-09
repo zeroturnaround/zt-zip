@@ -367,6 +367,9 @@ public final class ZipUtil {
         try {
           action.process(is, e);
         }
+        catch (IOException ze) {
+          throw new ZipException("Failed to process zip entry '" + e.getName() + " with action " + action, ze);
+        }
         catch (ZipBreakException ex) {
           break;
         }
@@ -411,6 +414,9 @@ public final class ZipUtil {
         InputStream is = zf.getInputStream(e);
         try {
           action.process(is, e);
+        }
+        catch (IOException ze) {
+          throw new ZipException("Failed to process zip entry '" + e.getName() + " with action " + action, ze);
         }
         catch (ZipBreakException ex) {
           break;
@@ -497,6 +503,9 @@ public final class ZipUtil {
         try {
           action.process(e);
         }
+        catch (IOException ze) {
+          throw new ZipException("Failed to process zip entry '" + e.getName() + " with action " + action, ze);
+        }
         catch (ZipBreakException ex) {
           break;
         }
@@ -531,6 +540,9 @@ public final class ZipUtil {
       while ((entry = in.getNextEntry()) != null) {
         try {
           action.process(in, entry);
+        }
+        catch (IOException ze) {
+          throw new ZipException("Failed to process zip entry '" + entry.getName() + " with action " + action, ze);
         }
         catch (ZipBreakException ex) {
           break;
@@ -572,6 +584,9 @@ public final class ZipUtil {
         }
         try {
           action.process(in, entry);
+        }
+        catch (IOException ze) {
+          throw new ZipException("Failed to process zip entry '" + entry.getName() + " with action " + action, ze);
         }
         catch (ZipBreakException ex) {
           break;
