@@ -361,11 +361,11 @@ public class Zips {
       }
       try {
         processAllEntries(zipEntryAdapter);
-        handleInPlaceActions(destinationFile);
       }
       finally {
         IOUtils.closeQuietly(out);
       }
+      handleInPlaceActions(destinationFile);
     }
     catch (IOException e) {
       ZipExceptionUtil.rethrow(e);
