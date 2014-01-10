@@ -368,7 +368,7 @@ public final class ZipUtil {
           action.process(is, e);
         }
         catch (IOException ze) {
-          throw new ZipException("Failed to process zip entry '" + e.getName() + " with action " + action, ze);
+          throw new ZipException("Failed to process zip entry '" + e.getName() + "' with action " + action, ze);
         }
         catch (ZipBreakException ex) {
           break;
