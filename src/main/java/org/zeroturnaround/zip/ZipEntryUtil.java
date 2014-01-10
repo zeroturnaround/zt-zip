@@ -49,7 +49,6 @@ class ZipEntryUtil {
     }
 
     copy.setComment(original.getComment());
-    copy.setCompressedSize(original.getCompressedSize());
     copy.setTime(original.getTime());
     return copy;
   }
