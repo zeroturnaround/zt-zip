@@ -389,7 +389,7 @@ public class ZipUtilTest extends TestCase {
     assertEquals(0, files.size());
   }
 
-  public void testIterateGivenEntries() {
+  public void testIterateGivenEntriesZipInfoCallback() {
     File src = new File(getClass().getResource("demo.zip").getPath());
     final Set files = new HashSet();
     files.add("foo.txt");
@@ -400,6 +400,23 @@ public class ZipUtilTest extends TestCase {
     ZipUtil.iterate(src, new String[] { "foo.txt", "foo1.txt", "foo2.txt" }, new ZipInfoCallback() {
 
       public void process(ZipEntry zipEntry) throws IOException {
+        files.remove(zipEntry.getName());
+      }
+    });
+    assertEquals(1, files.size());
+    assertTrue("Wrong entry hasn't beed iterated", files.contains("bar.txt"));
+  }
+  
+  public void testIterateGivenEntriesZipEntryCallback() {
+    File src = new File(getClass().getResource("demo.zip").getPath());
+    final Set files = new HashSet();
+    files.add("foo.txt");
+    files.add("bar.txt");
+    files.add("foo1.txt");
+    files.add("foo2.txt");
+
+    ZipUtil.iterate(src, new String[] { "foo.txt", "foo1.txt", "foo2.txt" }, new ZipEntryCallback() {
+      public void process(InputStream in, ZipEntry zipEntry) throws IOException {
         files.remove(zipEntry.getName());
       }
     });
