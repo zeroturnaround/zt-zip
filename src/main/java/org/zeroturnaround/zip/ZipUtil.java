@@ -1027,8 +1027,9 @@ public final class ZipUtil {
         }
       });
     }
-    else
+    else {
       pack(sourceDir, targetZipFile);
+    }
   }
 
   /**
@@ -1160,9 +1161,9 @@ public final class ZipUtil {
       String filename = filenames[i];
       File file = new File(dir, filename);
       boolean isDir = file.isDirectory();
-      String path = pathPrefix + file.getName();
+      String path = pathPrefix + file.getName(); //nosonar
       if (isDir) {
-        path += PATH_SEPARATOR;
+        path += PATH_SEPARATOR; //nosonar
       }
 
       // Create a ZIP entry
@@ -2161,13 +2162,16 @@ public final class ZipUtil {
     public void process(InputStream in, ZipEntry zipEntry) throws IOException {
       if (names.add(zipEntry.getName())) {
         ZipEntryTransformer entry = (ZipEntryTransformer) entryByPath.remove(zipEntry.getName());
-        if (entry != null)
+        if (entry != null) {
           entry.transform(in, zipEntry, out);
-        else
+        }
+        else {
           ZipEntryUtil.copyEntry(zipEntry, in, out);
+        }
       }
-      else if (log.isDebugEnabled())
+      else if (log.isDebugEnabled()) {
         log.debug("Duplicate entry: {}", zipEntry.getName());
+      }
     }
 
     /**
