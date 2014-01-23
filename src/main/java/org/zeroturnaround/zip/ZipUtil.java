@@ -900,13 +900,13 @@ public final class ZipUtil {
       return name.substring(root.length());
     }
 
-    private String getRootName(String name) {
-      name = name.substring(FilenameUtils.getPrefixLength(name));
-      int idx = name.indexOf(PATH_SEPARATOR);
+    private String getRootName(final String name) {
+      String newName = name.substring(FilenameUtils.getPrefixLength(name));
+      int idx = newName.indexOf(PATH_SEPARATOR);
       if (idx < 0) {
-        throw new ZipException("Entry " + name + " from the root of the zip is not supported");
+        throw new ZipException("Entry " + newName + " from the root of the zip is not supported");
       }
-      return name.substring(0, name.indexOf(PATH_SEPARATOR));
+      return newName.substring(0, newName.indexOf(PATH_SEPARATOR));
     }
   }
 
