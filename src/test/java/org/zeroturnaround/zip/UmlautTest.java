@@ -26,7 +26,15 @@ public class UmlautTest extends TestCase {
     }
   };
 
+  public boolean ignoreTestIfJava6() {
+    return (System.getProperty("java.version").startsWith("1.6"));
+  }
+
   public void testIterateWithCharset() throws Exception {
+    if (ignoreTestIfJava6()) {
+      return;
+    }
+
     FileInputStream fis = new FileInputStream(file);
 
     ZipUtil.iterate(fis, new ZipEntryCallback() {
@@ -35,19 +43,27 @@ public class UmlautTest extends TestCase {
       }
     }, Charset.forName("UTF8"));
   }
-  
+
   public void testIterateWithEntryNamesAndCharset() throws Exception {
+    if (ignoreTestIfJava6()) {
+      return;
+    }
+
     FileInputStream fis = new FileInputStream(file);
 
-    String[] entryNames = (String[])fileContents.toArray(new String[]{});
+    String[] entryNames = (String[]) fileContents.toArray(new String[] {});
     ZipUtil.iterate(fis, entryNames, new ZipEntryCallback() {
       public void process(InputStream in, ZipEntry zipEntry) throws IOException {
         assertTrue(zipEntry.getName(), fileContents.contains(zipEntry.getName()));
       }
     }, Charset.forName("UTF8"));
   }
-  
+
   public void testZipFileGetEntriesWithCharset() throws Exception {
+    if (ignoreTestIfJava6()) {
+      return;
+    }
+
     ZipFile zf = ZipFileUtil.getZipFile(file, Charset.forName("UTF8"));
     Enumeration entries = zf.entries();
     while (entries.hasMoreElements()) {
