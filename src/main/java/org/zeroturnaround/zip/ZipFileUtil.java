@@ -53,19 +53,19 @@ class ZipFileUtil {
       return (ZipFile) constructor.newInstance(new Object[] { src, charset });
     }
     catch (NoSuchMethodException e) {
-      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage());
+      throw new IllegalStateException("Your JRE doesn't support the ZipFile Charset constructor. Please upgrade JRE to 1.7 use this feature. Tried constructor ZipFile(File, Charset).", e);
     }
     catch (InstantiationException e) {
-      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage());
+      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage(), e);
     }
     catch (IllegalAccessException e) {
-      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage());
+      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage(), e);
     }
     catch (IllegalArgumentException e) {
-      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage());
+      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage(), e);
     }
     catch (InvocationTargetException e) {
-      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage());
+      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage(), e);
     }
   }
 
