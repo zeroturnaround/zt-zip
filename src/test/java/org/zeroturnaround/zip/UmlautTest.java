@@ -30,7 +30,6 @@ public class UmlautTest extends TestCase {
     FileInputStream fis = new FileInputStream(file);
 
     ZipUtil.iterate(fis, new ZipEntryCallback() {
-      @Override
       public void process(InputStream in, ZipEntry zipEntry) throws IOException {
         assertTrue(zipEntry.getName(), fileContents.contains(zipEntry.getName()));
       }
