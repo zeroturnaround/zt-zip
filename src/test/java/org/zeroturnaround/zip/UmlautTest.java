@@ -14,7 +14,7 @@ import java.util.zip.ZipFile;
 import junit.framework.TestCase;
 
 public class UmlautTest extends TestCase {
-  private static final File file = new File("src/test/resources/umlauts-öäš.zip");
+  private static final File file = new File("src/test/resources/umlauts-o\u0308a\u0308s\u030c.zip");
   // See StackOverFlow post why I'm not using just unicode
   // http://stackoverflow.com/questions/6153345/different-utf8-encoding-in-filenames-os-x/6153713#6153713
   private static final List fileContents = new ArrayList() {
