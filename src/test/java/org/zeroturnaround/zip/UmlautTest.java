@@ -38,9 +38,9 @@ public class UmlautTest extends TestCase {
 
   public void testZipFileGetEntriesWithCharset() throws Exception {
     ZipFile zf = ZipFileUtil.getZipFile(file, Charset.forName("UTF8"));
-    Enumeration<? extends ZipEntry> entries = zf.entries();
+    Enumeration entries = zf.entries();
     while (entries.hasMoreElements()) {
-      ZipEntry ze = entries.nextElement();
+      ZipEntry ze = (ZipEntry) entries.nextElement();
       assertTrue(ze.getName(), fileContents.contains(ze.getName()));
     }
   }
