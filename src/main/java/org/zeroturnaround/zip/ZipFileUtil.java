@@ -1,17 +1,52 @@
 package org.zeroturnaround.zip;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+/**
+ * Mainly methods to lookup Zip* class constructors. This is needed
+ * becauses Java 6 doesn't have constructors with Charsets. 
+ */
 class ZipFileUtil {
+  /**
+   * Returns a ZipInputStream opened with a given charset.
+   */
+  static ZipInputStream createZipInputStream(InputStream inStream, Charset charset) {
+    if (charset == null)
+      return new ZipInputStream(inStream);
 
+    try {
+      Constructor constructor = ZipInputStream.class.getConstructor(new Class[] { InputStream.class, Charset.class });
+      return (ZipInputStream) constructor.newInstance(new Object[] { inStream, charset });
+    }
+    catch (NoSuchMethodException e) {
+      throw new IllegalStateException("Using constructor ZipInputStream(InputStream, Charset) has failed: " + e.getMessage());
+    }
+    catch (InstantiationException e) {
+      throw new IllegalStateException("Using constructor ZipInputStream(InputStream, Charset) has failed: " + e.getMessage());
+    }
+    catch (IllegalAccessException e) {
+      throw new IllegalStateException("Using constructor ZipInputStream(InputStream, Charset) has failed: " + e.getMessage());
+    }
+    catch (IllegalArgumentException e) {
+      throw new IllegalStateException("Using constructor ZipInputStream(InputStream, Charset) has failed: " + e.getMessage());
+    }
+    catch (InvocationTargetException e) {
+      throw new IllegalStateException("Using constructor ZipInputStream(InputStream, Charset) has failed: " + e.getMessage());
+    }
+  }
+  
+  
   /**
    * Returns a ZipOutputStream opened with a given charset.
    */

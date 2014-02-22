@@ -24,6 +24,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -533,9 +534,15 @@ public final class ZipUtil {
    * @see ZipEntryCallback
    * @see #iterate(File, ZipEntryCallback)
    */
-  public static void iterate(InputStream is, ZipEntryCallback action) {
+  public static void iterate(InputStream is, ZipEntryCallback action, Charset charset) {
     try {
-      ZipInputStream in = new ZipInputStream(new BufferedInputStream(is));
+      ZipInputStream in = null;
+      if (charset == null) {
+        in = new ZipInputStream(new BufferedInputStream(is));
+      }
+      else {
+        in = ZipFileUtil.createZipInputStream(is, charset);
+      }
       ZipEntry entry;
       while ((entry = in.getNextEntry()) != null) {
         try {
@@ -552,6 +559,22 @@ public final class ZipUtil {
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
     }
+  }
+  
+  /**
+   * See {@link ZipUtil.iterate(InputStream, ZipEntryCallback)}. This method
+   * is a shorthand for a version where no Charset is specified.
+   * 
+   * @param is
+   *          input ZIP stream (it will not be closed automatically).
+   * @param action
+   *          action to be called for each entry.
+   *
+   * @see ZipEntryCallback
+   * @see #iterate(File, ZipEntryCallback)
+   */
+  public static void iterate(InputStream is, ZipEntryCallback action) {
+    iterate(is, action, null);
   }
 
   /**
