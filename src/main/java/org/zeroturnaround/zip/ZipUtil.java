@@ -562,7 +562,7 @@ public final class ZipUtil {
   }
   
   /**
-   * See {@link ZipUtil.iterate(InputStream, ZipEntryCallback)}. This method
+   * See {@link #iterate(InputStream, ZipEntryCallback, Charset)}. This method
    * is a shorthand for a version where no Charset is specified.
    * 
    * @param is
@@ -592,13 +592,19 @@ public final class ZipUtil {
    * @see ZipEntryCallback
    * @see #iterate(File, String[], ZipEntryCallback)
    */
-  public static void iterate(InputStream is, String[] entryNames, ZipEntryCallback action) {
+  public static void iterate(InputStream is, String[] entryNames, ZipEntryCallback action, Charset charset) {
     Set namesSet = new HashSet();
     for (int i = 0; i < entryNames.length; i++) {
       namesSet.add(entryNames[i]);
     }
     try {
-      ZipInputStream in = new ZipInputStream(new BufferedInputStream(is));
+      ZipInputStream in = null;
+      if (charset == null) {
+        in = new ZipInputStream(new BufferedInputStream(is));
+      }
+      else {
+        in = ZipFileUtil.createZipInputStream(is, charset);
+      }
       ZipEntry entry;
       while ((entry = in.getNextEntry()) != null) {
         if (!namesSet.contains(entry.getName())) {
@@ -619,6 +625,24 @@ public final class ZipUtil {
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
     }
+  }
+  
+  /**
+   * See @link{ {@link #iterate(InputStream, ZipEntryCallback, Charset)}. It is a
+   * shorthand where no Charset is specified.
+   *
+   * @param is
+   *          input ZIP stream (it will not be closed automatically).
+   * @param entryNames
+   *          names of entries to iterate
+   * @param action
+   *          action to be called for each entry.
+   *
+   * @see ZipEntryCallback
+   * @see #iterate(File, String[], ZipEntryCallback)
+   */
+  public static void iterate(InputStream is, String[] entryNames, ZipEntryCallback action) {
+    iterate(is, entryNames, action, null);
   }
 
   /**
