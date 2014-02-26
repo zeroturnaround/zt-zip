@@ -66,7 +66,7 @@ public final class ZipUtil {
   public static final int DEFAULT_COMPRESSION_LEVEL = Deflater.DEFAULT_COMPRESSION;
 
   // Use / instead of . to work around an issue with Maven Shade Plugin
-  private static final Logger log = LoggerFactory.getLogger("org/zeroturnaround/zip/ZipUtil".replace('/', '.'));
+  private static final Logger log = LoggerFactory.getLogger("org/zeroturnaround/zip/ZipUtil".replace('/', '.')); // NOSONAR
 
   private ZipUtil() {
   }
@@ -1208,9 +1208,9 @@ public final class ZipUtil {
       String filename = filenames[i];
       File file = new File(dir, filename);
       boolean isDir = file.isDirectory();
-      String path = pathPrefix + file.getName(); //nosonar
+      String path = pathPrefix + file.getName(); // NOSONAR
       if (isDir) {
-        path += PATH_SEPARATOR; //nosonar
+        path += PATH_SEPARATOR; // NOSONAR
       }
 
       // Create a ZIP entry
@@ -2591,7 +2591,7 @@ public final class ZipUtil {
    *
    * @author shelajev
    */
-  private static abstract class InPlaceAction {
+  private abstract static class InPlaceAction {
 
     /**
      * @return true if something has been changed during the action.

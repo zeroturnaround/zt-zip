@@ -54,7 +54,7 @@ import org.zeroturnaround.zip.transform.ZipEntryTransformerEntry;
 public class Zips {
 
   /**
-   * Source archive. TODO: make it work on streams
+   * Source archive.
    */
   private final File src;
 
