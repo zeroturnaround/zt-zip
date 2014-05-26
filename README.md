@@ -14,9 +14,9 @@ The project is built using java.util.zip.* packages for stream based access. Mos
 usage is also supported.
 
 ### Installation
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.zeroturnaround/zt-zip/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.zeroturnaround/zt-zip)
 
 The project artifacts are available in [Maven Central Repository](http://search.maven.org/#browse%7C895841167).
-
 To include it in your maven project then you have to specify the dependency.
 
 ```xml
