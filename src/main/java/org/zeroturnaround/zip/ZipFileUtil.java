@@ -17,6 +17,15 @@ import java.util.zip.ZipOutputStream;
  * becauses Java 6 doesn't have constructors with Charsets. 
  */
 class ZipFileUtil {
+  private static final String MISSING_METHOD_PLEASE_UPGRADE = "Your JRE doesn't support the ZipFile Charset constructor. Please upgrade JRE to 1.7 use this feature. Tried constructor ZipFile(File, Charset).";
+  private static final String CONSTRUCTOR_MESSAGE_FOR_ZIPFILE = "Using constructor ZipFile(File, Charset) has failed: ";
+  private static final String CONSTRUCTOR_MESSAGE_FOR_OUTPUT = "Using constructor ZipOutputStream(OutputStream, Charset) has failed: ";
+  private static final String CONSTRUCTOR_MESSAGE_FOR_INPUT = "Using constructor ZipInputStream(InputStream, Charset) has failed: ";
+
+  // Private constructor for the utility class
+  private ZipFileUtil() {
+  }
+  
   /**
    * Returns a ZipInputStream opened with a given charset.
    */
@@ -29,19 +38,19 @@ class ZipFileUtil {
       return (ZipInputStream) constructor.newInstance(new Object[] { inStream, charset });
     }
     catch (NoSuchMethodException e) {
-      throw new IllegalStateException("Using constructor ZipInputStream(InputStream, Charset) has failed: " + e.getMessage());
+      throw new IllegalStateException(MISSING_METHOD_PLEASE_UPGRADE, e);
     }
     catch (InstantiationException e) {
-      throw new IllegalStateException("Using constructor ZipInputStream(InputStream, Charset) has failed: " + e.getMessage());
+      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_INPUT + e.getMessage(), e);
     }
     catch (IllegalAccessException e) {
-      throw new IllegalStateException("Using constructor ZipInputStream(InputStream, Charset) has failed: " + e.getMessage());
+      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_INPUT + e.getMessage(), e);
     }
     catch (IllegalArgumentException e) {
-      throw new IllegalStateException("Using constructor ZipInputStream(InputStream, Charset) has failed: " + e.getMessage());
+      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_INPUT + e.getMessage(), e);
     }
     catch (InvocationTargetException e) {
-      throw new IllegalStateException("Using constructor ZipInputStream(InputStream, Charset) has failed: " + e.getMessage());
+      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_INPUT + e.getMessage(), e);
     }
   }
   
@@ -58,19 +67,19 @@ class ZipFileUtil {
       return (ZipOutputStream) constructor.newInstance(new Object[] { outStream, charset });
     }
     catch (NoSuchMethodException e) {
-      throw new IllegalStateException("Using constructor ZipOutputStream(OutputStream, Charset) has failed: " + e.getMessage());
+      throw new IllegalStateException(MISSING_METHOD_PLEASE_UPGRADE, e);
     }
     catch (InstantiationException e) {
-      throw new IllegalStateException("Using constructor ZipOutputStream(OutputStream, Charset) has failed: " + e.getMessage());
+      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_OUTPUT + e.getMessage(), e);
     }
     catch (IllegalAccessException e) {
-      throw new IllegalStateException("Using constructor ZipOutputStream(OutputStream, Charset) has failed: " + e.getMessage());
+      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_OUTPUT + e.getMessage(), e);
     }
     catch (IllegalArgumentException e) {
-      throw new IllegalStateException("Using constructor ZipOutputStream(OutputStream, Charset) has failed: " + e.getMessage());
+      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_OUTPUT + e.getMessage(), e);
     }
     catch (InvocationTargetException e) {
-      throw new IllegalStateException("Using constructor ZipOutputStream(OutputStream, Charset) has failed: " + e.getMessage());
+      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_OUTPUT + e.getMessage(), e);
     }
   }
 
@@ -87,19 +96,19 @@ class ZipFileUtil {
       return (ZipFile) constructor.newInstance(new Object[] { src, charset });
     }
     catch (NoSuchMethodException e) {
-      throw new IllegalStateException("Your JRE doesn't support the ZipFile Charset constructor. Please upgrade JRE to 1.7 use this feature. Tried constructor ZipFile(File, Charset).", e);
+      throw new IllegalStateException(MISSING_METHOD_PLEASE_UPGRADE, e);
     }
     catch (InstantiationException e) {
-      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage(), e);
+      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_ZIPFILE + e.getMessage(), e);
     }
     catch (IllegalAccessException e) {
-      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage(), e);
+      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_ZIPFILE + e.getMessage(), e);
     }
     catch (IllegalArgumentException e) {
-      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage(), e);
+      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_ZIPFILE + e.getMessage(), e);
     }
     catch (InvocationTargetException e) {
-      throw new IllegalStateException("Using constructor ZipFile(File, Charset) has failed: " + e.getMessage(), e);
+      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_ZIPFILE + e.getMessage(), e);
     }
   }
 

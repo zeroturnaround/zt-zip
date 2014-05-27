@@ -1322,7 +1322,7 @@ public final class ZipUtil {
    *
    * @author Pavel Grigorenko
    */
-  private static class RepackZipEntryCallback implements ZipEntryCallback {
+  private static final class RepackZipEntryCallback implements ZipEntryCallback {
 
     private ZipOutputStream out;
 
