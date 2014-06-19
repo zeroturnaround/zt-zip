@@ -30,12 +30,7 @@ import junit.framework.TestCase;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.zeroturnaround.zip.ZipBreakException;
-import org.zeroturnaround.zip.ZipEntryCallback;
-import org.zeroturnaround.zip.ZipEntrySource;
-import org.zeroturnaround.zip.ZipException;
-import org.zeroturnaround.zip.ZipInfoCallback;
-import org.zeroturnaround.zip.ZipUtil;
+import org.zeroturnaround.zip.*;
 
 public class ZipUtilTest extends TestCase {
 
@@ -61,6 +56,36 @@ public class ZipUtilTest extends TestCase {
     // if fails then maybe somebody changed the file contents and did not update
     // the test
     assertEquals(108, (new File(dest, "TestFile.txt")).length());
+  }
+
+  public void testPackEntryFileWithNameParameter() throws Exception {
+    File fileToPack = new File(getClass().getResource("TestFile.txt").getPath());
+    File dest = File.createTempFile("temp", null);
+    ZipUtil.packEntry(fileToPack, dest, "TestFile-II.txt");
+    assertTrue(dest.exists());
+
+    ZipUtil.explode(dest);
+    assertTrue((new File(dest, "TestFile-II.txt")).exists());
+    // if fails then maybe somebody changed the file contents and did not update
+    // the test
+    assertEquals(108, (new File(dest, "TestFile-II.txt")).length());
+  }
+
+  public void testPackEntryFileWithNameMapper() throws Exception {
+    File fileToPack = new File(getClass().getResource("TestFile.txt").getPath());
+    File dest = File.createTempFile("temp", null);
+    ZipUtil.packEntry(fileToPack, dest, new NameMapper() {
+      public String map(String name) {
+        return "TestFile-II.txt";
+      }
+    });
+    assertTrue(dest.exists());
+
+    ZipUtil.explode(dest);
+    assertTrue((new File(dest, "TestFile-II.txt")).exists());
+    // if fails then maybe somebody changed the file contents and did not update
+    // the test
+    assertEquals(108, (new File(dest, "TestFile-II.txt")).length());
   }
 
   public void testUnpackEntryFromFile() throws IOException {
@@ -218,7 +243,7 @@ public class ZipUtilTest extends TestCase {
     File fileToPack = new File(getClass().getResource("TestFile.txt").getPath());
     File fileToPackII = new File(getClass().getResource("TestFile-II.txt").getPath());
     File dest = File.createTempFile("temp", null);
-    ZipUtil.packEntries(new File[] { fileToPack, fileToPackII }, dest);
+    ZipUtil.packEntries(new File[]{fileToPack, fileToPackII}, dest);
     assertTrue(dest.exists());
 
     ZipUtil.explode(dest);
@@ -228,6 +253,26 @@ public class ZipUtilTest extends TestCase {
     // the test
     assertEquals(108, (new File(dest, "TestFile.txt")).length());
     assertEquals(103, (new File(dest, "TestFile-II.txt")).length());
+  }
+
+  public void testPackEntriesWithNameMapper() throws Exception {
+    File fileToPack = new File(getClass().getResource("TestFile.txt").getPath());
+    File fileToPackII = new File(getClass().getResource("TestFile-II.txt").getPath());
+    File dest = File.createTempFile("temp", null);
+    ZipUtil.packEntries(new File[] { fileToPack, fileToPackII }, dest, new NameMapper() {
+      public String map(String name) {
+        return "Changed-" + name;
+      }
+    });
+    assertTrue(dest.exists());
+
+    ZipUtil.explode(dest);
+    assertTrue((new File(dest, "Changed-TestFile.txt")).exists());
+    assertTrue((new File(dest, "Changed-TestFile-II.txt")).exists());
+    // if fails then maybe somebody changed the file contents and did not update
+    // the test
+    assertEquals(108, (new File(dest, "Changed-TestFile.txt")).length());
+    assertEquals(103, (new File(dest, "Changed-TestFile-II.txt")).length());
   }
 
   public void testZipException() {

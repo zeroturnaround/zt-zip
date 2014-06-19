@@ -763,6 +763,8 @@ public final class ZipUtil {
    *          input ZIP file.
    * @param outputDir
    *          output directory (created automatically if not found).
+   * @param mapper
+   *          call-back for renaming the entries.
    */
   public static void unpack(File zip, File outputDir, NameMapper mapper) {
     log.debug("Extracting '{}' into '{}'.", zip, outputDir);
@@ -796,6 +798,8 @@ public final class ZipUtil {
    *          input ZIP file.
    * @param outputDir
    *          output directory (created automatically if not found).
+   * @param mapper
+   *          call-back for renaming the entries.
    */
   public static void unwrap(File zip, File outputDir, NameMapper mapper) {
     log.debug("Unwraping '{}' into '{}'.", zip, outputDir);
@@ -825,6 +829,8 @@ public final class ZipUtil {
    *          inputstream for ZIP file.
    * @param outputDir
    *          output directory (created automatically if not found).
+   * @param mapper
+   *          call-back for renaming the entries.
    */
   public static void unpack(InputStream is, File outputDir, NameMapper mapper) {
     log.debug("Extracting {} into '{}'.", is, outputDir);
@@ -858,6 +864,8 @@ public final class ZipUtil {
    *          inputstream for ZIP file.
    * @param outputDir
    *          output directory (created automatically if not found).
+   * @param mapper
+   *          call-back for renaming the entries.
    */
   public static void unwrap(InputStream is, File outputDir, NameMapper mapper) {
     log.debug("Unwraping {} into '{}'.", is, outputDir);
@@ -1090,7 +1098,43 @@ public final class ZipUtil {
    *          ZIP file that will be created or overwritten.
    */
   public static void packEntry(File fileToPack, File destZipFile) {
-    packEntries(new File[] { fileToPack }, destZipFile);
+    packEntry(fileToPack, destZipFile, IdentityNameMapper.INSTANCE);
+  }
+
+  /**
+     * Compresses the given file into a ZIP file.
+     * <p>
+     * The ZIP file must not be a directory and its parent directory must exist.
+     *
+     * @param fileToPack
+     *          file that needs to be zipped.
+     * @param destZipFile
+     *          ZIP file that will be created or overwritten.
+     * @param fileName
+     *          the name for the file inside the archive
+     */
+    public static void packEntry(File fileToPack, File destZipFile, final String fileName) {
+        packEntry(fileToPack, destZipFile, new NameMapper() {
+          public String map(String name) {
+            return fileName;
+          }
+        });
+    }
+
+    /**
+   * Compresses the given file into a ZIP file.
+   * <p>
+   * The ZIP file must not be a directory and its parent directory must exist.
+   *
+   * @param fileToPack
+   *          file that needs to be zipped.
+   * @param destZipFile
+   *          ZIP file that will be created or overwritten.
+   * @param mapper
+   *          call-back for renaming the entries.
+   */
+  public static void packEntry(File fileToPack, File destZipFile, NameMapper mapper) {
+    packEntries(new File[] { fileToPack }, destZipFile, mapper);
   }
 
   /**
@@ -1104,6 +1148,22 @@ public final class ZipUtil {
    *          ZIP file that will be created or overwritten.
    */
   public static void packEntries(File[] filesToPack, File destZipFile) {
+    packEntries(filesToPack, destZipFile, IdentityNameMapper.INSTANCE);
+  }
+
+  /**
+   * Compresses the given files into a ZIP file.
+   * <p>
+   * The ZIP file must not be a directory and its parent directory must exist.
+   *
+   * @param filesToPack
+   *          files that needs to be zipped.
+   * @param destZipFile
+   *          ZIP file that will be created or overwritten.
+   * @param mapper
+   *          call-back for renaming the entries.
+   */
+  public static void packEntries(File[] filesToPack, File destZipFile, NameMapper mapper) {
     log.debug("Compressing '{}' into '{}'.", filesToPack, destZipFile);
 
     ZipOutputStream out = null;
@@ -1115,7 +1175,7 @@ public final class ZipUtil {
       for (int i = 0; i < filesToPack.length; i++) {
         File fileToPack = filesToPack[i];
 
-        ZipEntry zipEntry = new ZipEntry(fileToPack.getName());
+        ZipEntry zipEntry = new ZipEntry(mapper.map(fileToPack.getName()));
         zipEntry.setSize(fileToPack.length());
         zipEntry.setTime(fileToPack.lastModified());
         out.putNextEntry(zipEntry);
@@ -1141,6 +1201,8 @@ public final class ZipUtil {
    *          root directory.
    * @param targetZip
    *          ZIP file that will be created or overwritten.
+   * @param mapper
+   *          call-back for renaming the entries.
    */
   public static void pack(File sourceDir, File targetZip, NameMapper mapper) {
     pack(sourceDir, targetZip, mapper, DEFAULT_COMPRESSION_LEVEL);
@@ -1155,6 +1217,8 @@ public final class ZipUtil {
    *          root directory.
    * @param targetZip
    *          ZIP file that will be created or overwritten.
+   * @param mapper
+   *          call-back for renaming the entries.
    * @param compressionLevel
    *          compression level
    */
