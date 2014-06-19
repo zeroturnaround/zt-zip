@@ -1156,6 +1156,30 @@ public final class ZipUtil {
    * <p>
    * The ZIP file must not be a directory and its parent directory must exist.
    *
+   * @param destZipFile
+   *          ZIP file that will be created or overwritten.
+   * @param filesToPack
+   *          files that needs to be zipped.
+   * @param names
+   *          names for the files inside the archive.
+   *          must contain at least the same amount of items as files array
+   *          otherwise an IllegalArgumentException will be thrown
+   * @throws IllegalArgumentException if the file names array
+   *          contains less items than files array
+   */
+  public static void packEntries(File destZipFile, File[] filesToPack, String[] names) {
+      if (filesToPack.length > names.length) {
+          throw new IllegalArgumentException("file names array must contain " +
+                  "at least the same amount of items as files array");
+      }
+      packEntries(filesToPack, destZipFile, new ListNameMapper(names));
+  }
+
+  /**
+   * Compresses the given files into a ZIP file.
+   * <p>
+   * The ZIP file must not be a directory and its parent directory must exist.
+   *
    * @param filesToPack
    *          files that needs to be zipped.
    * @param destZipFile
