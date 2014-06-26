@@ -1,3 +1,4 @@
+package org.zeroturnaround.zip; 
 /**
  *    Copyright (C) 2012 ZeroTurnaround LLC <support@zeroturnaround.com>
  *
@@ -13,6 +14,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -21,21 +23,26 @@ import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.zeroturnaround.zip.ZipUtil;
 import org.zeroturnaround.zip.transform.ByteArrayZipEntryTransformer;
 
 import junit.framework.TestCase;
 
 public class ZipUtilInPlaceTest extends TestCase {
+
+  /** @noinspection ConstantConditions*/
+  private File file(String name) {
+    return new File(getClass().getClassLoader().getResource(name).getPath());
+  }
+
   public void testAddEntry() throws IOException {
-    File src = new File(getClass().getResource("demo.zip").getPath());
+    File src = file("demo.zip");
     File dest = File.createTempFile("temp.zip", null);
     try {
       FileUtils.copyFile(src, dest);
 
       final String fileName = "TestFile.txt";
       assertFalse(ZipUtil.containsEntry(dest, fileName));
-      File newEntry = new File(getClass().getResource(fileName).getPath());
+      File newEntry = file(fileName);
 
       ZipUtil.addEntry(dest, fileName, newEntry);
       assertTrue(ZipUtil.containsEntry(dest, fileName));
@@ -46,7 +53,7 @@ public class ZipUtilInPlaceTest extends TestCase {
   }
 
   public void testRemoveEntry() throws IOException {
-    File src = new File(getClass().getResource("demo.zip").getPath());
+    File src = file("demo.zip");
     File dest = File.createTempFile("temp", null);
     try {
       FileUtils.copyFile(src, dest);
@@ -64,7 +71,7 @@ public class ZipUtilInPlaceTest extends TestCase {
   }
 
   public void testRemoveDirs() throws IOException {
-    File src = new File(getClass().getResource("demo-dirs.zip").getPath());
+    File src = file("demo-dirs.zip");
 
     File dest = File.createTempFile("temp", null);
     try {
