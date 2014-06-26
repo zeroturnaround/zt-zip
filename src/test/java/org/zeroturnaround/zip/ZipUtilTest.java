@@ -294,6 +294,29 @@ public class ZipUtilTest extends TestCase {
     assertTrue(exceptionThrown);
   }
 
+  public void testPackEntriesWithNamesList() throws Exception {
+    File fileToPack = file("TestFile.txt");
+    File fileToPackII = file("TestFile-II.txt");
+    File dest = File.createTempFile("temp", null);
+
+    ZipUtil.pack(
+      FileSource.pair(
+          new File[]{fileToPack, fileToPackII},
+          new String[]{"Changed-TestFile.txt", "Changed-TestFile-II.txt"}),
+      dest
+    );
+
+    assertTrue(dest.exists());
+
+    ZipUtil.explode(dest);
+    assertTrue((new File(dest, "Changed-TestFile.txt")).exists());
+    assertTrue((new File(dest, "Changed-TestFile-II.txt")).exists());
+    // if fails then maybe somebody changed the file contents and did not update
+    // the test
+    assertEquals(108, (new File(dest, "Changed-TestFile.txt")).length());
+    assertEquals(103, (new File(dest, "Changed-TestFile-II.txt")).length());
+  }
+
   public void testPreserveRoot() throws Exception {
     File dest = File.createTempFile("temp", null);
     File parent = file("TestFile.txt").getParentFile();
