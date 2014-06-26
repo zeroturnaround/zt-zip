@@ -4,6 +4,9 @@ import junit.framework.TestCase;
 
 import java.io.File;
 
+/**
+ * @author Innokenty Shuvalov
+ */
 public class FileSourceTest extends TestCase {
 
   /** @noinspection ConstantConditions*/
