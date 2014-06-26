@@ -52,6 +52,7 @@ import org.zeroturnaround.zip.transform.ZipEntryTransformerEntry;
  * ZIP file manipulation utilities.
  *
  * @author Rein Raudjärv
+ * @author Innokenty Shuvalov
  *
  * @see #containsEntry(File, String)
  * @see #unpackEntry(File, String)
