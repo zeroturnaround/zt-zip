@@ -240,6 +240,10 @@ public class ZipsTest extends TestCase {
   }
 
   public void testCharsetEntry() throws IOException {
+    if (!ZipFileUtil.isCharsetSupported()) {
+      return; // skip
+    }
+
     File src = new File(MainExamplesTest.DEMO_ZIP);
     final String fileName = "TestFile.txt";
     assertFalse(ZipUtil.containsEntry(src, fileName));
