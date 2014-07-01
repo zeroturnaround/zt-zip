@@ -7,10 +7,12 @@ import java.io.OutputStream;
 
 import junit.framework.TestCase;
 
+import org.zeroturnaround.zip.commons.FileUtils;
+
 public class FileUtilTest extends TestCase {
   public void testGetTempFileFor() throws Exception {
     File tmpFile = File.createTempFile("prefix", "suffix");
-    File file = FileUtil.getTempFileFor(tmpFile);
+    File file = FileUtils.getTempFileFor(tmpFile);
     assertNotNull(file);
   }
 
@@ -18,7 +20,7 @@ public class FileUtilTest extends TestCase {
     File outFile = File.createTempFile("prefix", "suffix");
     File inFile = new File(MainExamplesTest.DEMO_ZIP);
     OutputStream out = new BufferedOutputStream(new FileOutputStream(outFile));
-    FileUtil.copy(inFile, out);
+    FileUtils.copy(inFile, out);
     out.close();
     assertEquals(inFile.length(), outFile.length());
   }

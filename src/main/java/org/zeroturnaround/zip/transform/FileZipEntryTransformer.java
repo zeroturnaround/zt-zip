@@ -9,9 +9,9 @@ import java.io.OutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.zeroturnaround.zip.FileSource;
+import org.zeroturnaround.zip.commons.FileUtils;
+import org.zeroturnaround.zip.commons.IOUtils;
 
 public abstract class FileZipEntryTransformer implements ZipEntryTransformer {
 

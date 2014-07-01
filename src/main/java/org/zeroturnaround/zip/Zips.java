@@ -40,8 +40,8 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
+import org.zeroturnaround.zip.commons.FileUtils;
+import org.zeroturnaround.zip.commons.IOUtils;
 import org.zeroturnaround.zip.transform.ZipEntryTransformer;
 import org.zeroturnaround.zip.transform.ZipEntryTransformerEntry;
 
@@ -696,7 +696,7 @@ public class Zips {
 
       ZipEntryTransformer transformer = (ZipEntryTransformer) entryByPath.remove(entryName);
       if (transformer == null) { // no transformer
-        FileUtil.copy(in, file);
+        FileUtils.copy(in, file);
       }
       else { // still transform entry
         transformIntoFile(transformer, in, zipEntry, file);
@@ -724,7 +724,7 @@ public class Zips {
           }
         });
         zipIn.getNextEntry();
-        FileUtil.copy(zipIn, destination);
+        FileUtils.copy(zipIn, destination);
       }
       finally {
         try {

@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.commons.io.IOUtils;
+import org.zeroturnaround.zip.commons.IOUtils;
 
 /**
  * Util class for static methods shared between ZipUtil and Zips.
