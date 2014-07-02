@@ -1,5 +1,3 @@
-package org.zeroturnaround.zip.commons;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -16,6 +14,7 @@ package org.zeroturnaround.zip.commons;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.zeroturnaround.zip.commons;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -30,6 +29,9 @@ import java.io.StringWriter;
 import java.io.Writer;
 
 /**
+ * This is a class that has been made significantly smaller (deleted a bunch of methods) and originally
+ * is from the Apache commons-io package. All license and other documentation is intact.
+ * 
  * General IO stream manipulation utilities.
  * <p>
  * This class provides static utility methods for input/output operations.

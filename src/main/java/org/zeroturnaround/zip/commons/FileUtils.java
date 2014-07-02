@@ -1,5 +1,3 @@
-package org.zeroturnaround.zip.commons;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -17,6 +15,8 @@ package org.zeroturnaround.zip.commons;
  * limitations under the License.
  */
 
+package org.zeroturnaround.zip.commons;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -31,6 +31,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * This is a class that has been made significantly smaller (deleted a bunch of methods) and originally
+ * is from the Apache commons-io package. All license and other documentation is intact.
+ * 
  * General file manipulation utilities.
  * <p>
  * Facilities are provided in the following areas:

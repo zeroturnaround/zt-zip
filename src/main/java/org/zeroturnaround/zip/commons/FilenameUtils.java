@@ -1,5 +1,3 @@
-package org.zeroturnaround.zip.commons;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -17,9 +15,14 @@ package org.zeroturnaround.zip.commons;
  * limitations under the License.
  */
 
+package org.zeroturnaround.zip.commons;
+
 import java.io.File;
 
 /**
+ * This is a class that has been made significantly smaller (deleted a bunch of methods) and originally
+ * is from the Apache commons-io package. All license and other documentation is intact.
+ * 
  * General filename and filepath manipulation utilities.
  * <p>
  * When dealing with filenames you can hit problems when moving from a Windows based development machine to a Unix based production machine. This class aims to help avoid those
