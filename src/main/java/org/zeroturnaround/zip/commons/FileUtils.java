@@ -27,10 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -220,68 +217,6 @@ public class FileUtils {
 
   // -----------------------------------------------------------------------
   /**
-   * Returns a human-readable version of the file size, where the input
-   * represents a specific number of bytes.
-   *
-   * @param size the number of bytes
-   * @return a human-readable display value (includes units)
-   */
-  public static String byteCountToDisplaySize(long size) {
-    String displaySize;
-
-    if (size / ONE_GB > 0) {
-      displaySize = String.valueOf(size / ONE_GB) + " GB";
-    }
-    else if (size / ONE_MB > 0) {
-      displaySize = String.valueOf(size / ONE_MB) + " MB";
-    }
-    else if (size / ONE_KB > 0) {
-      displaySize = String.valueOf(size / ONE_KB) + " KB";
-    }
-    else {
-      displaySize = String.valueOf(size) + " bytes";
-    }
-    return displaySize;
-  }
-
-  // -----------------------------------------------------------------------
-  /**
-   * Implements the same behaviour as the "touch" utility on Unix. It creates
-   * a new file with size 0 or, if the file exists already, it is opened and
-   * closed without modifying it, but updating the file date and time.
-   * <p>
-   * NOTE: As from v1.3, this method throws an IOException if the last modified date of the file cannot be set. Also, as from v1.3 this method creates parent directories if they do
-   * not exist.
-   *
-   * @param file the File to touch
-   * @throws IOException If an I/O problem occurs
-   */
-  public static void touch(File file) throws IOException {
-    if (!file.exists()) {
-      OutputStream out = openOutputStream(file);
-      IOUtils.closeQuietly(out);
-    }
-    boolean success = file.setLastModified(System.currentTimeMillis());
-    if (!success) {
-      throw new IOException("Unable to set the last modification time for " + file);
-    }
-  }
-
-  // -----------------------------------------------------------------------
-  /**
-   * Converts a Collection containing java.io.File instanced into array
-   * representation. This is to account for the difference between
-   * File.listFiles() and FileUtils.listFiles().
-   *
-   * @param files a Collection containing java.io.File instances
-   * @return an array of java.io.File
-   */
-  public static File[] convertFileCollectionToFileArray(Collection files) {
-    return (File[]) files.toArray(new File[files.size()]);
-  }
-
-  // -----------------------------------------------------------------------
-  /**
    * Compares the contents of two files to determine if they are equal or not.
    * <p>
    * This method checks to see if the two files are different lengths or if they point to the same file, before resorting to byte-by-byte comparison of the contents.
@@ -332,86 +267,6 @@ public class FileUtils {
       IOUtils.closeQuietly(input1);
       IOUtils.closeQuietly(input2);
     }
-  }
-
-  // -----------------------------------------------------------------------
-  /**
-   * Convert from a <code>URL</code> to a <code>File</code>.
-   * <p>
-   * From version 1.1 this method will decode the URL. Syntax such as <code>file:///my%20docs/file.txt</code> will be correctly decoded to <code>/my docs/file.txt</code>.
-   *
-   * @param url the file URL to convert, <code>null</code> returns <code>null</code>
-   * @return the equivalent <code>File</code> object, or <code>null</code> if the URL's protocol is not <code>file</code>
-   * @throws IllegalArgumentException if the file is incorrectly encoded
-   */
-  public static File toFile(URL url) {
-    if (url == null || !url.getProtocol().equals("file")) {
-      return null;
-    }
-    else {
-      String filename = url.getFile().replace('/', File.separatorChar);
-      int pos = 0;
-      while ((pos = filename.indexOf('%', pos)) >= 0) {
-        if (pos + 2 < filename.length()) {
-          String hexStr = filename.substring(pos + 1, pos + 3);
-          char ch = (char) Integer.parseInt(hexStr, 16);
-          filename = filename.substring(0, pos) + ch + filename.substring(pos + 3);
-        }
-      }
-      return new File(filename);
-    }
-  }
-
-  /**
-   * Converts each of an array of <code>URL</code> to a <code>File</code>.
-   * <p>
-   * Returns an array of the same size as the input. If the input is <code>null</code>, an empty array is returned. If the input contains <code>null</code>, the output array
-   * contains <code>null</code> at the same index.
-   * <p>
-   * This method will decode the URL. Syntax such as <code>file:///my%20docs/file.txt</code> will be correctly decoded to <code>/my docs/file.txt</code>.
-   *
-   * @param urls the file URLs to convert, <code>null</code> returns empty array
-   * @return a non-<code>null</code> array of Files matching the input, with a <code>null</code> item
-   *         if there was a <code>null</code> at that index in the input array
-   * @throws IllegalArgumentException if any file is not a URL file
-   * @throws IllegalArgumentException if any file is incorrectly encoded
-   * @since Commons IO 1.1
-   */
-  public static File[] toFiles(URL[] urls) {
-    if (urls == null || urls.length == 0) {
-      return EMPTY_FILE_ARRAY;
-    }
-    File[] files = new File[urls.length];
-    for (int i = 0; i < urls.length; i++) {
-      URL url = urls[i];
-      if (url != null) {
-        if (url.getProtocol().equals("file") == false) {
-          throw new IllegalArgumentException(
-              "URL could not be converted to a File: " + url);
-        }
-        files[i] = toFile(url);
-      }
-    }
-    return files;
-  }
-
-  /**
-   * Converts each of an array of <code>File</code> to a <code>URL</code>.
-   * <p>
-   * Returns an array of the same size as the input.
-   *
-   * @param files the files to convert
-   * @return an array of URLs matching the input
-   * @throws IOException if a file cannot be converted
-   */
-  public static URL[] toURLs(File[] files) throws IOException {
-    URL[] urls = new URL[files.length];
-
-    for (int i = 0; i < urls.length; i++) {
-      urls[i] = files[i].toURL();
-    }
-
-    return urls;
   }
 
   // -----------------------------------------------------------------------
@@ -558,39 +413,6 @@ public class FileUtils {
     }
   }
 
-  // -----------------------------------------------------------------------
-  /**
-   * Copies a directory to within another directory preserving the file dates.
-   * <p>
-   * This method copies the source directory and all its contents to a directory of the same name in the specified destination directory.
-   * <p>
-   * The destination directory is created if it does not exist. If the destination directory did exist, then this method merges the source with the destination, with the source
-   * taking precedence.
-   *
-   * @param srcDir an existing directory to copy, must not be <code>null</code>
-   * @param destDir the directory to place the copy in, must not be <code>null</code>
-   *
-   * @throws NullPointerException if source or destination is <code>null</code>
-   * @throws IOException if source or destination is invalid
-   * @throws IOException if an IO error occurs during copying
-   * @since Commons IO 1.2
-   */
-  public static void copyDirectoryToDirectory(File srcDir, File destDir) throws IOException {
-    if (srcDir == null) {
-      throw new NullPointerException("Source must not be null");
-    }
-    if (srcDir.exists() && srcDir.isDirectory() == false) {
-      throw new IllegalArgumentException("Source '" + destDir + "' is not a directory");
-    }
-    if (destDir == null) {
-      throw new NullPointerException("Destination must not be null");
-    }
-    if (destDir.exists() && destDir.isDirectory() == false) {
-      throw new IllegalArgumentException("Destination '" + destDir + "' is not a directory");
-    }
-    copyDirectory(srcDir, new File(destDir, srcDir.getName()), true);
-  }
-
   /**
    * Copies a whole directory to a new location preserving the file dates.
    * <p>
@@ -632,50 +454,6 @@ public class FileUtils {
   public static void copyDirectory(File srcDir, File destDir,
       boolean preserveFileDate) throws IOException {
     copyDirectory(srcDir, destDir, null, preserveFileDate);
-  }
-
-  /**
-   * Copies a filtered directory to a new location preserving the file dates.
-   * <p>
-   * This method copies the contents of the specified source directory to within the specified destination directory.
-   * <p>
-   * The destination directory is created if it does not exist. If the destination directory did exist, then this method merges the source with the destination, with the source
-   * taking precedence.
-   *
-   * <h4>Example: Copy directories only</h4>
-   * 
-   * <pre>
-   * // only copy the directory structure
-   * FileUtils.copyDirectory(srcDir, destDir, DirectoryFileFilter.DIRECTORY);
-   * </pre>
-   *
-   * <h4>Example: Copy directories and txt files</h4>
-   * 
-   * <pre>
-   * // Create a filter for &quot;.txt&quot; files
-   * IOFileFilter txtSuffixFilter = FileFilterUtils.suffixFileFilter(&quot;.txt&quot;);
-   * IOFileFilter txtFiles = FileFilterUtils.andFileFilter(FileFileFilter.FILE, txtSuffixFilter);
-   * 
-   * // Create a filter for either directories or &quot;.txt&quot; files
-   * FileFilter filter = FileFilterUtils.orFileFilter(DirectoryFileFilter.DIRECTORY, txtFiles);
-   * 
-   * // Copy using the filter
-   * FileUtils.copyDirectory(srcDir, destDir, filter);
-   * </pre>
-   *
-   * @param srcDir an existing directory to copy, must not be <code>null</code>
-   * @param destDir the new directory, must not be <code>null</code>
-   * @param filter the filter to apply, null means copy all directories and files
-   *          should be the same as the original
-   *
-   * @throws NullPointerException if source or destination is <code>null</code>
-   * @throws IOException if source or destination is invalid
-   * @throws IOException if an IO error occurs during copying
-   * @since Commons IO 1.4
-   */
-  public static void copyDirectory(File srcDir, File destDir,
-      FileFilter filter) throws IOException {
-    copyDirectory(srcDir, destDir, filter, true);
   }
 
   /**
@@ -800,36 +578,6 @@ public class FileUtils {
 
   // -----------------------------------------------------------------------
   /**
-   * Copies bytes from the URL <code>source</code> to a file <code>destination</code>. The directories up to <code>destination</code> will be created if they don't already exist.
-   * <code>destination</code> will be overwritten if it already exists.
-   *
-   * @param source the <code>URL</code> to copy bytes from, must not be <code>null</code>
-   * @param destination the non-directory <code>File</code> to write bytes to
-   *          (possibly overwriting), must not be <code>null</code>
-   * @throws IOException if <code>source</code> URL cannot be opened
-   * @throws IOException if <code>destination</code> is a directory
-   * @throws IOException if <code>destination</code> cannot be written
-   * @throws IOException if <code>destination</code> needs creating but can't be
-   * @throws IOException if an IO error occurs during copying
-   */
-  public static void copyURLToFile(URL source, File destination) throws IOException {
-    InputStream input = source.openStream();
-    try {
-      FileOutputStream output = openOutputStream(destination);
-      try {
-        IOUtils.copy(input, output);
-      }
-      finally {
-        IOUtils.closeQuietly(output);
-      }
-    }
-    finally {
-      IOUtils.closeQuietly(input);
-    }
-  }
-
-  // -----------------------------------------------------------------------
-  /**
    * Deletes a directory recursively.
    *
    * @param directory directory to delete
@@ -922,40 +670,6 @@ public class FileUtils {
 
   // -----------------------------------------------------------------------
   /**
-   * Waits for NFS to propagate a file creation, imposing a timeout.
-   * <p>
-   * This method repeatedly tests {@link File#exists()} until it returns true up to the maximum time specified in seconds.
-   *
-   * @param file the file to check, must not be <code>null</code>
-   * @param seconds the maximum time in seconds to wait
-   * @return true if file exists
-   * @throws NullPointerException if the file is <code>null</code>
-   */
-  public static boolean waitFor(File file, int seconds) {
-    int timeout = 0;
-    int tick = 0;
-    while (!file.exists()) {
-      if (tick++ >= 10) {
-        tick = 0;
-        if (timeout++ > seconds) {
-          return false;
-        }
-      }
-      try {
-        Thread.sleep(100);
-      }
-      catch (InterruptedException ignore) {
-        // ignore exception
-      }
-      catch (Exception ex) {
-        break;
-      }
-    }
-    return true;
-  }
-
-  // -----------------------------------------------------------------------
-  /**
    * Reads the contents of a file into a String.
    * The file is always closed.
    *
@@ -987,190 +701,6 @@ public class FileUtils {
    */
   public static String readFileToString(File file) throws IOException {
     return readFileToString(file, null);
-  }
-
-  /**
-   * Reads the contents of a file into a byte array.
-   * The file is always closed.
-   *
-   * @param file the file to read, must not be <code>null</code>
-   * @return the file contents, never <code>null</code>
-   * @throws IOException in case of an I/O error
-   * @since Commons IO 1.1
-   */
-  public static byte[] readFileToByteArray(File file) throws IOException {
-    InputStream in = null;
-    try {
-      in = openInputStream(file);
-      return IOUtils.toByteArray(in);
-    }
-    finally {
-      IOUtils.closeQuietly(in);
-    }
-  }
-
-  /**
-   * Reads the contents of a file line by line to a List of Strings.
-   * The file is always closed.
-   *
-   * @param file the file to read, must not be <code>null</code>
-   * @param encoding the encoding to use, <code>null</code> means platform default
-   * @return the list of Strings representing each line in the file, never <code>null</code>
-   * @throws IOException in case of an I/O error
-   * @throws java.io.UnsupportedEncodingException if the encoding is not supported by the VM
-   * @since Commons IO 1.1
-   */
-  public static List readLines(File file, String encoding) throws IOException {
-    InputStream in = null;
-    try {
-      in = openInputStream(file);
-      return IOUtils.readLines(in, encoding);
-    }
-    finally {
-      IOUtils.closeQuietly(in);
-    }
-  }
-
-  /**
-   * Reads the contents of a file line by line to a List of Strings using the default encoding for the VM.
-   * The file is always closed.
-   *
-   * @param file the file to read, must not be <code>null</code>
-   * @return the list of Strings representing each line in the file, never <code>null</code>
-   * @throws IOException in case of an I/O error
-   * @since Commons IO 1.3
-   */
-  public static List readLines(File file) throws IOException {
-    return readLines(file, null);
-  }
-
-  // -----------------------------------------------------------------------
-  /**
-   * Writes a String to a file creating the file if it does not exist.
-   *
-   * NOTE: As from v1.3, the parent directories of the file will be created
-   * if they do not exist.
-   *
-   * @param file the file to write
-   * @param data the content to write to the file
-   * @param encoding the encoding to use, <code>null</code> means platform default
-   * @throws IOException in case of an I/O error
-   * @throws java.io.UnsupportedEncodingException if the encoding is not supported by the VM
-   */
-  public static void writeStringToFile(File file, String data, String encoding) throws IOException {
-    OutputStream out = null;
-    try {
-      out = openOutputStream(file);
-      IOUtils.write(data, out, encoding);
-    }
-    finally {
-      IOUtils.closeQuietly(out);
-    }
-  }
-
-  /**
-   * Writes a String to a file creating the file if it does not exist using the default encoding for the VM.
-   * 
-   * @param file the file to write
-   * @param data the content to write to the file
-   * @throws IOException in case of an I/O error
-   */
-  public static void writeStringToFile(File file, String data) throws IOException {
-    writeStringToFile(file, data, null);
-  }
-
-  /**
-   * Writes a byte array to a file creating the file if it does not exist.
-   * <p>
-   * NOTE: As from v1.3, the parent directories of the file will be created if they do not exist.
-   *
-   * @param file the file to write to
-   * @param data the content to write to the file
-   * @throws IOException in case of an I/O error
-   * @since Commons IO 1.1
-   */
-  public static void writeByteArrayToFile(File file, byte[] data) throws IOException {
-    OutputStream out = null;
-    try {
-      out = openOutputStream(file);
-      out.write(data);
-    }
-    finally {
-      IOUtils.closeQuietly(out);
-    }
-  }
-
-  /**
-   * Writes the <code>toString()</code> value of each item in a collection to
-   * the specified <code>File</code> line by line.
-   * The specified character encoding and the default line ending will be used.
-   * <p>
-   * NOTE: As from v1.3, the parent directories of the file will be created if they do not exist.
-   *
-   * @param file the file to write to
-   * @param encoding the encoding to use, <code>null</code> means platform default
-   * @param lines the lines to write, <code>null</code> entries produce blank lines
-   * @throws IOException in case of an I/O error
-   * @throws java.io.UnsupportedEncodingException if the encoding is not supported by the VM
-   * @since Commons IO 1.1
-   */
-  public static void writeLines(File file, String encoding, Collection lines) throws IOException {
-    writeLines(file, encoding, lines, null);
-  }
-
-  /**
-   * Writes the <code>toString()</code> value of each item in a collection to
-   * the specified <code>File</code> line by line.
-   * The default VM encoding and the default line ending will be used.
-   *
-   * @param file the file to write to
-   * @param lines the lines to write, <code>null</code> entries produce blank lines
-   * @throws IOException in case of an I/O error
-   * @since Commons IO 1.3
-   */
-  public static void writeLines(File file, Collection lines) throws IOException {
-    writeLines(file, null, lines, null);
-  }
-
-  /**
-   * Writes the <code>toString()</code> value of each item in a collection to
-   * the specified <code>File</code> line by line.
-   * The specified character encoding and the line ending will be used.
-   * <p>
-   * NOTE: As from v1.3, the parent directories of the file will be created if they do not exist.
-   *
-   * @param file the file to write to
-   * @param encoding the encoding to use, <code>null</code> means platform default
-   * @param lines the lines to write, <code>null</code> entries produce blank lines
-   * @param lineEnding the line separator to use, <code>null</code> is system default
-   * @throws IOException in case of an I/O error
-   * @throws java.io.UnsupportedEncodingException if the encoding is not supported by the VM
-   * @since Commons IO 1.1
-   */
-  public static void writeLines(File file, String encoding, Collection lines, String lineEnding) throws IOException {
-    OutputStream out = null;
-    try {
-      out = openOutputStream(file);
-      IOUtils.writeLines(lines, lineEnding, out, encoding);
-    }
-    finally {
-      IOUtils.closeQuietly(out);
-    }
-  }
-
-  /**
-   * Writes the <code>toString()</code> value of each item in a collection to
-   * the specified <code>File</code> line by line.
-   * The default VM encoding and the specified line ending will be used.
-   *
-   * @param file the file to write to
-   * @param lines the lines to write, <code>null</code> entries produce blank lines
-   * @param lineEnding the line separator to use, <code>null</code> is system default
-   * @throws IOException in case of an I/O error
-   * @since Commons IO 1.3
-   */
-  public static void writeLines(File file, Collection lines, String lineEnding) throws IOException {
-    writeLines(file, null, lines, lineEnding);
   }
 
   // -----------------------------------------------------------------------
@@ -1345,134 +875,6 @@ public class FileUtils {
     return size;
   }
 
-  // -----------------------------------------------------------------------
-  /**
-   * Tests if the specified <code>File</code> is newer than the reference <code>File</code>.
-   *
-   * @param file the <code>File</code> of which the modification date must
-   *          be compared, must not be <code>null</code>
-   * @param reference the <code>File</code> of which the modification date
-   *          is used, must not be <code>null</code>
-   * @return true if the <code>File</code> exists and has been modified more
-   *         recently than the reference <code>File</code>
-   * @throws IllegalArgumentException if the file is <code>null</code>
-   * @throws IllegalArgumentException if the reference file is <code>null</code> or doesn't exist
-   */
-  public static boolean isFileNewer(File file, File reference) {
-    if (reference == null) {
-      throw new IllegalArgumentException("No specified reference file");
-    }
-    if (!reference.exists()) {
-      throw new IllegalArgumentException("The reference file '"
-          + file + "' doesn't exist");
-    }
-    return isFileNewer(file, reference.lastModified());
-  }
-
-  /**
-   * Tests if the specified <code>File</code> is newer than the specified <code>Date</code>.
-   * 
-   * @param file the <code>File</code> of which the modification date
-   *          must be compared, must not be <code>null</code>
-   * @param date the date reference, must not be <code>null</code>
-   * @return true if the <code>File</code> exists and has been modified
-   *         after the given <code>Date</code>.
-   * @throws IllegalArgumentException if the file is <code>null</code>
-   * @throws IllegalArgumentException if the date is <code>null</code>
-   */
-  public static boolean isFileNewer(File file, Date date) {
-    if (date == null) {
-      throw new IllegalArgumentException("No specified date");
-    }
-    return isFileNewer(file, date.getTime());
-  }
-
-  /**
-   * Tests if the specified <code>File</code> is newer than the specified
-   * time reference.
-   *
-   * @param file the <code>File</code> of which the modification date must
-   *          be compared, must not be <code>null</code>
-   * @param timeMillis the time reference measured in milliseconds since the
-   *          epoch (00:00:00 GMT, January 1, 1970)
-   * @return true if the <code>File</code> exists and has been modified after
-   *         the given time reference.
-   * @throws IllegalArgumentException if the file is <code>null</code>
-   */
-  public static boolean isFileNewer(File file, long timeMillis) {
-    if (file == null) {
-      throw new IllegalArgumentException("No specified file");
-    }
-    if (!file.exists()) {
-      return false;
-    }
-    return file.lastModified() > timeMillis;
-  }
-
-  // -----------------------------------------------------------------------
-  /**
-   * Tests if the specified <code>File</code> is older than the reference <code>File</code>.
-   *
-   * @param file the <code>File</code> of which the modification date must
-   *          be compared, must not be <code>null</code>
-   * @param reference the <code>File</code> of which the modification date
-   *          is used, must not be <code>null</code>
-   * @return true if the <code>File</code> exists and has been modified before
-   *         the reference <code>File</code>
-   * @throws IllegalArgumentException if the file is <code>null</code>
-   * @throws IllegalArgumentException if the reference file is <code>null</code> or doesn't exist
-   */
-  public static boolean isFileOlder(File file, File reference) {
-    if (reference == null) {
-      throw new IllegalArgumentException("No specified reference file");
-    }
-    if (!reference.exists()) {
-      throw new IllegalArgumentException("The reference file '"
-          + file + "' doesn't exist");
-    }
-    return isFileOlder(file, reference.lastModified());
-  }
-
-  /**
-   * Tests if the specified <code>File</code> is older than the specified <code>Date</code>.
-   * 
-   * @param file the <code>File</code> of which the modification date
-   *          must be compared, must not be <code>null</code>
-   * @param date the date reference, must not be <code>null</code>
-   * @return true if the <code>File</code> exists and has been modified
-   *         before the given <code>Date</code>.
-   * @throws IllegalArgumentException if the file is <code>null</code>
-   * @throws IllegalArgumentException if the date is <code>null</code>
-   */
-  public static boolean isFileOlder(File file, Date date) {
-    if (date == null) {
-      throw new IllegalArgumentException("No specified date");
-    }
-    return isFileOlder(file, date.getTime());
-  }
-
-  /**
-   * Tests if the specified <code>File</code> is older than the specified
-   * time reference.
-   *
-   * @param file the <code>File</code> of which the modification date must
-   *          be compared, must not be <code>null</code>
-   * @param timeMillis the time reference measured in milliseconds since the
-   *          epoch (00:00:00 GMT, January 1, 1970)
-   * @return true if the <code>File</code> exists and has been modified before
-   *         the given time reference.
-   * @throws IllegalArgumentException if the file is <code>null</code>
-   */
-  public static boolean isFileOlder(File file, long timeMillis) {
-    if (file == null) {
-      throw new IllegalArgumentException("No specified file");
-    }
-    if (!file.exists()) {
-      return false;
-    }
-    return file.lastModified() < timeMillis;
-  }
-
   /**
    * Moves a directory.
    * <p>
@@ -1510,39 +912,6 @@ public class FileUtils {
             "' after copy to '" + destDir + "'");
       }
     }
-  }
-
-  /**
-   * Moves a directory to another directory.
-   *
-   * @param src the file to be moved
-   * @param destDir the destination file
-   * @param createDestDir If <code>true</code> create the destination directory,
-   *          otherwise if <code>false</code> throw an IOException
-   * @throws NullPointerException if source or destination is <code>null</code>
-   * @throws IOException if source or destination is invalid
-   * @throws IOException if an IO error occurs moving the file
-   * @since Commons IO 1.4
-   */
-  public static void moveDirectoryToDirectory(File src, File destDir, boolean createDestDir) throws IOException {
-    if (src == null) {
-      throw new NullPointerException("Source must not be null");
-    }
-    if (destDir == null) {
-      throw new NullPointerException("Destination directory must not be null");
-    }
-    if (!destDir.exists() && createDestDir) {
-      destDir.mkdirs();
-    }
-    if (!destDir.exists()) {
-      throw new FileNotFoundException("Destination directory '" + destDir +
-          "' does not exist [createDestDir=" + createDestDir + "]");
-    }
-    if (!destDir.isDirectory()) {
-      throw new IOException("Destination '" + destDir + "' is not a directory");
-    }
-    moveDirectory(src, new File(destDir, src.getName()));
-
   }
 
   /**
@@ -1584,70 +953,6 @@ public class FileUtils {
         throw new IOException("Failed to delete original file '" + srcFile +
             "' after copy to '" + destFile + "'");
       }
-    }
-  }
-
-  /**
-   * Moves a file to a directory.
-   *
-   * @param srcFile the file to be moved
-   * @param destDir the destination file
-   * @param createDestDir If <code>true</code> create the destination directory,
-   *          otherwise if <code>false</code> throw an IOException
-   * @throws NullPointerException if source or destination is <code>null</code>
-   * @throws IOException if source or destination is invalid
-   * @throws IOException if an IO error occurs moving the file
-   * @since Commons IO 1.4
-   */
-  public static void moveFileToDirectory(File srcFile, File destDir, boolean createDestDir) throws IOException {
-    if (srcFile == null) {
-      throw new NullPointerException("Source must not be null");
-    }
-    if (destDir == null) {
-      throw new NullPointerException("Destination directory must not be null");
-    }
-    if (!destDir.exists() && createDestDir) {
-      destDir.mkdirs();
-    }
-    if (!destDir.exists()) {
-      throw new FileNotFoundException("Destination directory '" + destDir +
-          "' does not exist [createDestDir=" + createDestDir + "]");
-    }
-    if (!destDir.isDirectory()) {
-      throw new IOException("Destination '" + destDir + "' is not a directory");
-    }
-    moveFile(srcFile, new File(destDir, srcFile.getName()));
-  }
-
-  /**
-   * Moves a file or directory to the destination directory.
-   * <p>
-   * When the destination is on another file system, do a "copy and delete".
-   *
-   * @param src the file or directory to be moved
-   * @param destDir the destination directory
-   * @param createDestDir If <code>true</code> create the destination directory,
-   *          otherwise if <code>false</code> throw an IOException
-   * @throws NullPointerException if source or destination is <code>null</code>
-   * @throws IOException if source or destination is invalid
-   * @throws IOException if an IO error occurs moving the file
-   * @since Commons IO 1.4
-   */
-  public static void moveToDirectory(File src, File destDir, boolean createDestDir) throws IOException {
-    if (src == null) {
-      throw new NullPointerException("Source must not be null");
-    }
-    if (destDir == null) {
-      throw new NullPointerException("Destination must not be null");
-    }
-    if (!src.exists()) {
-      throw new FileNotFoundException("Source '" + src + "' does not exist");
-    }
-    if (src.isDirectory()) {
-      moveDirectoryToDirectory(src, destDir, createDestDir);
-    }
-    else {
-      moveFileToDirectory(src, destDir, createDestDir);
     }
   }
 

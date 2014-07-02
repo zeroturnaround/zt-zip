@@ -199,7 +199,8 @@ public class Zips {
       this.changedEntries.add(new FileSource(file.getName(), file));
       return this;
     }
-    Collection files = FileUtils.listFiles(file, null, true);
+    
+    Collection files = ZTFileUtil.listFiles(file);
     for (Iterator iter = files.iterator(); iter.hasNext();) {
       File entryFile = (File) iter.next();
       if (filter != null && !filter.accept(entryFile)) {
