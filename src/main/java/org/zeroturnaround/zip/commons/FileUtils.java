@@ -467,14 +467,14 @@ public class FileUtils {
    * The destination directory is created if it does not exist. If the destination directory did exist, then this method merges the source with the destination, with the source
    * taking precedence.
    *
-   * <h4>Example: Copy directories only</h4>
+   * <h3>Example: Copy directories only</h3>
    * 
    * <pre>
    * // only copy the directory structure
    * FileUtils.copyDirectory(srcDir, destDir, DirectoryFileFilter.DIRECTORY, false);
    * </pre>
    *
-   * <h4>Example: Copy directories and txt files</h4>
+   * <h3>Example: Copy directories and txt files</h3>
    * 
    * <pre>
    * // Create a filter for &quot;.txt&quot; files
