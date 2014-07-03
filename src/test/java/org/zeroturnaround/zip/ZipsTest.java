@@ -311,7 +311,7 @@ public class ZipsTest extends TestCase {
     File dest = File.createTempFile("temp", ".zip");
     FileFilter filter = new FileFilter() {
       public boolean accept(File pathname) {
-        return FilenameUtils.getName(pathname.getAbsolutePath()).startsWith("TestFile");
+        return pathname.getName().startsWith("TestFile");
       }
     };
 
