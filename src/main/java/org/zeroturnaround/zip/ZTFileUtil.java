@@ -50,16 +50,17 @@ public final class ZTFileUtil {
 
   private static void innerListFiles(File dir, Collection rtrn, FileFilter filter) {
 
-    File[] files = dir.listFiles();
+    String[] filenames = dir.list();
 
-    if (files != null) {
-      for (int i = 0; i < files.length; i++) {
-        if (files[i].isDirectory()) {
-          innerListFiles(files[i], rtrn, filter);
+    if (filenames != null) {
+      for (int i = 0; i < filenames.length; i++) {
+        File file = new File(dir, filenames[i]);
+        if (file.isDirectory()) {
+          innerListFiles(file, rtrn, filter);
         }
         else {
-          if (filter != null && filter.accept(files[i])) {
-            rtrn.add(files[i]);
+          if (filter != null && filter.accept(file)) {
+            rtrn.add(file);
           }
         }
       }
