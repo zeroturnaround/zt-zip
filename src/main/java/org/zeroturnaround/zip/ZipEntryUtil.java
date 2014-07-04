@@ -15,6 +15,8 @@ import org.zeroturnaround.zip.commons.IOUtils;
  *
  */
 class ZipEntryUtil {
+  
+  private ZipEntryUtil() {}
 
   /**
    * Copy entry
