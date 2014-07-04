@@ -39,4 +39,14 @@ public class ZTFileUtilTest extends TestCase {
     });
     assertEquals(files.size(), 1);
   }
+  
+  public void testListFilesFromFile() {
+    Collection files = ZTFileUtil.listFiles(new File("pom.xml"), null);
+    assertEquals(files.size(), 0);
+  }
+  
+  public void testListFilesFromNonExistent() {
+    Collection files = ZTFileUtil.listFiles(new File("don'tExist"), null);
+    assertEquals(files.size(), 0);
+  }
 }
