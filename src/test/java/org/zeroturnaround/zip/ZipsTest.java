@@ -30,9 +30,9 @@ import java.util.zip.ZipOutputStream;
 
 import junit.framework.TestCase;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
+import org.zeroturnaround.zip.commons.FileUtils;
+import org.zeroturnaround.zip.commons.FilenameUtils;
+import org.zeroturnaround.zip.commons.IOUtils;
 import org.zeroturnaround.zip.transform.ByteArrayZipEntryTransformer;
 import org.zeroturnaround.zip.transform.ZipEntryTransformer;
 
@@ -311,7 +311,7 @@ public class ZipsTest extends TestCase {
     File dest = File.createTempFile("temp", ".zip");
     FileFilter filter = new FileFilter() {
       public boolean accept(File pathname) {
-        return FilenameUtils.getName(pathname.getAbsolutePath()).startsWith("TestFile");
+        return pathname.getName().startsWith("TestFile");
       }
     };
 

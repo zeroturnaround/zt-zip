@@ -30,8 +30,9 @@ import java.util.zip.ZipOutputStream;
 
 import junit.framework.TestCase;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
+import org.zeroturnaround.zip.commons.FileUtils;
+import org.zeroturnaround.zip.commons.IOUtils;
+
 
 /** @noinspection ResultOfMethodCallIgnored*/
 public class ZipUtilTest extends TestCase {

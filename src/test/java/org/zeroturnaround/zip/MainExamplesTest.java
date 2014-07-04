@@ -8,7 +8,8 @@ import java.util.zip.ZipEntry;
 
 import junit.framework.TestCase;
 
-import org.apache.commons.io.IOUtils;
+import org.zeroturnaround.zip.commons.FileUtils;
+import org.zeroturnaround.zip.commons.IOUtils;
 import org.zeroturnaround.zip.transform.StringZipEntryTransformer;
 
 public final class MainExamplesTest extends TestCase {
@@ -53,7 +54,7 @@ public final class MainExamplesTest extends TestCase {
     
     File outFile = new File(outDir, "demo");
     
-    FileUtil.copy(demoFile, new FileOutputStream(outFile));
+    FileUtils.copy(demoFile, new FileOutputStream(outFile));
     ZipUtil.explode(outFile);
     assertTrue((new File(outDir, FOO_TXT)).exists());
   }

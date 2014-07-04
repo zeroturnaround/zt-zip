@@ -8,8 +8,8 @@ import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import org.apache.commons.io.IOUtils;
 import org.zeroturnaround.zip.ZipUtil;
+import org.zeroturnaround.zip.commons.IOUtils;
 
 
 public class UnpackExample {

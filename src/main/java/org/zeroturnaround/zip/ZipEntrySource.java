@@ -38,6 +38,7 @@ public interface ZipEntrySource {
   ZipEntry getEntry();
   
   /**
+   * @throws IOException can throw getting the InputStream
    * @return an input stream of the given entry 
    *    or <code>null</code> if this entry is a directory.
    */

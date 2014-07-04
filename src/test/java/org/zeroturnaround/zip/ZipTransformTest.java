@@ -26,8 +26,8 @@ import java.util.zip.ZipOutputStream;
 
 import junit.framework.TestCase;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
+import org.zeroturnaround.zip.commons.FileUtils;
+import org.zeroturnaround.zip.commons.IOUtils;
 import org.zeroturnaround.zip.transform.ByteArrayZipEntryTransformer;
 import org.zeroturnaround.zip.transform.FileZipEntryTransformer;
 import org.zeroturnaround.zip.transform.StreamZipEntryTransformer;

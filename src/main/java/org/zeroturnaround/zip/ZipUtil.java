@@ -40,11 +40,11 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.zeroturnaround.zip.commons.FileUtils;
+import org.zeroturnaround.zip.commons.FilenameUtils;
+import org.zeroturnaround.zip.commons.IOUtils;
 import org.zeroturnaround.zip.transform.ZipEntryTransformer;
 import org.zeroturnaround.zip.transform.ZipEntryTransformerEntry;
 
@@ -297,7 +297,7 @@ public final class ZipUtil {
 
     InputStream in = new BufferedInputStream(zf.getInputStream(ze));
     try {
-      FileUtil.copy(in, file);
+      FileUtils.copy(in, file);
     }
     finally {
       IOUtils.closeQuietly(in);
@@ -335,7 +335,7 @@ public final class ZipUtil {
     }
 
     public void process(InputStream in, ZipEntry zipEntry) throws IOException {
-      FileUtil.copy(in, file);
+      FileUtils.copy(in, file);
     }
 
   }
@@ -902,7 +902,7 @@ public final class ZipUtil {
             log.debug("Overwriting file '{}'.", zipEntry.getName());
           }
 
-          FileUtil.copy(in, file);
+          FileUtils.copy(in, file);
         }
       }
     }
@@ -947,7 +947,7 @@ public final class ZipUtil {
             log.debug("Overwriting file '{}'.", zipEntry.getName());
           }
 
-          FileUtil.copy(in, file);
+          FileUtils.copy(in, file);
         }
       }
     }
@@ -980,7 +980,7 @@ public final class ZipUtil {
   public static void explode(File zip) {
     try {
       // Find a new unique name is the same directory
-      File tempFile = FileUtil.getTempFileFor(zip);
+      File tempFile = FileUtils.getTempFileFor(zip);
 
       // Rename the archive
       FileUtils.moveFile(zip, tempFile);
@@ -1180,7 +1180,7 @@ public final class ZipUtil {
         zipEntry.setSize(fileToPack.length());
         zipEntry.setTime(fileToPack.lastModified());
         out.putNextEntry(zipEntry);
-        FileUtil.copy(fileToPack, out);
+        FileUtils.copy(fileToPack, out);
         out.closeEntry();
       }
     }
@@ -1291,7 +1291,7 @@ public final class ZipUtil {
 
         // Copy the file content
         if (!isDir) {
-          FileUtil.copy(file, out);
+          FileUtils.copy(file, out);
         }
 
         out.closeEntry();
@@ -1365,7 +1365,7 @@ public final class ZipUtil {
    */
   public static void repack(File zip, int compressionLevel) {
     try {
-      File tmpZip = FileUtil.getTempFileFor(zip);
+      File tmpZip = FileUtils.getTempFileFor(zip);
 
       repack(zip, tmpZip, compressionLevel);
 
@@ -1443,7 +1443,7 @@ public final class ZipUtil {
   public static void unexplode(File dir, int compressionLevel) {
     try {
       // Find a new unique name is the same directory
-      File zip = FileUtil.getTempFileFor(dir);
+      File zip = FileUtils.getTempFileFor(dir);
 
       // Pack it
       pack(dir, zip, compressionLevel);
