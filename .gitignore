@@ -7,3 +7,5 @@ test.log
 .project
 .settings/
 .idea
+pom.xml.versionsBackup
+release.sh
