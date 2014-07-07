@@ -1,6 +1,14 @@
 ********************************************
   ZT Zip Changelog
 ********************************************
+1.8
+
+* Removed dependency on commons-io
+* ZipUtil.pack more memory efficient for large directories
+* Fixed preserving compressed state of copied entries
+* Fixed packing files from a directory based on an accept filter
+* Improved Charset support
+
 1.6-SNAPSHOT
 * Started to write a changelog 
 * Added public CI, https://travis-ci.org/
