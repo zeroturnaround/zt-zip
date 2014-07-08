@@ -30,6 +30,9 @@ To include it in your maven project then you have to specify the dependency.
 ...
 ```
 
+Notice that [1.8](https://oss.sonatype.org/content/repositories/releases/org/zeroturnaround/zt-zip/1.8/) is the last Java 1.4 compatible release. 
+Since then Java 1.5 is required.
+
 ## Background
 
 We had the following functional requirements:
@@ -50,7 +53,7 @@ and these non-functional requirements:
 3. be effective to use - do not traverse an entire ZIP file if only a single entry is needed
 4. be safe to use - do not enable user to leave streams open and keep files locked
 5. do not declare exceptions
-6. be compatible with Java 1.4
+6. be compatible with Java 1.5
 
 ## Examples
 
