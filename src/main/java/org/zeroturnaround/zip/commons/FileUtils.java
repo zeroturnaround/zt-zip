@@ -518,11 +518,11 @@ public class FileUtils {
     }
 
     // Cater for destination being directory within the source directory (see IO-141)
-    List exclusionList = null;
+    List<String> exclusionList = null;
     if (destDir.getCanonicalPath().startsWith(srcDir.getCanonicalPath())) {
       File[] srcFiles = filter == null ? srcDir.listFiles() : srcDir.listFiles(filter);
       if (srcFiles != null && srcFiles.length > 0) {
-        exclusionList = new ArrayList(srcFiles.length);
+        exclusionList = new ArrayList<String>(srcFiles.length);
         for (int i = 0; i < srcFiles.length; i++) {
           File copiedFile = new File(destDir, srcFiles[i].getName());
           exclusionList.add(copiedFile.getCanonicalPath());
@@ -544,7 +544,7 @@ public class FileUtils {
    * @since Commons IO 1.1
    */
   private static void doCopyDirectory(File srcDir, File destDir, FileFilter filter,
-      boolean preserveFileDate, List exclusionList) throws IOException {
+      boolean preserveFileDate, List<String> exclusionList) throws IOException {
     if (destDir.exists()) {
       if (destDir.isDirectory() == false) {
         throw new IOException("Destination '" + destDir + "' exists but is not a directory");

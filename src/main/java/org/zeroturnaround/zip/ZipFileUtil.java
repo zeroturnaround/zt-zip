@@ -35,7 +35,7 @@ class ZipFileUtil {
       return new ZipInputStream(inStream);
 
     try {
-      Constructor constructor = ZipInputStream.class.getConstructor(new Class[] { InputStream.class, Charset.class });
+      Constructor<ZipInputStream> constructor = ZipInputStream.class.getConstructor(new Class[] { InputStream.class, Charset.class });
       return (ZipInputStream) constructor.newInstance(new Object[] { inStream, charset });
     }
     catch (NoSuchMethodException e) {
@@ -64,7 +64,7 @@ class ZipFileUtil {
       return new ZipOutputStream(outStream);
 
     try {
-      Constructor constructor = ZipOutputStream.class.getConstructor(new Class[] { OutputStream.class, Charset.class });
+      Constructor<ZipOutputStream> constructor = ZipOutputStream.class.getConstructor(new Class[] { OutputStream.class, Charset.class });
       return (ZipOutputStream) constructor.newInstance(new Object[] { outStream, charset });
     }
     catch (NoSuchMethodException e) {
@@ -93,7 +93,7 @@ class ZipFileUtil {
     }
 
     try {
-      Constructor constructor = ZipFile.class.getConstructor(new Class[] { File.class, Charset.class });
+      Constructor<ZipFile> constructor = ZipFile.class.getConstructor(new Class[] { File.class, Charset.class });
       return (ZipFile) constructor.newInstance(new Object[] { src, charset });
     }
     catch (NoSuchMethodException e) {

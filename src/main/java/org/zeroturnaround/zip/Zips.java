@@ -29,7 +29,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -76,17 +75,17 @@ public class Zips {
   /**
    * List<ZipEntrySource>
    */
-  private List changedEntries = new ArrayList();
+  private List<ZipEntrySource> changedEntries = new ArrayList<ZipEntrySource>();
 
   /**
-   * List<String>
+   * Set<String>
    */
-  private Set removedEntries = new HashSet();
+  private Set<String> removedEntries = new HashSet<String>();
 
   /**
    * List<ZipEntryTransformerEntry>
    */
-  private List transformers = new ArrayList();
+  private List<ZipEntryTransformerEntry> transformers = new ArrayList<ZipEntryTransformerEntry>();
 
   /*
    * If you want many name mappers here, you can create some compound instance that knows if
@@ -200,9 +199,8 @@ public class Zips {
       return this;
     }
     
-    Collection files = ZTFileUtil.listFiles(file);
-    for (Iterator iter = files.iterator(); iter.hasNext();) {
-      File entryFile = (File) iter.next();
+    Collection<File> files = ZTFileUtil.listFiles(file);
+    for (File entryFile : files) {
       if (filter != null && !filter.accept(entryFile)) {
         continue;
       }
@@ -349,8 +347,6 @@ public class Zips {
       throw new IllegalArgumentException("Source and destination shouldn't be null together");
     }
 
-    ZipEntryTransformerEntry[] transformersArray = getTransformersArray();
-
     File destinationFile = null;
     try {
       destinationFile = getDestinationFile();
@@ -359,10 +355,10 @@ public class Zips {
 
       if (destinationFile.isFile()) {
         out = ZipFileUtil.createZipOutputStream(new BufferedOutputStream(new FileOutputStream(destinationFile)), charset);
-        zipEntryAdapter = new ZipEntryOrInfoAdapter(new CopyingCallback(transformersArray, out, preserveTimestamps), null);
+        zipEntryAdapter = new ZipEntryOrInfoAdapter(new CopyingCallback(transformers, out, preserveTimestamps), null);
       }
       else { // directory
-        zipEntryAdapter = new ZipEntryOrInfoAdapter(new UnpackingCallback(transformersArray, destinationFile), null);
+        zipEntryAdapter = new ZipEntryOrInfoAdapter(new UnpackingCallback(transformers, destinationFile), null);
       }
       try {
         processAllEntries(zipEntryAdapter);
@@ -492,16 +488,16 @@ public class Zips {
       // if we don't have source specified, then we have nothing to iterate.
       return;
     }
-    final Set removedDirs = ZipUtil.filterDirEntries(src, removedEntries);
+    final Set<String> removedDirs = ZipUtil.filterDirEntries(src, removedEntries);
 
     ZipFile zf = null;
     try {
       zf = getZipFile();
 
       // manage existing entries
-      Enumeration en = zf.entries();
+      Enumeration<? extends ZipEntry> en = zf.entries();
       while (en.hasMoreElements()) {
-        ZipEntry entry = (ZipEntry) en.nextElement();
+        ZipEntry entry = en.nextElement();
         String entryName = entry.getName();
         if (removedEntries.contains(entryName) || isEntryInDir(removedDirs, entryName)) {
           // removed entries are
@@ -545,8 +541,8 @@ public class Zips {
    * @param zipEntryCallback callback to execute on entries or their info
    */
   private void iterateChangedAndAdded(ZipEntryOrInfoAdapter zipEntryCallback) {
-    for (Iterator it = changedEntries.iterator(); it.hasNext();) {
-      ZipEntrySource entrySource = (ZipEntrySource) it.next();
+
+    for (ZipEntrySource entrySource : changedEntries) {
       try {
         ZipEntry entry = entrySource.getEntry();
         if (nameMapper != null) {
@@ -594,30 +590,15 @@ public class Zips {
    * @param dirNames dirs
    * @param entryName entryPath
    */
-  private boolean isEntryInDir(Set dirNames, String entryName) {
+  private boolean isEntryInDir(Set<String> dirNames, String entryName) {
     // this should be done with a trie, put dirNames in a trie and check if entryName leads to
     // some node or not.
-    Iterator iter = dirNames.iterator();
-    while (iter.hasNext()) {
-      String dirName = (String) iter.next();
+    for(String dirName : dirNames) {
       if (entryName.startsWith(dirName)) {
         return true;
       }
     }
     return false;
-  }
-
-  /**
-   * @return transformers as array. Replace with .toArray, when we accept generics
-   */
-  private ZipEntryTransformerEntry[] getTransformersArray() {
-    ZipEntryTransformerEntry[] result = new ZipEntryTransformerEntry[transformers.size()];
-    int idx = 0;
-    Iterator iter = transformers.iterator();
-    while (iter.hasNext()) {
-      result[idx++] = (ZipEntryTransformerEntry) iter.next();
-    }
-    return result;
   }
 
   /**
@@ -635,16 +616,16 @@ public class Zips {
 
   private static class CopyingCallback implements ZipEntryCallback {
 
-    private final Map entryByPath;
+    private final Map<String, ZipEntryTransformer> entryByPath;
     private final ZipOutputStream out;
-    private final Set visitedNames;
+    private final Set<String> visitedNames;
     private final boolean preserveTimestapms;
 
-    private CopyingCallback(ZipEntryTransformerEntry[] entries, ZipOutputStream out, boolean preserveTimestapms) {
+    private CopyingCallback(List<ZipEntryTransformerEntry> transformerEntries, ZipOutputStream out, boolean preserveTimestapms) {
       this.out = out;
       this.preserveTimestapms = preserveTimestapms;
-      entryByPath = ZipUtil.byPath(entries);
-      visitedNames = new HashSet();
+      entryByPath = ZipUtil.transformersByPath(transformerEntries);
+      visitedNames = new HashSet<String>();
     }
 
     public void process(InputStream in, ZipEntry zipEntry) throws IOException {
@@ -667,14 +648,14 @@ public class Zips {
 
   private static class UnpackingCallback implements ZipEntryCallback {
 
-    private final Map entryByPath;
-    private final Set visitedNames;
+    private final Map<String, ZipEntryTransformer> entryByPath;
+    private final Set<String> visitedNames;
     private final File destination;
 
-    private UnpackingCallback(ZipEntryTransformerEntry[] entries, File destination) {
+    private UnpackingCallback(List<ZipEntryTransformerEntry> entries, File destination) {
       this.destination = destination;
-      this.entryByPath = ZipUtil.byPath(entries);
-      visitedNames = new HashSet();
+      this.entryByPath = ZipUtil.transformersByPath(entries);
+      visitedNames = new HashSet<String>();
     }
 
     public void process(InputStream in, ZipEntry zipEntry) throws IOException {

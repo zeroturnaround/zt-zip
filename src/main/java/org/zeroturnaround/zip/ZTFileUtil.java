@@ -24,15 +24,15 @@ public final class ZTFileUtil {
   private ZTFileUtil() {
   }
 
-  public static Collection listFiles(File dir) {
+  public static Collection<File> listFiles(File dir) {
     return listFiles(dir, null);
   }
   
-  public static Collection listFiles(File dir, FileFilter filter) {
-    Collection rtrn = new ArrayList();
+  public static Collection<File> listFiles(File dir, FileFilter filter) {
+    Collection<File> accumulator = new ArrayList<File>();
 
     if (dir.isFile()) {
-      return rtrn;
+      return accumulator;
     }
     
     if (filter == null) {
@@ -44,11 +44,11 @@ public final class ZTFileUtil {
       };
     }
 
-    innerListFiles(dir, rtrn, filter);
-    return rtrn;
+    innerListFiles(dir, accumulator, filter);
+    return accumulator;
   }
 
-  private static void innerListFiles(File dir, Collection rtrn, FileFilter filter) {
+  private static void innerListFiles(File dir, Collection<File> accumulator, FileFilter filter) {
 
     String[] filenames = dir.list();
 
@@ -56,11 +56,11 @@ public final class ZTFileUtil {
       for (int i = 0; i < filenames.length; i++) {
         File file = new File(dir, filenames[i]);
         if (file.isDirectory()) {
-          innerListFiles(file, rtrn, filter);
+          innerListFiles(file, accumulator, filter);
         }
         else {
           if (filter != null && filter.accept(file)) {
-            rtrn.add(file);
+            accumulator.add(file);
           }
         }
       }

@@ -31,7 +31,7 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.Deflater;
@@ -361,7 +361,7 @@ public final class ZipUtil {
     try {
       zf = new ZipFile(zip);
 
-      Enumeration en = zf.entries();
+      Enumeration<? extends ZipEntry> en = zf.entries();
       while (en.hasMoreElements()) {
         ZipEntry e = (ZipEntry) en.nextElement();
 
@@ -455,7 +455,7 @@ public final class ZipUtil {
     try {
       zf = new ZipFile(zip);
 
-      Enumeration en = zf.entries();
+      Enumeration<? extends ZipEntry> en = zf.entries();
       while (en.hasMoreElements()) {
         ZipEntry e = (ZipEntry) en.nextElement();
         try {
@@ -594,7 +594,7 @@ public final class ZipUtil {
    * @see #iterate(File, String[], ZipEntryCallback)
    */
   public static void iterate(InputStream is, String[] entryNames, ZipEntryCallback action, Charset charset) {
-    Set namesSet = new HashSet();
+    Set<String> namesSet = new HashSet<String>();
     for (int i = 0; i < entryNames.length; i++) {
       namesSet.add(entryNames[i]);
     }
@@ -1686,7 +1686,7 @@ public final class ZipUtil {
     ZipOutputStream out = null;
     try {
       out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destZip)));
-      copyEntries(zip, out, new HashSet(Arrays.asList(paths)));
+      copyEntries(zip, out, new HashSet<String>(Arrays.asList(paths)));
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
@@ -1724,7 +1724,7 @@ public final class ZipUtil {
    */
   private static void copyEntries(File zip, final ZipOutputStream out) {
     // this one doesn't call copyEntries with ignoredEntries, because that has poorer performance
-    final Set names = new HashSet();
+    final Set<String> names = new HashSet<String>();
     iterate(zip, new ZipEntryCallback() {
       public void process(InputStream in, ZipEntry zipEntry) throws IOException {
         String entryName = zipEntry.getName();
@@ -1748,9 +1748,9 @@ public final class ZipUtil {
    * @param ignoredEntries
    *          paths of entries not to copy
    */
-  private static void copyEntries(File zip, final ZipOutputStream out, final Set ignoredEntries) {
-    final Set names = new HashSet();
-    final Set dirNames = filterDirEntries(zip, ignoredEntries);
+  private static void copyEntries(File zip, final ZipOutputStream out, final Set<String> ignoredEntries) {
+    final Set<String> names = new HashSet<String>();
+    final Set<String> dirNames = filterDirEntries(zip, ignoredEntries);
     iterate(zip, new ZipEntryCallback() {
       public void process(InputStream in, ZipEntry zipEntry) throws IOException {
         String entryName = zipEntry.getName();
@@ -1758,9 +1758,7 @@ public final class ZipUtil {
           return;
         }
 
-        Iterator iter = dirNames.iterator();
-        while (iter.hasNext()) {
-          String dirName = (String) iter.next();
+        for(String dirName: dirNames) {
           if (entryName.startsWith(dirName)) {
             return;
           }
@@ -1785,17 +1783,15 @@ public final class ZipUtil {
    * @return Set<String> names of entries that are dirs.
    *
    */
-  static Set filterDirEntries(File zip, Collection names) {
-    Set dirs = new HashSet();
+  static Set<String> filterDirEntries(File zip, Collection<String> names) {
+    Set<String> dirs = new HashSet<String>();
     if (zip == null) {
       return dirs;
     }
     ZipFile zf = null;
     try {
       zf = new ZipFile(zip);
-      Iterator iterator = names.iterator();
-      while (iterator.hasNext()) {
-        String entryName = (String) iterator.next();
+      for(String entryName : names) {
         ZipEntry entry = zf.getEntry(entryName);
         if (entry.isDirectory()) {
           dirs.add(entry.getName());
@@ -1936,12 +1932,12 @@ public final class ZipUtil {
       log.debug("Copying '" + zip + "' to '" + destZip + "' and replacing entries " + Arrays.asList(entries) + ".");
     }
 
-    final Map entryByPath = byPath(entries);
+    final Map<String, ZipEntrySource> entryByPath = entriesByPath(entries);
     final int entryCount = entryByPath.size();
     try {
       final ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destZip)));
       try {
-        final Set names = new HashSet();
+        final Set<String> names = new HashSet<String>();
         iterate(zip, new ZipEntryCallback() {
           public void process(InputStream in, ZipEntry zipEntry) throws IOException {
             if (names.add(zipEntry.getName())) {
@@ -2002,12 +1998,12 @@ public final class ZipUtil {
           + ".");
     }
 
-    final Map entryByPath = byPath(entries);
+    final Map<String, ZipEntrySource> entryByPath = entriesByPath(entries);
     try {
       final ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destZip)));
       try {
         // Copy and replace entries
-        final Set names = new HashSet();
+        final Set<String> names = new HashSet<String>();
         iterate(zip, new ZipEntryCallback() {
           public void process(InputStream in, ZipEntry zipEntry) throws IOException {
             if (names.add(zipEntry.getName())) {
@@ -2026,8 +2022,8 @@ public final class ZipUtil {
         });
 
         // Add new entries
-        for (Iterator it = entryByPath.values().iterator(); it.hasNext();) {
-          addEntry((ZipEntrySource) it.next(), out);
+        for (ZipEntrySource zipEntrySource : entryByPath.values()) {
+          addEntry(zipEntrySource, out);
         }
       }
       finally {
@@ -2059,23 +2055,10 @@ public final class ZipUtil {
   /**
    * @return given entries indexed by path.
    */
-  static Map byPath(ZipEntrySource[] entries) {
-    Map result = new HashMap();
+  static Map<String, ZipEntrySource> entriesByPath(ZipEntrySource... entries) {
+    Map<String, ZipEntrySource> result = new HashMap<String, ZipEntrySource>();
     for (int i = 0; i < entries.length; i++) {
       ZipEntrySource source = entries[i];
-      result.put(source.getPath(), source);
-    }
-    return result;
-  }
-
-  /**
-   * @return given entries indexed by path.
-   */
-  static Map byPath(Collection entries) {
-    Map result = new HashMap();
-    Iterator iter = entries.iterator();
-    while (iter.hasNext()) {
-      ZipEntrySource source = (ZipEntrySource) iter.next();
       result.put(source.getPath(), source);
     }
     return result;
@@ -2167,7 +2150,7 @@ public final class ZipUtil {
     try {
       ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destZip)));
       try {
-        TransformerZipEntryCallback action = new TransformerZipEntryCallback(entries, out);
+        TransformerZipEntryCallback action = new TransformerZipEntryCallback(Arrays.asList(entries), out);
         iterate(zip, action);
         return action.found();
       }
@@ -2246,7 +2229,7 @@ public final class ZipUtil {
 
     try {
       ZipOutputStream out = new ZipOutputStream(os);
-      TransformerZipEntryCallback action = new TransformerZipEntryCallback(entries, out);
+      TransformerZipEntryCallback action = new TransformerZipEntryCallback(Arrays.asList(entries), out);
       iterate(is, action);
       // Finishes writing the contents of the ZIP output stream without closing
       // the underlying stream.
@@ -2260,13 +2243,13 @@ public final class ZipUtil {
 
   private static class TransformerZipEntryCallback implements ZipEntryCallback {
 
-    private final Map entryByPath;
+    private final Map<String, ZipEntryTransformer> entryByPath;
     private final int entryCount;
     private final ZipOutputStream out;
-    private final Set names = new HashSet();
+    private final Set<String> names = new HashSet<String>();
 
-    public TransformerZipEntryCallback(ZipEntryTransformerEntry[] entries, ZipOutputStream out) {
-      entryByPath = byPath(entries);
+    public TransformerZipEntryCallback(List<ZipEntryTransformerEntry> entries, ZipOutputStream out) {
+      entryByPath = transformersByPath(entries);
       entryCount = entryByPath.size();
       this.out = out;
     }
@@ -2298,10 +2281,9 @@ public final class ZipUtil {
   /**
    * @return transformers by path.
    */
-  static Map byPath(ZipEntryTransformerEntry[] entries) {
-    Map result = new HashMap();
-    for (int i = 0; i < entries.length; i++) {
-      ZipEntryTransformerEntry entry = entries[i];
+  static Map<String, ZipEntryTransformer> transformersByPath(List<ZipEntryTransformerEntry> entries) {
+    Map<String, ZipEntryTransformer> result = new HashMap<String, ZipEntryTransformer>();
+    for (ZipEntryTransformerEntry entry: entries) {
       result.put(entry.getPath(), entry.getTransformer());
     }
     return result;
@@ -2412,7 +2394,7 @@ public final class ZipUtil {
        * We guarantee that no entry of the second archive is skipped as there
        * are same number of unique entries in both archives.
        */
-      Enumeration en = zf1.entries();
+      Enumeration<? extends ZipEntry> en = zf1.entries();
       while (en.hasMoreElements()) {
         ZipEntry e1 = (ZipEntry) en.nextElement();
         String path = e1.getName();
