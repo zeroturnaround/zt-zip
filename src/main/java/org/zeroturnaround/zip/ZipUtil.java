@@ -296,7 +296,12 @@ public final class ZipUtil {
     }
 
     if(ze.isDirectory() || zf.getInputStream(ze) == null) {
-      FileUtils.forceDelete(file);
+      if(file.isDirectory()) {
+        return true;
+      }
+      if(file.exists()) {
+        FileUtils.forceDelete(file);
+      }
       return file.mkdirs();
     }
 
