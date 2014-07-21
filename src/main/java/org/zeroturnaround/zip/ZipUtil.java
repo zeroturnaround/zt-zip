@@ -295,6 +295,11 @@ public final class ZipUtil {
       return false; // entry not found
     }
 
+    if(ze.isDirectory() || zf.getInputStream(ze) == null) {
+      FileUtils.forceDelete(file);
+      return file.mkdirs();
+    }
+
     InputStream in = new BufferedInputStream(zf.getInputStream(ze));
     try {
       FileUtils.copy(in, file);

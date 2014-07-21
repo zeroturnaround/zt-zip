@@ -28,10 +28,10 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-import junit.framework.TestCase;
-
 import org.zeroturnaround.zip.commons.FileUtils;
 import org.zeroturnaround.zip.commons.IOUtils;
+
+import junit.framework.TestCase;
 
 
 /** @noinspection ResultOfMethodCallIgnored*/
@@ -99,6 +99,7 @@ public class ZipUtilTest extends TestCase {
   public void testUnpackEntryFromFile() throws IOException {
     final String name = "foo";
     final byte[] contents = "bar".getBytes();
+
 
     File file = File.createTempFile("temp", null);
     try {
@@ -639,6 +640,20 @@ public class ZipUtilTest extends TestCase {
     finally {
       FileUtils.forceDelete(destDir);
     }
+  }
+
+  public void testUnpackEntryDir() throws Exception {
+    File src = file("demo-dirs.zip");
+    File dest = File.createTempFile("unpackEntryDir", null);
+    try {
+      ZipUtil.unpackEntry(src, "a", dest);
+      assertTrue("Couldn't unpackEntry of a directory entry from a zip!", dest.exists());
+      assertTrue("UnpackedEntry of a directory is not a dir!", dest.isDirectory());
+    }
+    finally {
+      FileUtils.forceDelete(dest);
+    }
+
   }
 
 }
