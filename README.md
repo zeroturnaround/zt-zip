@@ -103,6 +103,21 @@ ZipUtil.unpack(new File("/tmp/demo.zip"), new File("/tmp/demo"), new NameMapper(
 });
 ```
 
+#### Extract files from a ZIP archive that match a name pattern
+```java
+ZipUtil.unpack(new File("/tmp/demo.zip"), new File("/tmp/demo"), new NameMapper() {
+  public String map(String name) {
+    if (name.contains("/doc")) {
+      return name;
+    }
+    else {
+      // returning null from the map method will disregard the entry
+      return null;
+    }
+  }
+});
+```
+
 #### Print .class entry names in a ZIP archive
 ```java
 ZipUtil.iterate(new File("/tmp/demo.zip"), new ZipInfoCallback() {
