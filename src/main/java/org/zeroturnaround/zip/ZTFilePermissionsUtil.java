@@ -1,11 +1,11 @@
 package org.zeroturnaround.zip;
 
+import java.io.File;
+
 class ZTFilePermissionsUtil {
   
   private ZTFilePermissionsUtil() {
   }
-  
-  private static ZTFilePermissionsStrategy DEFAULT_STRATEGY = new Java5FileApiFilePermissionsStrategy();
   
   private static final int OWNER_READ_FLAG =     0400;
   private static final int OWNER_WRITE_FLAG =    0200;
@@ -61,6 +61,27 @@ class ZTFilePermissionsUtil {
     permissions.setOthersCanRead((mode &  OTHERS_READ_FLAG) > 0 );
     
     return permissions;
+  }
+  
+  private static final ZTFilePermissionsStrategy NOP_STRATEGY = new ZTFilePermissionsStrategy() {
+    public void setPermissions(File file, ZTFilePermissions permissions) {
+      // do nothing
+    }
+    
+    public ZTFilePermissions getPermissions(File file) {
+      return null;
+    }
+  };
+  
+  private static final ZTFilePermissionsStrategy DEFAULT_STRATEGY = fetchDefaultStrategy();
+
+  private static ZTFilePermissionsStrategy fetchDefaultStrategy() {
+    try {
+      return new Java6FileApiPermissionsStrategy();
+    }
+    catch (ZipException e) {
+      return NOP_STRATEGY;
+    }
   }
   
 }

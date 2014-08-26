@@ -2,11 +2,8 @@ package org.zeroturnaround.zip;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FilePermission;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -120,8 +117,9 @@ class ZipEntryUtil {
     zipEntry.setTime(file.lastModified());
     
     ZTFilePermissions permissions = ZTFilePermissionsUtil.getDefaultStategy().getPermissions(file);
-    ZipEntryUtil.setZTFilePermissions(zipEntry, permissions);
-    
+    if (permissions != null) {
+      ZipEntryUtil.setZTFilePermissions(zipEntry, permissions);
+    }
     return zipEntry;
   }
   
