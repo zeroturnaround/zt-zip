@@ -9,10 +9,6 @@ import junit.framework.TestCase;
 public class FilePermissionsTest extends TestCase {
   private final File testFile = new File(getClass().getClassLoader().getResource("TestFile.txt").getPath());
   
-  public void beforeMethod() {
-    System.out.println("Before method called!");
-  }
-  
   public void testPreserveExecuteFlag() throws Exception {
     File tmpDir = File.createTempFile("FilePermissionsTest-", null);
     tmpDir.delete();
