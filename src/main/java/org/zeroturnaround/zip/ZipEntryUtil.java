@@ -1,12 +1,20 @@
 package org.zeroturnaround.zip;
 
 import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FilePermission;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.zeroturnaround.zip.commons.IOUtils;
+import org.zeroturnaround.zip.extra.AsiExtraField;
+import org.zeroturnaround.zip.extra.ExtraFieldUtils;
+import org.zeroturnaround.zip.extra.ZipExtraField;
 
 /**
  * Util class for static methods shared between ZipUtil and Zips.
@@ -102,6 +110,68 @@ class ZipEntryUtil {
       IOUtils.copy(in, out);
     }
     out.closeEntry();
+  }
+  
+  static ZipEntry fromFile(String name, File file) {
+    ZipEntry zipEntry = new ZipEntry(name);
+    if (!file.isDirectory()) {
+      zipEntry.setSize(file.length());
+    }
+    zipEntry.setTime(file.lastModified());
+    
+    ZTFilePermissions permissions = ZTFilePermissionsUtil.getDefaultStategy().getPermissions(file);
+    ZipEntryUtil.setZTFilePermissions(zipEntry, permissions);
+    
+    return zipEntry;
+  }
+  
+
+  /**
+   *  
+   */
+  static boolean setZTFilePermissions(ZipEntry zipEntry, ZTFilePermissions permissions) {
+    try {
+      List<ZipExtraField> fields = ExtraFieldUtils.parse(zipEntry.getExtra());
+      AsiExtraField asiExtraField = getFirstAsiExtraField(fields);
+      if (asiExtraField == null) {
+        asiExtraField = new AsiExtraField();
+        fields.add(asiExtraField);
+      }
+      
+      asiExtraField.setDirectory(zipEntry.isDirectory());
+      asiExtraField.setMode(ZTFilePermissionsUtil.toPosixFileMode(permissions));
+      zipEntry.setExtra(ExtraFieldUtils.mergeLocalFileDataData(fields));
+      return true;
+    }
+    catch (java.util.zip.ZipException ze) {
+      return false;
+    }
+  }
+
+  static ZTFilePermissions getZTFilePermissions(ZipEntry zipEntry) {
+    try {
+      ZTFilePermissions permissions = null;
+      List<ZipExtraField> fields = ExtraFieldUtils.parse(zipEntry.getExtra());
+      AsiExtraField asiExtraField = getFirstAsiExtraField(fields);
+      if (asiExtraField != null) {
+        int mode = asiExtraField.getMode() & 0777;
+        permissions = ZTFilePermissionsUtil.fromPosixFileMode(mode);
+      }
+      return permissions;
+    }
+    catch (java.util.zip.ZipException ze) {
+      throw new ZipException(ze);
+    }
+  }
+
+  private static AsiExtraField getFirstAsiExtraField(List<ZipExtraField> fields) {
+    AsiExtraField asiExtraField = null;
+    for (ZipExtraField field : fields) {
+      if (field instanceof AsiExtraField) {
+        asiExtraField = (AsiExtraField) field;
+      }
+    }
+    return asiExtraField;
   }
 
 }

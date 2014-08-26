@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -914,6 +915,11 @@ public final class ZipUtil {
 
           FileUtils.copy(in, file);
         }
+        
+        ZTFilePermissions permissions = ZipEntryUtil.getZTFilePermissions(zipEntry);
+        if (permissions != null) {
+          ZTFilePermissionsUtil.getDefaultStategy().setPermissions(file, permissions);
+        }
       }
     }
   }
@@ -1022,8 +1028,7 @@ public final class ZipUtil {
     ByteArrayOutputStream result = new ByteArrayOutputStream();
     try {
       ZipOutputStream out = new ZipOutputStream(result);
-      ZipEntry entry = new ZipEntry(file.getName());
-      entry.setTime(file.lastModified());
+      ZipEntry entry = ZipEntryUtil.fromFile(file.getName(), file);
       InputStream in = new BufferedInputStream(new FileInputStream(file));
       try {
         ZipEntryUtil.addEntry(entry, in, out);
@@ -1186,9 +1191,7 @@ public final class ZipUtil {
       for (int i = 0; i < filesToPack.length; i++) {
         File fileToPack = filesToPack[i];
 
-        ZipEntry zipEntry = new ZipEntry(mapper.map(fileToPack.getName()));
-        zipEntry.setSize(fileToPack.length());
-        zipEntry.setTime(fileToPack.lastModified());
+        ZipEntry zipEntry =  ZipEntryUtil.fromFile(mapper.map(fileToPack.getName()), fileToPack);
         out.putNextEntry(zipEntry);
         FileUtils.copy(fileToPack, out);
         out.closeEntry();
@@ -1291,11 +1294,7 @@ public final class ZipUtil {
       // Create a ZIP entry
       String name = mapper.map(path);
       if (name != null) {
-        ZipEntry zipEntry = new ZipEntry(name);
-        if (!isDir) {
-          zipEntry.setSize(file.length());
-          zipEntry.setTime(file.lastModified());
-        }
+        ZipEntry zipEntry = ZipEntryUtil.fromFile(name, file);
 
         out.putNextEntry(zipEntry);
 
