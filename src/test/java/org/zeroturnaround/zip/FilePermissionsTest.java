@@ -14,19 +14,23 @@ public class FilePermissionsTest extends TestCase {
     tmpDir.delete();
     tmpDir.mkdir();
     
-    File file = new File(tmpDir, "TestFile.txt");
-    FileUtils.copyFile(testFile, file);
+    File fileA = new File(tmpDir, "fileA.txt");
+    File fileB = new File(tmpDir, "fileB.txt");
+    FileUtils.copyFile(testFile, fileA);
+    FileUtils.copyFile(testFile, fileB);
     
-    assertTrue(file.exists());
-    setExecutable(file, true);
+    assertTrue(fileA.exists());
+    setExecutable(fileA, true);
     
     File tmpZip = File.createTempFile("FilePermissionsTest-", ".zip");
     ZipUtil.pack(tmpDir, tmpZip);
     FileUtils.deleteDirectory(tmpDir);
     ZipUtil.unpack(tmpZip, tmpDir);
     
-    assertTrue(file.exists());
-    assertTrue(canExecute(file));
+    assertTrue(fileA.exists());
+    assertTrue(canExecute(fileA));
+    assertTrue(fileB.exists());
+    assertFalse(canExecute(fileB));
   }
   
   private boolean canExecute(File file) throws Exception {
