@@ -42,11 +42,7 @@ public class FileSource implements ZipEntrySource {
   }
 
   public ZipEntry getEntry() {
-    ZipEntry entry = new ZipEntry(path);
-    if (!file.isDirectory()) {
-      entry.setSize(file.length());
-    }
-    entry.setTime(file.lastModified());
+    ZipEntry entry = ZipEntryUtil.fromFile(path, file);
     return entry;
   }
 
