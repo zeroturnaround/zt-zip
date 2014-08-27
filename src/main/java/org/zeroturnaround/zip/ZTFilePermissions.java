@@ -1,5 +1,10 @@
 package org.zeroturnaround.zip;
 
+/**
+ * This class holds POSIX file permissions.
+ * 
+ * @author Viktor Karabut
+ */
 class ZTFilePermissions {
   private boolean isDirectory;
 

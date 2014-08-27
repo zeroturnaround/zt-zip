@@ -2,6 +2,11 @@ package org.zeroturnaround.zip;
 
 import java.io.File;
 
+/**
+ * Utilities to manipulate {@link ZTFilePermissions}.
+ * 
+ * @author Viktor Karabut
+ */
 class ZTFilePermissionsUtil {
   
   private ZTFilePermissionsUtil() {
@@ -19,10 +24,22 @@ class ZTFilePermissionsUtil {
   private static final int OTHERS_WRITE_FLAG =   0002;
   private static final int OTHERS_EXECUTE_FLAG = 0001;
   
+  /**
+   * Get most appropriate {@link ZTFilePermissionsStrategy} based on Java version and OS.
+   * 
+   * @return
+   */
   static ZTFilePermissionsStrategy getDefaultStategy() {
     return DEFAULT_STRATEGY;
   }
   
+  /**
+   * Convert {@link ZTFilePermissions} to POSIX file permission bit array.
+   * 
+   * 
+   * @param permissions permissions
+   * @return Posix mode
+   */
   static int toPosixFileMode(ZTFilePermissions permissions) {
     int mode = 0;
     
@@ -45,6 +62,12 @@ class ZTFilePermissionsUtil {
     return condition ? flag : 0;
   }
   
+  /**
+   * Convert Posix mode to {@link ZTFilePermissions}
+   * 
+   * @param mode
+   * @return
+   */
   static ZTFilePermissions fromPosixFileMode(int mode) {
     ZTFilePermissions permissions = new ZTFilePermissions();
     
@@ -63,6 +86,9 @@ class ZTFilePermissionsUtil {
     return permissions;
   }
   
+  /**
+   * Empty {@link ZTFilePermissionsStrategy} implementation.
+   */
   private static final ZTFilePermissionsStrategy NOP_STRATEGY = new ZTFilePermissionsStrategy() {
     public void setPermissions(File file, ZTFilePermissions permissions) {
       // do nothing
@@ -80,6 +106,7 @@ class ZTFilePermissionsUtil {
       return new Java6FileApiPermissionsStrategy();
     }
     catch (ZipException e) {
+      // JDK 1.5
       return NOP_STRATEGY;
     }
   }

@@ -18,6 +18,10 @@
 package org.zeroturnaround.zip.extra;
 
 /**
+ * This is a class that has been made significantly smaller (deleted a bunch of methods) and originally
+ * is from the Apache Ant Project (http://ant.apache.org), org.apache.tools.zip package.
+ * All license and other documentation is intact.
+ * 
  * Various constants used throughout the package.
  */
 final class ZipConstants {

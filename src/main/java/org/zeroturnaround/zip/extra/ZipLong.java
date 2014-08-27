@@ -22,6 +22,10 @@ import static org.zeroturnaround.zip.extra.ZipConstants.BYTE_MASK;
 import static org.zeroturnaround.zip.extra.ZipConstants.WORD;
 
 /**
+ * This is a class that has been made significantly smaller (deleted a bunch of methods) and originally
+ * is from the Apache Ant Project (http://ant.apache.org), org.apache.tools.zip package.
+ * All license and other documentation is intact.
+ * 
  * Utility class that represents a four byte integer with conversion
  * rules for the big endian byte order of ZIP files.
  * 

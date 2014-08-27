@@ -109,6 +109,13 @@ class ZipEntryUtil {
     out.closeEntry();
   }
   
+  /**
+   * Create new Zip entry and fill it with associated with file meta-info
+   * 
+   * @param name Zip entry name
+   * @param file source File
+   * @return newly created Zip entry
+   */
   static ZipEntry fromFile(String name, File file) {
     ZipEntry zipEntry = new ZipEntry(name);
     if (!file.isDirectory()) {
@@ -125,7 +132,11 @@ class ZipEntryUtil {
   
 
   /**
+   *  Add file permissions info to ZIP entry.
+   *  Current implementation adds "ASi Unix" (tag 0x756e) extra block to entry.
    *  
+   *  @param zipEntry ZIP entry
+   *  @param permissions permissions to assign
    */
   static boolean setZTFilePermissions(ZipEntry zipEntry, ZTFilePermissions permissions) {
     try {
@@ -145,7 +156,13 @@ class ZipEntryUtil {
       return false;
     }
   }
-
+  
+  /**
+   * Get assigned to ZIP entry file permissions info. Current implementation tries to read "ASi Unix" (tag 0x756e) extra tag.
+   * "ASi Unix"
+   * @param zipEntry
+   * @return file permissions info or <code>null</code> if ZIP entry does not have "ASi Unix" extra field.
+   */
   static ZTFilePermissions getZTFilePermissions(ZipEntry zipEntry) {
     try {
       ZTFilePermissions permissions = null;
