@@ -31,7 +31,8 @@ import java.util.zip.ZipException;
  * 
  * <p>
  * This class uses the ASi extra field in the format:
- * 
+ * </p>
+ *
  * <pre>
  *         Value         Size            Description
  *         -----         ----            -----------
@@ -44,7 +45,8 @@ import java.util.zip.ZipException;
  *         GID           Short           group ID
  *         (var.)        variable        symbolic link filename
  * </pre>
- * 
+ *
+ * <p>
  * taken from appnote.iz (Info-ZIP note, 981119) found at <a href="ftp://ftp.uu.net/pub/archiving/zip/doc/">ftp://ftp.uu.net/pub/archiving/zip/doc/</a>
  * </p>
  * 

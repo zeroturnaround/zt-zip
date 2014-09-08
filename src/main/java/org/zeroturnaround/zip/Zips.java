@@ -458,6 +458,11 @@ public class Zips {
 
   /**
    * Alias to ZipUtil.getEntry()
+   *
+   * @param name
+   *          name of the entry to fetch bytes from
+   * @return byte[]
+   *           contents of the entry by given name
    */
   public byte[] getEntry(String name) {
     if (src == null) {
@@ -468,6 +473,10 @@ public class Zips {
 
   /**
    * Alias to ZipUtil.containsEntry()
+   *
+   * @param name
+   *          entry to check existence of
+   * @return true if zip archive we're processing contains entry by given name, false otherwise
    */
   public boolean containsEntry(String name) {
     if (src == null) {

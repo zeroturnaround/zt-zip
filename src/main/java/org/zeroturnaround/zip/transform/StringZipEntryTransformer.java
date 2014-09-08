@@ -25,6 +25,15 @@ public abstract class StringZipEntryTransformer implements ZipEntryTransformer {
 
   /**
    * Transforms the given String into a new one.
+   *
+   * @param zipEntry
+   *          zip entry metadata
+   * @param input
+   *          zip entry contents
+   *          
+   * @return String - transformed entry contents
+   *
+   * @throws IOException if transformation cannot be completed succesfully
    */
   protected abstract String transform(ZipEntry zipEntry, String input) throws IOException;
 

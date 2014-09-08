@@ -31,6 +31,8 @@ public interface ZipInfoCallback {
    * Invoked for each entry in a ZIP file.
    * 
    * @param zipEntry ZIP entry.
+   *
+   * @throws java.io.IOException when any processing exception occurs
    */
   void process(ZipEntry zipEntry) throws IOException;
   

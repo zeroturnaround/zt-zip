@@ -13,15 +13,15 @@ public interface ZTFilePermissionsStrategy {
   /**
    * Get {@link ZTFilePermissions} from file.
    * 
-   * @param file
-   * @return permissions or <code>null</null> if cannot retrieve permissions info by some reason.
+   * @param file file to get permissions for
+   * @return permissions or <code>null</code> if cannot retrieve permissions info by some reason.
    */
   ZTFilePermissions getPermissions(File file);
   
   /**
    * Set {@link ZTFilePermissions} to file
    * 
-   * @param file file
+   * @param file file to get permissions for
    * @param permissions permission
    */
   void setPermissions(File file, ZTFilePermissions permissions);

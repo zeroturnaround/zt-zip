@@ -33,6 +33,7 @@ public interface ZipEntryCallback {
    * 
    * @param in contents of the ZIP entry.
    * @param zipEntry ZIP entry.
+   * @throws java.io.IOException when any processing exception occurs
    */
   void process(InputStream in, ZipEntry zipEntry) throws IOException;
   

@@ -12,9 +12,30 @@ public abstract class ByteArrayZipEntryTransformer implements ZipEntryTransforme
 
   /**
    * Transforms the given byte array into a new one.
+   *
+   * @param zipEntry
+   *          entry to transform
+   * @param input
+   *          entry contents
+   *
+   * @return byte[]
+   *           the transformed contents of the entry
+   *
+   * @throws IOException
+   *           if anything goes wrong
    */
   protected abstract byte[] transform(ZipEntry zipEntry, byte[] input) throws IOException;
 
+  /**
+   * Transforms the zip entry given as an input stream and ZipEntry metadata.
+   * The result is written to a ZipOutputStream
+   *   * @param in input stream of the entry contents
+   * @param zipEntry zip entry metadata
+   * @param out output stream to write transformed entry
+   *
+   * @throws IOException if anything goes wrong
+
+   */
   public void transform(InputStream in, ZipEntry zipEntry, ZipOutputStream out) throws IOException {
     byte[] bytes = IOUtils.toByteArray(in);
     bytes = transform(zipEntry, bytes);
@@ -33,6 +54,8 @@ public abstract class ByteArrayZipEntryTransformer implements ZipEntryTransforme
 
   /**
    * Override to return true if needed.
+   *
+   * @return true if this transformer should preserve timestamp of the entry it transforms, false otherwise
    */
   protected boolean preserveTimestamps() {
     return false;

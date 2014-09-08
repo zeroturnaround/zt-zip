@@ -326,6 +326,7 @@ public final class ZipUtil {
    *          target file to be created or overwritten.
    * @return <code>true</code> if the entry was found and unpacked,
    *         <code>false</code> if the entry was not found.
+   * @throws java.io.IOException if file is not found or writing to it fails
    */
   public static boolean unpackEntry(InputStream is, String name, File file) throws IOException {
     return handle(is, name, new FileUnpacker(file));
@@ -541,6 +542,8 @@ public final class ZipUtil {
    *          input ZIP stream (it will not be closed automatically).
    * @param action
    *          action to be called for each entry.
+   * @param charset
+   *          charset to process entries in
    *
    * @see ZipEntryCallback
    * @see #iterate(File, ZipEntryCallback)
@@ -599,6 +602,8 @@ public final class ZipUtil {
    *          names of entries to iterate
    * @param action
    *          action to be called for each entry.
+   * @param charset
+   *          charset to process entries in
    *
    * @see ZipEntryCallback
    * @see #iterate(File, String[], ZipEntryCallback)
@@ -1087,6 +1092,8 @@ public final class ZipUtil {
    *          root directory.
    * @param targetZipFile
    *          ZIP file that will be created or overwritten.
+   * @param preserveRoot
+   *          true if the resulted archive should have the top directory entry
    */
   public static void pack(final File sourceDir, final File targetZipFile, final boolean preserveRoot) {
     if (preserveRoot) {

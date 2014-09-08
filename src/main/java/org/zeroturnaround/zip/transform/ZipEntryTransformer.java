@@ -13,7 +13,14 @@ import java.util.zip.ZipOutputStream;
 public interface ZipEntryTransformer {
 
   /**
-   * Copies and transforms the given entry into the ZIP output stream.
+   * Transforms the zip entry given as an input stream and ZipEntry metadata.
+   * The result is written to a ZipOutputStream
+   *
+   * @param in input stream of the entry contents
+   * @param zipEntry zip entry metadata
+   * @param out output stream to write transformed entry (if necessary)
+   *
+   * @throws IOException if anything goes wrong
    */
   void transform(InputStream in, ZipEntry zipEntry, ZipOutputStream out) throws IOException;
 

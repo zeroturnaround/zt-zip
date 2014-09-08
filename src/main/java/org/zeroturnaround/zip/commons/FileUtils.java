@@ -102,6 +102,8 @@ public class FileUtils {
    * 
    * @param file input file (must exist).
    * @param out output stream.
+   *
+   * @throws java.io.IOException if file is not found or copying fails
    */
   public static void copy(File file, OutputStream out) throws IOException {
     FileInputStream in = new FileInputStream(file);
@@ -120,6 +122,8 @@ public class FileUtils {
    * 
    * @param in source stream.
    * @param file output file to be created or overwritten.
+   *
+   * @throws java.io.IOException if file is not found or copying fails
    */
   public static void copy(InputStream in, File file) throws IOException {
     OutputStream out = new BufferedOutputStream(new FileOutputStream(file));

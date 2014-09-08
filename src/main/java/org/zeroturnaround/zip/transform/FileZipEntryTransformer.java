@@ -17,9 +17,32 @@ public abstract class FileZipEntryTransformer implements ZipEntryTransformer {
 
   /**
    * Copies and transforms the given file into the output file.
+   *
+   * @param zipEntry
+   *          zip entry metadata
+   * @param in
+   *          zip entry contents
+   * @param out
+   *          file to write transformed contents
+   *
+   * @throws IOException if file is not found or writing to it fails
+   *
    */
   protected abstract void transform(ZipEntry zipEntry, File in, File out) throws IOException;
 
+  /**
+   * Copies the input stream to the file, then transforms the file.
+   * FileSource is added then to the output stream.
+   *
+   * @param in
+   *          input stream of the entry contents
+   * @param zipEntry
+   *          zip entry metadata
+   * @param out
+   *          ignored, because we're working on files
+   *
+   * @throws IOException if anything goes wrong
+   */
   public void transform(InputStream in, ZipEntry zipEntry, ZipOutputStream out) throws IOException {
     File inFile = null;
     File outFile = null;
