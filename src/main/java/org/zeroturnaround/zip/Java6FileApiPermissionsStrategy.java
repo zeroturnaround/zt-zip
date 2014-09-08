@@ -1,7 +1,6 @@
 package org.zeroturnaround.zip;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 class Java6FileApiPermissionsStrategy implements ZTFilePermissionsStrategy {
@@ -11,10 +10,10 @@ class Java6FileApiPermissionsStrategy implements ZTFilePermissionsStrategy {
   private final Method setReadableMethod;
   
   public Java6FileApiPermissionsStrategy() throws ZipException {
-    canExecuteMethod = getDeclaredMethod(File.class, "canExecute");
-    setExecutableMethod = getDeclaredMethod(File.class, "setExecutable", boolean.class, boolean.class);
-    setReadableMethod = getDeclaredMethod(File.class, "setReadable", boolean.class, boolean.class);
-    setWritableMethod = getDeclaredMethod(File.class, "setWritable", boolean.class, boolean.class);
+    canExecuteMethod = ZTZipReflectionUtil.getDeclaredMethod(File.class, "canExecute");
+    setExecutableMethod = ZTZipReflectionUtil.getDeclaredMethod(File.class, "setExecutable", boolean.class, boolean.class);
+    setReadableMethod = ZTZipReflectionUtil.getDeclaredMethod(File.class, "setReadable", boolean.class, boolean.class);
+    setWritableMethod = ZTZipReflectionUtil.getDeclaredMethod(File.class, "setWritable", boolean.class, boolean.class);
   }
 
   public ZTFilePermissions getPermissions(File file) {
@@ -53,42 +52,18 @@ class Java6FileApiPermissionsStrategy implements ZTFilePermissionsStrategy {
   }
   
   private boolean setExecutable(File file, boolean executable, boolean ownerOnly) {
-    return (Boolean) invoke(setExecutableMethod, file, executable, ownerOnly);
+    return (Boolean) ZTZipReflectionUtil.invoke(setExecutableMethod, file, executable, ownerOnly);
   }
   
   private boolean setWritable(File file, boolean executable, boolean ownerOnly) {
-    return (Boolean) invoke(setWritableMethod, file, executable, ownerOnly);
+    return (Boolean) ZTZipReflectionUtil.invoke(setWritableMethod, file, executable, ownerOnly);
   }
   
   private boolean setReadable(File file, boolean executable, boolean ownerOnly) {
-    return (Boolean) invoke(setReadableMethod, file, executable, ownerOnly);
+    return (Boolean) ZTZipReflectionUtil.invoke(setReadableMethod, file, executable, ownerOnly);
   }
   
   private boolean canExecute(File file) {
-    return (Boolean) invoke(canExecuteMethod, file);
-  }
-  
-  private static Method getDeclaredMethod(Class<?> clazz, String methodName, Class<?>... parameterTypes) {
-    try {
-      return clazz.getDeclaredMethod(methodName, parameterTypes);
-    }
-    catch (NoSuchMethodException e) {
-      throw new ZipException(e);
-    }
-  }
-  
-  private static Object invoke(Method method, Object obj, Object... args) throws ZipException {
-    try {
-      return method.invoke(obj, args);
-    }
-    catch (IllegalAccessException e) {
-      throw new ZipException(e);
-    }
-    catch (InvocationTargetException e) {
-      throw new ZipException(e);
-    }
-    catch (IllegalArgumentException e) {
-      throw new ZipException(e);
-    }
+    return (Boolean) ZTZipReflectionUtil.invoke(canExecuteMethod, file);
   }
 }

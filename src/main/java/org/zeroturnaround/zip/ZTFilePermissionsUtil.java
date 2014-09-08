@@ -1,6 +1,7 @@
 package org.zeroturnaround.zip;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * Utilities to manipulate {@link ZTFilePermissions}.
@@ -95,19 +96,34 @@ class ZTFilePermissionsUtil {
     }
     
     public ZTFilePermissions getPermissions(File file) {
+      // do nothing
       return null;
     }
   };
   
   private static final ZTFilePermissionsStrategy DEFAULT_STRATEGY = fetchDefaultStrategy();
-
+  
   private static ZTFilePermissionsStrategy fetchDefaultStrategy() {
-    try {
-      return new Java6FileApiPermissionsStrategy();
+    ZTFilePermissionsStrategy strategy = tryInstantiateStrategy(Java7Nio2ApiPermissionsStrategy.class);
+    
+    if (strategy == null) {
+      strategy = tryInstantiateStrategy(Java6FileApiPermissionsStrategy.class);
     }
-    catch (ZipException e) {
-      // JDK 1.5
-      return NOP_STRATEGY;
+    
+    if (strategy == null) {
+      strategy = NOP_STRATEGY;
+    }
+    
+    return strategy;
+  }
+  
+  private static ZTFilePermissionsStrategy tryInstantiateStrategy(Class<? extends ZTFilePermissionsStrategy> clazz) {
+    try {
+      return clazz.newInstance();
+    }
+    catch (Exception e) {
+      // failed to instantiate strategy by some reason
+      return null;
     }
   }
   
