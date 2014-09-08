@@ -1,6 +1,7 @@
 package org.zeroturnaround.zip;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * Utilities to manipulate {@link ZTFilePermissions}.
@@ -120,14 +121,9 @@ class ZTFilePermissionsUtil {
     try {
       return clazz.newInstance();
     }
-    catch (InstantiationException e) {
-      // cannot instantiate this specific strategy by some reason
-      // for example old JDK version or file system does not match
-      // just return null
+    catch (Exception e) {
+      // failed to instantiate strategy by some reason
       return null;
-    }
-    catch (IllegalAccessException e) {
-      throw new ZipException(e);
     }
   }
   
