@@ -818,7 +818,7 @@ public final class ZipUtil {
    *          call-back for renaming the entries.
    */
   public static void unwrap(File zip, File outputDir, NameMapper mapper) {
-    log.debug("Unwraping '{}' into '{}'.", zip, outputDir);
+    log.debug("Unwrapping '{}' into '{}'.", zip, outputDir);
     iterate(zip, new Unwraper(outputDir, mapper));
   }
 
@@ -884,7 +884,7 @@ public final class ZipUtil {
    *          call-back for renaming the entries.
    */
   public static void unwrap(InputStream is, File outputDir, NameMapper mapper) {
-    log.debug("Unwraping {} into '{}'.", is, outputDir);
+    log.debug("Unwrapping {} into '{}'.", is, outputDir);
     iterate(is, new Unwraper(outputDir, mapper));
   }
 
