@@ -7,5 +7,6 @@ test.log
 .project
 .settings/
 .idea
+.sonar
 pom.xml.versionsBackup
 release.sh
