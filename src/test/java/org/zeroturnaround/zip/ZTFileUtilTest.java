@@ -28,23 +28,26 @@ public class ZTFileUtilTest extends TestCase {
   }
 
   public void testListFiles() {
-    Collection files = ZTFileUtil.listFiles(new File("."), new FileFilter() {
+    Collection<File> files = ZTFileUtil.listFiles(new File("."), new FileFilter() {
 
       public boolean accept(File pathname) {
-        if (pathname.getName().endsWith("pom.xml"))
+        if (pathname.toString().endsWith("./pom.xml")) {
           return true;
-        else
+        }
+        else {
           return false;
+        }
       }
     });
-    assertEquals(files.size(), 1);
+
+    assertEquals(1, files.size());
   }
-  
+
   public void testListFilesFromFile() {
     Collection files = ZTFileUtil.listFiles(new File("pom.xml"), null);
     assertEquals(files.size(), 0);
   }
-  
+
   public void testListFilesFromNonExistent() {
     Collection files = ZTFileUtil.listFiles(new File("don'tExist"), null);
     assertEquals(files.size(), 0);
