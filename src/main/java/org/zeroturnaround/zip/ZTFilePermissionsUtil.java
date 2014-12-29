@@ -1,7 +1,6 @@
 package org.zeroturnaround.zip;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * Utilities to manipulate {@link ZTFilePermissions}.
