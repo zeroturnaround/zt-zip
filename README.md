@@ -186,7 +186,14 @@ ZipEntrySource[] entries = new ZipEntrySource[] {
     new FileSource("doc/readme.txt", new File("foo.txt")),
     new ByteSource("sample.txt", "bar".getBytes())
 };
-ZipUtil.addEntries(new File("/tmp/demo.zip"), entries, new BufferedOutputStream(new FileOutputStream(new File("/tmp/new.zip"))));
+OutputStream out = null;
+try {
+  out = new BufferedOutputStream(new FileOutputStream(new File("/tmp/new.zip")));
+  ZipUtil.addEntries(new File("/tmp/demo.zip"), entries, out);
+}
+finally {
+  IOUtils.closeQuietly(out);
+}
 ```
 
 #### Replace a ZIP archive entry from file 
