@@ -180,6 +180,15 @@ ZipEntrySource[] entries = new ZipEntrySource[] {
 ZipUtil.addEntries(new File("/tmp/demo.zip"), entries, new File("/tmp/new.zip"));
 ```
 
+#### Add an entry from file and from byte array to a output stream
+```java
+ZipEntrySource[] entries = new ZipEntrySource[] {
+    new FileSource("doc/readme.txt", new File("foo.txt")),
+    new ByteSource("sample.txt", "bar".getBytes())
+};
+ZipUtil.addEntries(new File("/tmp/demo.zip"), entries, new BufferedOutputStream(new FileOutputStream(new File("/tmp/new.zip"))));
+```
+
 #### Replace a ZIP archive entry from file 
 ```java
 boolean replaced = ZipUtil.replaceEntry(new File("/tmp/demo.zip"), "doc/readme.txt", new File("/tmp/foo.txt"), new File("/tmp/new.zip"));
