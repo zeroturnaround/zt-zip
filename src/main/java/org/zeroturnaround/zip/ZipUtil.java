@@ -574,11 +574,11 @@ public final class ZipUtil {
       throw ZipExceptionUtil.rethrow(e);
     }
   }
-  
+
   /**
    * See {@link #iterate(InputStream, ZipEntryCallback, Charset)}. This method
    * is a shorthand for a version where no Charset is specified.
-   * 
+   *
    * @param is
    *          input ZIP stream (it will not be closed automatically).
    * @param action
@@ -642,7 +642,7 @@ public final class ZipUtil {
       throw ZipExceptionUtil.rethrow(e);
     }
   }
-  
+
   /**
    * See @link{ {@link #iterate(InputStream, ZipEntryCallback, Charset)}. It is a
    * shorthand where no Charset is specified.
@@ -919,7 +919,7 @@ public final class ZipUtil {
 
           FileUtils.copy(in, file);
         }
-        
+
         ZTFilePermissions permissions = ZipEntryUtil.getZTFilePermissions(zipEntry);
         if (permissions != null) {
           ZTFilePermissionsUtil.getDefaultStategy().setPermissions(file, permissions);
@@ -1616,21 +1616,47 @@ public final class ZipUtil {
       log.debug("Copying '" + zip + "' to '" + destZip + "' and adding " + Arrays.asList(entries) + ".");
     }
 
-    ZipOutputStream out = null;
+    OutputStream destOut = null;
     try {
-      out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destZip)));
-      copyEntries(zip, out);
-      for (int i = 0; i < entries.length; i++) {
-        addEntry(entries[i], out);
-      }
+      destOut = new BufferedOutputStream(new FileOutputStream(destZip));
+      addEntries(zip, entries, destOut);
     }
     catch (IOException e) {
       ZipExceptionUtil.rethrow(e);
     }
     finally {
-      IOUtils.closeQuietly(out);
+      IOUtils.closeQuietly(destOut);
     }
   }
+
+    /**
+     * Copies an existing ZIP file and appends it with new entries.
+     *
+     * @param zip
+     *          an existing ZIP file (only read).
+     * @param entries
+     *          new ZIP entries appended.
+     * @param destOut
+     *          new ZIP destination output stream
+     */
+    public static void addEntries(File zip, ZipEntrySource[] entries, OutputStream destOut) {
+      if (log.isDebugEnabled()) {
+        log.debug("Copying '" + zip + "' to a stream and adding " + Arrays.asList(entries) + ".");
+      }
+
+      ZipOutputStream out = null;
+      try {
+        out = new ZipOutputStream(destOut);
+        copyEntries(zip, out);
+        for (int i = 0; i < entries.length; i++) {
+          addEntry(entries[i], out);
+        }
+        out.finish();
+      }
+      catch (IOException e) {
+        ZipExceptionUtil.rethrow(e);
+      }
+    }
 
   /**
    * Changes a zip file it with with new entries. in-place.
