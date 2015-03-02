@@ -1655,9 +1655,6 @@ public final class ZipUtil {
       catch (IOException e) {
         ZipExceptionUtil.rethrow(e);
       }
-      finally {
-        IOUtils.closeQuietly(out);
-      }
     }
 
   /**
