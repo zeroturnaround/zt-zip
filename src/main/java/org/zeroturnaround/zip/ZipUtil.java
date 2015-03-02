@@ -1651,6 +1651,7 @@ public final class ZipUtil {
         for (int i = 0; i < entries.length; i++) {
           addEntry(entries[i], out);
         }
+        out.finish();
       }
       catch (IOException e) {
         ZipExceptionUtil.rethrow(e);
