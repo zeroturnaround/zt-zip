@@ -98,6 +98,34 @@ public final class ZipUtil {
   }
 
   /**
+   * Returns the compression level of a given entry of the ZIP file.
+   *
+   * @param zip
+   *          ZIP file.
+   * @param name
+   *          entry name.
+   * @return Returns <code>ZipEntry.STORED</code>, <code>ZipEntry.DEFLATED</code> or -1 if
+   * the ZIP file does not contain the given entry.
+   */
+  public static int getCompressionLevelOfEntry(File zip, String name) {
+    ZipFile zf = null;
+    try {
+      zf = new ZipFile(zip);
+      ZipEntry zipEntry = zf.getEntry(name);
+      if(zipEntry == null) {
+        return -1;
+      }
+      return zipEntry.getMethod();
+    }
+    catch (IOException e) {
+      throw ZipExceptionUtil.rethrow(e);
+    }
+    finally {
+      closeQuietly(zf);
+    }
+  }
+
+  /**
    * Checks if the ZIP file contains any of the given entries.
    *
    * @param zip
@@ -1552,6 +1580,24 @@ public final class ZipUtil {
   }
 
   /**
+   * Copies an existing ZIP file and appends it with one new entry.
+   *
+   * @param zip
+   *          an existing ZIP file (only read).
+   * @param path
+   *          new ZIP entry path.
+   * @param bytes
+   *          new entry bytes (or <code>null</code> if directory).
+   * @param destZip
+   *          new ZIP file created.
+   * @param compressionLevel
+   *          the new compression level (<code>ZipEntry.STORED</code> or <code>ZipEntry.DEFLATED</code>).
+   */
+  public static void addEntry(File zip, String path, byte[] bytes, File destZip, final int compressionLevel) {
+    addEntry(zip, new ByteSource(path, bytes, compressionLevel), destZip);
+  }
+
+  /**
    * Changes a zip file, adds one new entry in-place.
    *
    * @param zip
@@ -1569,6 +1615,28 @@ public final class ZipUtil {
       }
     });
   }
+
+  /**
+   * Changes a zip file, adds one new entry in-place.
+   *
+   * @param zip
+   *          an existing ZIP file (only read).
+   * @param path
+   *          new ZIP entry path.
+   * @param bytes
+   *          new entry bytes (or <code>null</code> if directory).
+   * @param compressionLevel
+   *          the new compression level (<code>ZipEntry.STORED</code> or <code>ZipEntry.DEFLATED</code>).
+   */
+  public static void addEntry(final File zip, final String path, final byte[] bytes, final int compressionLevel) {
+    operateInPlace(zip, new InPlaceAction() {
+      public boolean act(File tmpFile) {
+        addEntry(zip, path, bytes, tmpFile, compressionLevel);
+        return true;
+      }
+    });
+  }
+
 
   /**
    * Copies an existing ZIP file and appends it with one new entry.
@@ -1921,6 +1989,28 @@ public final class ZipUtil {
     return operateInPlace(zip, new InPlaceAction() {
       public boolean act(File tmpFile) {
         return replaceEntry(zip, new ByteSource(path, bytes), tmpFile);
+      }
+    });
+  }
+
+  /**
+   * Changes an existing ZIP file: replaces a given entry in it.
+   *
+   * @param zip
+   *          an existing ZIP file.
+   * @param path
+   *          new ZIP entry path.
+   * @param bytes
+   *          new entry bytes (or <code>null</code> if directory).
+   * @param compressionLevel
+   *          the new compression level (<code>ZipEntry.STORED</code> or <code>ZipEntry.DEFLATED</code>).
+   * @return <code>true</code> if the entry was replaced.
+   */
+  public static boolean replaceEntry(final File zip, final String path, final byte[] bytes,
+                                     final int compressionLevel) {
+    return operateInPlace(zip, new InPlaceAction() {
+      public boolean act(File tmpFile) {
+        return replaceEntry(zip, new ByteSource(path, bytes, compressionLevel), tmpFile);
       }
     });
   }
