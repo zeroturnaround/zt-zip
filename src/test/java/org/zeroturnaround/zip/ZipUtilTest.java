@@ -416,6 +416,19 @@ public class ZipUtilTest extends TestCase {
     }
   }
 
+  public void testRemoveMissingEntry() throws IOException {
+    File src = file("demo.zip");
+    assertFalse("Source zip contains entry 'missing.txt'", ZipUtil.containsEntry(src, "missing.txt"));
+
+    File dest = File.createTempFile("temp", null);
+    try {
+      ZipUtil.removeEntry(src, "missing.txt", dest);
+    }
+    finally {
+      FileUtils.deleteQuietly(dest);
+    }
+  }
+
   public void testRemoveDirs() throws IOException {
     File src = file("demo-dirs.zip");
 

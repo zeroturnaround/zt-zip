@@ -1902,12 +1902,14 @@ public final class ZipUtil {
       zf = new ZipFile(zip);
       for(String entryName : names) {
         ZipEntry entry = zf.getEntry(entryName);
-        if (entry.isDirectory()) {
-          dirs.add(entry.getName());
-        }
-        else if (zf.getInputStream(entry) == null) {
-          // no input stream means that this is a dir.
-          dirs.add(entry.getName() + PATH_SEPARATOR);
+        if (entry != null) {
+          if (entry.isDirectory()) {
+            dirs.add(entry.getName());
+          }
+          else if (zf.getInputStream(entry) == null) {
+            // no input stream means that this is a dir.
+            dirs.add(entry.getName() + PATH_SEPARATOR);
+          }
         }
       }
 
