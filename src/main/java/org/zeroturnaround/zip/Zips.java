@@ -552,6 +552,7 @@ public class Zips {
   private void iterateChangedAndAdded(ZipEntryOrInfoAdapter zipEntryCallback) {
 
     for (ZipEntrySource entrySource : changedEntries) {
+      InputStream entrySourceStream = null;
       try {
         ZipEntry entry = entrySource.getEntry();
         if (nameMapper != null) {
@@ -564,13 +565,17 @@ public class Zips {
             entry = ZipEntryUtil.copy(entry, mappedName);
           }
         }
-        zipEntryCallback.process(entrySource.getInputStream(), entry);
+        entrySourceStream = entrySource.getInputStream();
+        zipEntryCallback.process(entrySourceStream, entry);
       }
       catch (ZipBreakException ex) {
         break;
       }
       catch (IOException e) {
         ZipExceptionUtil.rethrow(e);
+      }
+      finally {
+         IOUtils.closeQuietly(entrySourceStream);
       }
     }
   }
