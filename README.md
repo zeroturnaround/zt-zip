@@ -216,7 +216,7 @@ boolean replaced = ZipUtil.replaceEntries(new File("/tmp/demo.zip"), entries, ne
 ```
 
 #### Add or replace entries in a ZIP archive
-```
+```java
 ZipEntrySource[] addedEntries = new ZipEntrySource[] {
         new FileSource("/path/in/zip/File1.txt", new File("/tmp/file1.txt")),
         new FileSource("/path/in/zip/File2.txt", new File("/tmp/file2.txt")),
