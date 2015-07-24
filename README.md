@@ -215,6 +215,16 @@ ZipEntrySource[] entries = new ZipEntrySource[] {
 boolean replaced = ZipUtil.replaceEntries(new File("/tmp/demo.zip"), entries, new File("/tmp/new.zip"));
 ```
 
+#### Add or replace entries in a ZIP archive
+```
+ZipEntrySource[] addedEntries = new ZipEntrySource[] {
+        new FileSource("/path/in/zip/File1.txt", new File("/tmp/file1.txt")),
+        new FileSource("/path/in/zip/File2.txt", new File("/tmp/file2.txt")),
+        new FileSource("/path/in/zip/File3.txt", new File("/tmp/file2.txt")),
+    };
+ZipUtil.addOrReplaceEntries(new File("/tmp/demo.zip"), addedEntries);
+```
+
 ### Transforming
 
 #### Transform a ZIP archive entry into uppercase
