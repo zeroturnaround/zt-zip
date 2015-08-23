@@ -17,12 +17,18 @@ package org.zeroturnaround.zip;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -261,6 +267,72 @@ public class ZipUtilTest extends TestCase {
     // if fails then maybe somebody changed the file contents and did not update the test
     assertEquals(108, (new File(dest, "TestFile.txt")).length());
     assertEquals(103, (new File(dest, "TestFile-II.txt")).length());
+  }
+
+  public void testPackEntriesToStream() throws Exception {
+    String encoding = "UTF-8";
+    //list of entries, each entry consists of entry name and entry contents
+    List<String[]> entryDescriptions = Arrays.asList(new String[][] {
+      new String[] {"foo.txt", "foo"},
+      new String[] {"bar.txt", "bar"}
+      });
+    ByteArrayOutputStream out = null;
+    out = new ByteArrayOutputStream();
+    ZipUtil.pack(convertToEntries(entryDescriptions, encoding), out);
+    
+    byte[] zipBytes = out.toByteArray();
+    assertEquals(116, zipBytes.length);
+    assertEntries(entryDescriptions, zipBytes, encoding);
+  }
+
+  public void testAddEntriesToStream() throws Exception {
+    String encoding = "UTF-8";
+    //list of entries, each entry consists of entry name and entry contents
+    List<String[]> entryDescriptions = Arrays.asList(new String[][] {
+      new String[] {"foo.txt", "foo"},
+      new String[] {"bar.txt", "bar"}
+      });
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    ZipUtil.pack(convertToEntries(entryDescriptions, encoding), out);
+    byte[] zipBytes = out.toByteArray();
+    List<String[]> entryDescriptions2 = Arrays.asList(new String[][] {
+      new String[] {"foo2.txt", "foo2"},
+      new String[] {"bar2.txt", "bar2"}
+      });
+    ByteArrayOutputStream out2 = new ByteArrayOutputStream();
+    ZipUtil.addEntries(new ByteArrayInputStream(zipBytes), convertToEntries(entryDescriptions2, encoding), out2);
+    byte[] zipBytes2 = out2.toByteArray();
+    ArrayList<String[]> allEntryDescriptions = new ArrayList<String[]>(entryDescriptions.size() + entryDescriptions2.size());
+    allEntryDescriptions.addAll(entryDescriptions);
+    allEntryDescriptions.addAll(entryDescriptions2);
+    
+    assertEntries(allEntryDescriptions, zipBytes2, encoding);
+  }
+
+  private ZipEntrySource[] convertToEntries(List<String[]> entryDescriptions, String encoding) throws UnsupportedEncodingException {
+    ZipEntrySource[] entries = new ZipEntrySource[entryDescriptions.size()];
+    for (int i = 0; i < entries.length; i++) {
+      String[] entryDescription = entryDescriptions.get(i);
+      entries[i] = new ByteSource(entryDescription[0], entryDescription[1].getBytes(encoding));
+    }
+    return entries;
+  }
+
+  private void assertEntries(final List<String[]> entryDescriptions, byte[] zipBytes, final String encoding) {
+    final ArrayList<String> actualContents = new ArrayList<String>(entryDescriptions.size());
+    ZipUtil.iterate(new ByteArrayInputStream(zipBytes), new ZipEntryCallback() {
+      public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+        String content = IOUtils.toString(in, encoding);
+        actualContents.add(content);
+        for (int i = 0; i < entryDescriptions.size(); i++) {
+          String[] entryDescription = entryDescriptions.get(i);
+          if (zipEntry.getName().equals(entryDescription[0])) {
+            assertEquals(entryDescription[1], content);
+          }
+        }
+      }
+    });
+    assertEquals(entryDescriptions.size(), actualContents.size());
   }
 
   public void testPackEntriesWithNameMapper() throws Exception {

@@ -1503,6 +1503,38 @@ public final class ZipUtil {
   }
 
   /**
+   * Compresses the given entries into an output stream.
+   *
+   * @param entries
+   *          ZIP entries added.
+   * @param os
+   *          output stream for the new ZIP (does not have to be buffered)
+   * 
+   * @since 1.9
+   */
+  public static void pack(ZipEntrySource[] entries, OutputStream os) {
+    log.debug("Creating stream from {}.", Arrays.asList(entries));
+    pack(entries, os, false);
+  }
+
+  private static void pack(ZipEntrySource[] entries, OutputStream os, boolean closeStream) {
+    try {
+      ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(os));
+      for (int i = 0; i < entries.length; i++) {
+        addEntry(entries[i], out);
+      }
+      out.flush();
+      out.finish();
+      if (closeStream) {
+        out.close();
+      }
+    }
+    catch (IOException e) {
+      throw ZipExceptionUtil.rethrow(e);
+    }
+  }
+
+  /**
    * Compresses the given entries into a new ZIP file.
    *
    * @param entries
@@ -1513,12 +1545,10 @@ public final class ZipUtil {
   public static void pack(ZipEntrySource[] entries, File zip) {
     log.debug("Creating '{}' from {}.", zip, Arrays.asList(entries));
 
-    ZipOutputStream out = null;
+    OutputStream out = null;
     try {
-      out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zip)));
-      for (int i = 0; i < entries.length; i++) {
-        addEntry(entries[i], out);
-      }
+      out = new FileOutputStream(zip);
+      pack(entries, out, true);
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
@@ -1727,6 +1757,37 @@ public final class ZipUtil {
     }
 
   /**
+   * Copies an existing ZIP file and appends it with new entries.
+   *
+   * @param is
+   *          an existing ZIP input stream.
+   * @param entries
+   *          new ZIP entries appended.
+   * @param destOut
+   *          new ZIP destination output stream
+   *
+   * @since 1.9
+   */
+  public static void addEntries(InputStream is, ZipEntrySource[] entries, OutputStream destOut) {
+    if (log.isDebugEnabled()) {
+      log.debug("Copying input stream to an output stream and adding " + Arrays.asList(entries) + ".");
+    }
+
+    ZipOutputStream out = null;
+    try {
+      out = new ZipOutputStream(destOut);
+      copyEntries(is, out);
+      for (int i = 0; i < entries.length; i++) {
+        addEntry(entries[i], out);
+      }
+      out.finish();
+    }
+    catch (IOException e) {
+      ZipExceptionUtil.rethrow(e);
+    }
+  }
+
+  /**
    * Changes a zip file it with with new entries. in-place.
    *
    * @param zip
@@ -1835,6 +1896,30 @@ public final class ZipUtil {
     // this one doesn't call copyEntries with ignoredEntries, because that has poorer performance
     final Set<String> names = new HashSet<String>();
     iterate(zip, new ZipEntryCallback() {
+      public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+        String entryName = zipEntry.getName();
+        if (names.add(entryName)) {
+          ZipEntryUtil.copyEntry(zipEntry, in, out);
+        }
+        else if (log.isDebugEnabled()) {
+          log.debug("Duplicate entry: {}", entryName);
+        }
+      }
+    });
+  }
+
+  /**
+   * Copies all entries from one ZIP stream to another.
+   *
+   * @param is
+   *          source stream (contains ZIP file).
+   * @param out
+   *          target ZIP stream.
+   */
+  private static void copyEntries(InputStream is, final ZipOutputStream out) {
+    // this one doesn't call copyEntries with ignoredEntries, because that has poorer performance
+    final Set<String> names = new HashSet<String>();
+    iterate(is, new ZipEntryCallback() {
       public void process(InputStream in, ZipEntry zipEntry) throws IOException {
         String entryName = zipEntry.getName();
         if (names.add(entryName)) {
