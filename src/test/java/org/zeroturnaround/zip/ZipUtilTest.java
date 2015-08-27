@@ -281,7 +281,7 @@ public class ZipUtilTest extends TestCase {
     ZipUtil.pack(convertToEntries(entryDescriptions, encoding), out);
     
     byte[] zipBytes = out.toByteArray();
-    assertEquals(116, zipBytes.length);
+    assertEquals(244, zipBytes.length);
     assertEntries(entryDescriptions, zipBytes, encoding);
   }
 

@@ -1513,13 +1513,15 @@ public final class ZipUtil {
    * @since 1.9
    */
   public static void pack(ZipEntrySource[] entries, OutputStream os) {
-    log.debug("Creating stream from {}.", Arrays.asList(entries));
+    if (log.isDebugEnabled()) {
+      log.debug("Creating stream from {}.", Arrays.asList(entries));
+    }
     pack(entries, os, false);
   }
 
   private static void pack(ZipEntrySource[] entries, OutputStream os, boolean closeStream) {
     try {
-      ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(os));
+      ZipOutputStream out = new ZipOutputStream(os);
       for (int i = 0; i < entries.length; i++) {
         addEntry(entries[i], out);
       }
@@ -1543,11 +1545,13 @@ public final class ZipUtil {
    *          new ZIP file created.
    */
   public static void pack(ZipEntrySource[] entries, File zip) {
-    log.debug("Creating '{}' from {}.", zip, Arrays.asList(entries));
+    if (log.isDebugEnabled()) {
+      log.debug("Creating '{}' from {}.", zip, Arrays.asList(entries));
+    }
 
     OutputStream out = null;
     try {
-      out = new FileOutputStream(zip);
+      out = new BufferedOutputStream(new FileOutputStream(zip));
       pack(entries, out, true);
     }
     catch (IOException e) {
