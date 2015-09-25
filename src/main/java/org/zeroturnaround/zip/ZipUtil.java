@@ -960,8 +960,10 @@ public final class ZipUtil {
    * Unpacks each ZIP entries. Presumes they are packed with the backslash separator.
    * Some archives can have this problem if they are created with some software
    * that is not following the ZIP specification.
+   * 
+   * @since zt-zip 1.9
    */
-  protected static class BackslashUnpacker implements ZipEntryCallback {
+  public static class BackslashUnpacker implements ZipEntryCallback {
 
     private final File outputDir;
     private final NameMapper mapper;
@@ -969,6 +971,11 @@ public final class ZipUtil {
     public BackslashUnpacker(File outputDir, NameMapper mapper) {
       this.outputDir = outputDir;
       this.mapper = mapper;
+    }
+
+    public BackslashUnpacker(File outputDir) {
+      this.outputDir = outputDir;
+      this.mapper = IdentityNameMapper.INSTANCE;
     }
 
     public void process(InputStream in, ZipEntry zipEntry) throws IOException {
