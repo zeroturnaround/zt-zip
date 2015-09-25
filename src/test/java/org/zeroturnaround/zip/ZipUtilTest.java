@@ -23,7 +23,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -829,4 +828,34 @@ public class ZipUtilTest extends TestCase {
     FileUtils.forceDelete(src);
   }
 
+  public void testUnpackBackslashes() throws IOException {
+    File initialSrc = file("backSlashTest.zip");
+
+    // lets create a temporary file and then use it as a dir
+    File dest = File.createTempFile("unpackEntryDir", null);
+
+    if(!(dest.delete())) {
+        throw new IOException("Could not delete temp file: " + dest.getAbsolutePath());
+    }
+
+    if(!(dest.mkdir())){
+        throw new IOException("Could not create temp directory: " + dest.getAbsolutePath());
+    }
+
+    // unpack the archive that has the backslashes
+    // and double check that the file structure is preserved
+    ZipUtil.iterate(initialSrc, new ZipUtil.BackslashUnpacker(dest));
+
+    File parentDir = new File(dest, "testDirectory");
+    assertTrue("Sub directory 'destDirectory' wasn't created", parentDir.isDirectory());
+
+    File file = new File(parentDir, "testfileInTestDirectory.txt");
+    assertTrue("Can't find file testfileInTestDirectory.txt in testDirectory", file.isFile());
+
+    file = new File(parentDir, "testSubdirectory");
+    assertTrue("The sub sub directory 'testSubdirectory' isn't a directory", file.isDirectory());
+
+    file = new File(file, "testFileInTestSubdirectory.txt");
+    assertTrue("The testFileInTestSubdirectory.txt is not a file", file.isFile());
+  }
 }
