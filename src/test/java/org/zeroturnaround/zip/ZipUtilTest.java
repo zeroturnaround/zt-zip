@@ -853,9 +853,9 @@ public class ZipUtilTest extends TestCase {
     assertTrue("Can't find file testfileInTestDirectory.txt in testDirectory", file.isFile());
 
     file = new File(parentDir, "testSubdirectory");
-    assertTrue("The sub sub directory 'testSubdirectory' wasn't created", file.isDirectory());
+    assertTrue("The sub sub directory 'testSubdirectory' isn't a directory", file.isDirectory());
 
     file = new File(file, "testFileInTestSubdirectory.txt");
-    assertTrue(file.isFile());
+    assertTrue("The testFileInTestSubdirectory.txt is not a file", file.isFile());
   }
 }
