@@ -847,15 +847,15 @@ public class ZipUtilTest extends TestCase {
     ZipUtil.iterate(initialSrc, new ZipUtil.BackslashUnpacker(dest));
 
     File parentDir = new File(dest, "testDirectory");
-    assertTrue("Sub directory 'destDirectory' wasn't created", parentDir.isDirectory());
+    assertTrue("Sub directory 'testDirectory' wasn't created", parentDir.isDirectory());
 
     File file = new File(parentDir, "testfileInTestDirectory.txt");
-    assertTrue("Can't find file testfileInTestDirectory.txt in testDirectory", file.isFile());
+    assertTrue("Can't find file 'testfileInTestDirectory.txt' in testDirectory", file.isFile());
 
     file = new File(parentDir, "testSubdirectory");
     assertTrue("The sub sub directory 'testSubdirectory' isn't a directory", file.isDirectory());
 
     file = new File(file, "testFileInTestSubdirectory.txt");
-    assertTrue("The testFileInTestSubdirectory.txt is not a file", file.isFile());
+    assertTrue("The 'testFileInTestSubdirectory.txt' is not a file", file.isFile());
   }
 }
