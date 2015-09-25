@@ -974,8 +974,7 @@ public final class ZipUtil {
     }
 
     public BackslashUnpacker(File outputDir) {
-      this.outputDir = outputDir;
-      this.mapper = IdentityNameMapper.INSTANCE;
+      this(outputDir, IdentityNameMapper.INSTANCE);
     }
 
     public void process(InputStream in, ZipEntry zipEntry) throws IOException {
@@ -985,7 +984,7 @@ public final class ZipUtil {
          * We assume that EVERY backslash will denote a directory
          * separator. Also such broken archives don't have entries that
          * are just directories. Everything is a file. See the example
-         *                                                                                                                                                                                                   1 ↵
+         *
          * Archive:  backSlashTest.zip
          *   testing: testDirectory\testfileInTestDirectory.txt   OK
          *   testing: testDirectory\testSubdirectory\testFileInTestSubdirectory.txt   OK

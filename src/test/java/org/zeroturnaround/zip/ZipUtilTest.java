@@ -844,7 +844,7 @@ public class ZipUtilTest extends TestCase {
 
     // unpack the archive that has the backslashes
     // and double check that the file structure is preserved
-    ZipUtil.iterate(initialSrc, new ZipUtil.BackslashUnpacker(dest, IdentityNameMapper.INSTANCE));
+    ZipUtil.iterate(initialSrc, new ZipUtil.BackslashUnpacker(dest));
 
     File parentDir = new File(dest, "testDirectory");
     assertTrue("Sub directory 'destDirectory' wasn't created", parentDir.isDirectory());
