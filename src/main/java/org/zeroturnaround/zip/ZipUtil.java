@@ -955,6 +955,58 @@ public final class ZipUtil {
       }
     }
   }
+  
+  /**
+   * Unpacks each ZIP entries. Presumes they are packed with the backslash separator.
+   * Some archives can have this problem if they are created with some software
+   * that is not following the ZIP specification.
+   */
+  protected static class BackslashUnpacker implements ZipEntryCallback {
+
+    private final File outputDir;
+    private final NameMapper mapper;
+
+    public BackslashUnpacker(File outputDir, NameMapper mapper) {
+      this.outputDir = outputDir;
+      this.mapper = mapper;
+    }
+
+    public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+      String name = mapper.map(zipEntry.getName());
+      if (name != null) {
+        /**
+         * We assume that EVERY backslash will denote a directory
+         * separator. Also such broken archives don't have entries that
+         * are just directories. Everything is a file. See the example
+         *                                                                                                                                                                                                   1 ↵
+         * Archive:  backSlashTest.zip
+         *   testing: testDirectory\testfileInTestDirectory.txt   OK
+         *   testing: testDirectory\testSubdirectory\testFileInTestSubdirectory.txt   OK
+         * No errors detected in compressed data of backSlashTest.zip.
+         */
+        if (name.indexOf('\\') != -1) {
+          File parentDirectory = outputDir;
+          String[] dirs = name.split("\\\\");
+
+          // lets create all the directories and the last entry is the file as EVERY entry is a file
+          for (int i = 0; i < dirs.length-1; i++) {
+            File file = new File(parentDirectory, dirs[i]);
+            if (!file.exists()) {
+              FileUtils.forceMkdir(file);
+            }
+            parentDirectory = file;
+          }
+          File destFile = new File(parentDirectory, dirs[dirs.length-1]);
+          FileUtils.copy(in, destFile);
+        }
+        // it could be that there are just top level files that the unpacker is used for
+        else {
+          File destFile = new File(outputDir, name);
+          FileUtils.copy(in, destFile);
+        }
+      }
+    }
+  }
 
   /**
    * Unwraps entries excluding a single parent dir. If there are multiple roots
