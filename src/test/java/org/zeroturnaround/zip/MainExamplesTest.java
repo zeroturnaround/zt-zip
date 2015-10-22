@@ -46,7 +46,7 @@ public final class MainExamplesTest extends TestCase {
     assertTrue(fooFile.exists());
   }
 
-  public static void upnackInPlace() throws Exception{
+  public static void testUnpackInPlace() throws Exception{
     File demoFile = new File(DEMO_ZIP);
     File outDir = File.createTempFile("prefix", "suffix");
     outDir.delete();
@@ -54,9 +54,12 @@ public final class MainExamplesTest extends TestCase {
     
     File outFile = new File(outDir, "demo");
     
+    // so the zip file will be outDir/demo <- this is a zip archive
     FileUtils.copy(demoFile, new FileOutputStream(outFile));
+    // we explode the zip archive
     ZipUtil.explode(outFile);
-    assertTrue((new File(outDir, FOO_TXT)).exists());
+    // we expect the outDir/demo/foo.txt to exist now
+    assertTrue((new File(outFile, FOO_TXT)).exists());
   }
 
   public static void unpackDocOnly() {
