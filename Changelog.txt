@@ -4,11 +4,11 @@
 
 1.9
 
-* Project requires Java 5 as of zt-zip 1.9 version
-* Add support for Java 7 POSIX file permissions
-* Added support to create and update byte-array backed ZIP streams
-* Added support of specifying/replacing compression level of ZipEntry
-* Added BackslashUnpacker for broken ZIP archives
+* Bumped minimal supported Java version to Java 5
+* Added support for Java 7 POSIX file permissions
+* Added ability to create and update byte-array backed ZIP streams
+* Added ability to specify/replace compression level of ZipEntry
+* Added BackslashUnpacker for broken (Windows) ZIP archives
 * Fixed not closing InputStream after processing each ZipEntrySource
 * Fixed buffering when creating and updating ZIP streams
 
