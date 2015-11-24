@@ -4,6 +4,8 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -20,8 +22,9 @@ import org.zeroturnaround.zip.extra.ZipExtraField;
  *
  */
 class ZipEntryUtil {
-  
-  private ZipEntryUtil() {}
+
+  private ZipEntryUtil() {
+  }
 
   /**
    * Copy entry
@@ -78,17 +81,60 @@ class ZipEntryUtil {
    * Copies a given ZIP entry to a ZIP file. If this.preserveTimestamps is true, original timestamp
    * is carried over, otherwise uses current time.
    *
-   * @param zipEntry
+   * @param originalEntry
    *          a ZIP entry from existing ZIP file.
    * @param in
    *          contents of the ZIP entry.
    * @param out
    *          target ZIP stream.
    */
-  static void copyEntry(ZipEntry zipEntry, InputStream in, ZipOutputStream out, boolean preserveTimestamps) throws IOException {
-    ZipEntry copy = copy(zipEntry);
-    copy.setTime(preserveTimestamps ? zipEntry.getTime() : System.currentTimeMillis());
+  static void copyEntry(ZipEntry originalEntry, InputStream in, ZipOutputStream out, boolean preserveTimestamps) throws IOException {
+    ZipEntry copy = copy(originalEntry);
+
+    if (preserveTimestamps) {
+      copy.setTime(originalEntry.getTime());
+      tryToSetLastModifiedTime(copy, originalEntry);
+    }
+    else {
+      copy.setTime(System.currentTimeMillis());
+    }
     addEntry(copy, new BufferedInputStream(in), out);
+  }
+
+  /**
+   * The method tries to set the last modified time. The pre-requisite for this is that
+   * the running JDK is at least 1.8 that has the necessary methods. As we need to preserve
+   * compile time compatibility with JDK 5 then we use reflection for the lookup.
+   * 
+   * See https://github.com/zeroturnaround/zt-zip/issues/73
+   * 
+   * @param target the instance we want to set the last modified time to
+   * @param original the instance we use to get the last modified time
+   */
+  private static void tryToSetLastModifiedTime(ZipEntry target, ZipEntry original) {
+    try {
+      Class fileTimeClass = ZipEntryUtil.class.forName("java.nio.file.attribute.FileTime");
+      Method setLastModifiedTimeMethod = ZipEntry.class.getMethod("setLastModifiedTime", fileTimeClass);
+      Method getLastModifiedTimeMethod = ZipEntry.class.getMethod("getLastModifiedTime");
+
+      Object lastModified = getLastModifiedTimeMethod.invoke(original);
+      setLastModifiedTimeMethod.invoke(target, lastModified);
+    }
+    catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
+    catch (InvocationTargetException e) {
+      throw new RuntimeException(e);
+    }
+    catch (NoSuchMethodException e) {
+      throw new RuntimeException(e);
+    }
+    catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+    catch (SecurityException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -108,7 +154,7 @@ class ZipEntryUtil {
     }
     out.closeEntry();
   }
-  
+
   /**
    * Create new Zip entry and fill it with associated with file meta-info
    * 
@@ -122,21 +168,20 @@ class ZipEntryUtil {
       zipEntry.setSize(file.length());
     }
     zipEntry.setTime(file.lastModified());
-    
+
     ZTFilePermissions permissions = ZTFilePermissionsUtil.getDefaultStategy().getPermissions(file);
     if (permissions != null) {
       ZipEntryUtil.setZTFilePermissions(zipEntry, permissions);
     }
     return zipEntry;
   }
-  
 
   /**
-   *  Add file permissions info to ZIP entry.
-   *  Current implementation adds "ASi Unix" (tag 0x756e) extra block to entry.
-   *  
-   *  @param zipEntry ZIP entry
-   *  @param permissions permissions to assign
+   * Add file permissions info to ZIP entry.
+   * Current implementation adds "ASi Unix" (tag 0x756e) extra block to entry.
+   * 
+   * @param zipEntry ZIP entry
+   * @param permissions permissions to assign
    */
   static boolean setZTFilePermissions(ZipEntry zipEntry, ZTFilePermissions permissions) {
     try {
@@ -146,7 +191,7 @@ class ZipEntryUtil {
         asiExtraField = new AsiExtraField();
         fields.add(asiExtraField);
       }
-      
+
       asiExtraField.setDirectory(zipEntry.isDirectory());
       asiExtraField.setMode(ZTFilePermissionsUtil.toPosixFileMode(permissions));
       zipEntry.setExtra(ExtraFieldUtils.mergeLocalFileDataData(fields));
@@ -156,10 +201,11 @@ class ZipEntryUtil {
       return false;
     }
   }
-  
+
   /**
    * Get assigned to ZIP entry file permissions info. Current implementation tries to read "ASi Unix" (tag 0x756e) extra tag.
    * "ASi Unix"
+   * 
    * @param zipEntry
    * @return file permissions info or <code>null</code> if ZIP entry does not have "ASi Unix" extra field.
    */

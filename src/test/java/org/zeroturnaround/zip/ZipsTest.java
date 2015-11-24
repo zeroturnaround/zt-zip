@@ -28,13 +28,12 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-import junit.framework.TestCase;
-
 import org.zeroturnaround.zip.commons.FileUtils;
-import org.zeroturnaround.zip.commons.FilenameUtils;
 import org.zeroturnaround.zip.commons.IOUtils;
 import org.zeroturnaround.zip.transform.ByteArrayZipEntryTransformer;
 import org.zeroturnaround.zip.transform.ZipEntryTransformer;
+
+import junit.framework.TestCase;
 
 public class ZipsTest extends TestCase {
 
