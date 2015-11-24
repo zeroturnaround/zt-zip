@@ -121,19 +121,19 @@ class ZipEntryUtil {
       setLastModifiedTimeMethod.invoke(target, lastModified);
     }
     catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
+      // Ignore, we are not running Java 8
     }
     catch (InvocationTargetException e) {
-      throw new RuntimeException(e);
+      // Ignore, we are not running Java 8
     }
     catch (NoSuchMethodException e) {
-      throw new RuntimeException(e);
+      // Ignore, we are not running Java 8
     }
     catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
+      // Ignore, we are not running Java 8
     }
     catch (SecurityException e) {
-      throw new RuntimeException(e);
+      // Ignore, we are not running Java 8
     }
   }
 
