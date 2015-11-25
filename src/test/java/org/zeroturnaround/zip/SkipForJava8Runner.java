@@ -17,6 +17,7 @@ public class SkipForJava8Runner extends BlockJUnit4ClassRunner {
     super(testClass);
   }
 
+  @Override
   protected boolean isIgnored(FrameworkMethod child) {
     return isJdk8();
   }
