@@ -92,8 +92,16 @@ class ZipEntryUtil {
     ZipEntry copy = copy(originalEntry);
 
     if (preserveTimestamps) {
-      copy.setTime(originalEntry.getTime());
-      tryToSetLastModifiedTime(copy, originalEntry);
+      /**
+       * If we succeed to set the modified time (works only on JDK8)
+       * then we shouldn't call the setTime method anymore as that
+       * will nullify the modified time - see
+       * http://hg.openjdk.java.net/jdk8u/jdk8u/jdk/file/f1f3f9eaf7fa/src/share/classes/java/util/zip/ZipEntry.java#l163
+       */
+      boolean success = tryToPreserveLatestJDKSupportedTimes(copy, originalEntry);
+      if (!success) {
+        copy.setTime(originalEntry.getTime());
+      }
     }
     else {
       copy.setTime(System.currentTimeMillis());
@@ -111,14 +119,32 @@ class ZipEntryUtil {
    * @param target the instance we want to set the last modified time to
    * @param original the instance we use to get the last modified time
    */
-  private static void tryToSetLastModifiedTime(ZipEntry target, ZipEntry original) {
+  private static boolean tryToPreserveLatestJDKSupportedTimes(ZipEntry target, ZipEntry original) {
     try {
-      Class fileTimeClass = ZipEntryUtil.class.forName("java.nio.file.attribute.FileTime");
+      Class<?> fileTimeClass = Class.forName("java.nio.file.attribute.FileTime");
+      
+      // modified time handling
       Method setLastModifiedTimeMethod = ZipEntry.class.getMethod("setLastModifiedTime", fileTimeClass);
       Method getLastModifiedTimeMethod = ZipEntry.class.getMethod("getLastModifiedTime");
 
       Object lastModified = getLastModifiedTimeMethod.invoke(original);
       setLastModifiedTimeMethod.invoke(target, lastModified);
+      
+      // creation time handling
+      Method setCreationTime = ZipEntry.class.getMethod("setCreationTime", fileTimeClass);
+      Method getCreationTime = ZipEntry.class.getMethod("getCreationTime");
+
+      Object createdTime = getCreationTime.invoke(original);
+      setCreationTime.invoke(target, createdTime);
+      
+      // last access time
+      Method setLastAccessTime = ZipEntry.class.getMethod("setLastAccessTime", fileTimeClass);
+      Method getLastAccessTime = ZipEntry.class.getMethod("getLastAccessTime");
+
+      Object lastAccessTime = getLastAccessTime.invoke(original);
+      setLastAccessTime.invoke(target, lastAccessTime);
+      
+      return true;
     }
     catch (IllegalAccessException e) {
       // Ignore, we are not running Java 8
@@ -135,6 +161,7 @@ class ZipEntryUtil {
     catch (SecurityException e) {
       // Ignore, we are not running Java 8
     }
+    return false;
   }
 
   /**

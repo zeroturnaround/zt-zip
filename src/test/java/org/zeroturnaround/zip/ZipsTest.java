@@ -158,46 +158,6 @@ public class ZipsTest extends TestCase {
     }
   }
 
-  public void testPreservingTimestamps() throws IOException {
-    File src = new File(MainExamplesTest.DEMO_ZIP);
-
-    File dest = File.createTempFile("temp", ".zip");
-    final ZipFile zf = new ZipFile(src);
-    try {
-      Zips.get(src).addEntries(new ZipEntrySource[0]).preserveTimestamps().destination(dest).process();
-      Zips.get(dest).iterate(new ZipEntryCallback() {
-        public void process(InputStream in, ZipEntry zipEntry) throws IOException {
-          String name = zipEntry.getName();
-          assertEquals("Timestapms differ at entry " + name, zf.getEntry(name).getTime(), zipEntry.getTime());
-        }
-      });
-    }
-    finally {
-      ZipUtil.closeQuietly(zf);
-      FileUtils.deleteQuietly(dest);
-    }
-  }
-
-  public void testPreservingTimestampsSetter() throws IOException {
-    File src = new File(MainExamplesTest.DEMO_ZIP);
-
-    File dest = File.createTempFile("temp", ".zip");
-    final ZipFile zf = new ZipFile(src);
-    try {
-      Zips.get(src).addEntries(new ZipEntrySource[0]).setPreserveTimestamps(true).destination(dest).process();
-      Zips.get(dest).iterate(new ZipEntryCallback() {
-        public void process(InputStream in, ZipEntry zipEntry) throws IOException {
-          String name = zipEntry.getName();
-          assertEquals("Timestapms differ at entry " + name, zf.getEntry(name).getTime(), zipEntry.getTime());
-        }
-      });
-    }
-    finally {
-      ZipUtil.closeQuietly(zf);
-      FileUtils.deleteQuietly(dest);
-    }
-  }
-
   public void testOverwritingTimestamps() throws IOException {
     File src = new File(MainExamplesTest.DEMO_ZIP);
 
@@ -209,7 +169,7 @@ public class ZipsTest extends TestCase {
         public void process(InputStream in, ZipEntry zipEntry) throws IOException {
           String name = zipEntry.getName();
           // original timestamp is believed to be earlier than test execution time.
-          assertTrue("Timestapms were carried over for entry " + name, zf.getEntry(name).getTime() < zipEntry.getTime());
+          assertTrue("Timestamps were carried over for entry " + name, zf.getEntry(name).getTime() < zipEntry.getTime());
         }
       });
     }
@@ -475,7 +435,7 @@ public class ZipsTest extends TestCase {
         Zips.get(destination).iterate(new ZipEntryCallback() {
           public void process(InputStream in, ZipEntry zipEntry) throws IOException {
             String name = zipEntry.getName();
-            assertEquals("Timestapms differ at entry " + name, zf.getEntry(name).getTime(), zipEntry.getTime());
+            assertEquals("Timestamps differ at entry " + name, zf.getEntry(name).getTime(), zipEntry.getTime());
           }
         });
       }
