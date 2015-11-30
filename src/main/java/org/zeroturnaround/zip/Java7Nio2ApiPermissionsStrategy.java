@@ -121,7 +121,7 @@ class Java7Nio2ApiPermissionsStrategy implements ZTFilePermissionsStrategy {
     return ZTZipReflectionUtil.invoke(toPathMethod, file);
   }
   
-  // Files.setPosicFilePermissions(file.toPath(), set);
+  // Files.setPosixFilePermissions(file.toPath(), set);
   private void setPosixFilePermissions(File file, Set<?> set) {
     ZTZipReflectionUtil.invoke(setPosixFilePermissionsMethod, null, toPath(file), set);
   }

@@ -1,4 +1,4 @@
-package org.zeroturnaround.zip;
+package org.zeroturnaround.zip.timestamps;
 /**
  *    Copyright (C) 2012 ZeroTurnaround LLC <support@zeroturnaround.com>
  *
@@ -16,22 +16,18 @@ package org.zeroturnaround.zip;
  */
 import java.util.zip.ZipEntry;
 
-import junit.framework.TestCase;
+/**
+ * Setting the timestamp in pre-java-8 environments.
+ * 
+ * @since 1.9
+ */
+public class PreJava8TimestampStrategy implements TimestampStrategy {
 
+  public void setTime(ZipEntry newInstance, ZipEntry oldInstance) {
+    long time = oldInstance.getTime();
+    if (time != -1) {
+      newInstance.setTime(time);
+    }
+  }
 
-public class ZipEntryUtilTest extends TestCase {
-  
-  public void testSetUnixFileMode() {
-    ZipEntry entry = new ZipEntry("test1");
-    
-    ZipEntryUtil.setZTFilePermissions(entry, ZTFilePermissionsUtil.fromPosixFileMode(0654));
-    int modeFromExtra = ZTFilePermissionsUtil.toPosixFileMode(ZipEntryUtil.getZTFilePermissions(entry));
-    assertEquals(0654, modeFromExtra);    
-  }
-  
-  public void testGetUnixModeOnEntryWithoutExtra() {
-    ZipEntry entry = new ZipEntry("test2");
-    
-    assertNull(ZipEntryUtil.getZTFilePermissions(entry));
-  }
 }

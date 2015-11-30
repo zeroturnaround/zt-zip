@@ -1,5 +1,20 @@
 package org.zeroturnaround.zip;
 
+/**
+ *    Copyright (C) 2012 ZeroTurnaround LLC <support@zeroturnaround.com>
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -12,6 +27,7 @@ import org.zeroturnaround.zip.commons.IOUtils;
 import org.zeroturnaround.zip.extra.AsiExtraField;
 import org.zeroturnaround.zip.extra.ExtraFieldUtils;
 import org.zeroturnaround.zip.extra.ZipExtraField;
+import org.zeroturnaround.zip.timestamps.TimestampStrategyFactory;
 
 /**
  * Util class for static methods shared between ZipUtil and Zips.
@@ -20,8 +36,9 @@ import org.zeroturnaround.zip.extra.ZipExtraField;
  *
  */
 class ZipEntryUtil {
-  
-  private ZipEntryUtil() {}
+
+  private ZipEntryUtil() {
+  }
 
   /**
    * Copy entry
@@ -78,16 +95,23 @@ class ZipEntryUtil {
    * Copies a given ZIP entry to a ZIP file. If this.preserveTimestamps is true, original timestamp
    * is carried over, otherwise uses current time.
    *
-   * @param zipEntry
+   * @param originalEntry
    *          a ZIP entry from existing ZIP file.
    * @param in
    *          contents of the ZIP entry.
    * @param out
    *          target ZIP stream.
    */
-  static void copyEntry(ZipEntry zipEntry, InputStream in, ZipOutputStream out, boolean preserveTimestamps) throws IOException {
-    ZipEntry copy = copy(zipEntry);
-    copy.setTime(preserveTimestamps ? zipEntry.getTime() : System.currentTimeMillis());
+  static void copyEntry(ZipEntry originalEntry, InputStream in, ZipOutputStream out, boolean preserveTimestamps) throws IOException {
+    ZipEntry copy = copy(originalEntry);
+
+    if (preserveTimestamps) {
+      TimestampStrategyFactory.getInstance().setTime(copy, originalEntry);
+    }
+    else {
+      copy.setTime(System.currentTimeMillis());
+    }
+    
     addEntry(copy, new BufferedInputStream(in), out);
   }
 
@@ -108,7 +132,7 @@ class ZipEntryUtil {
     }
     out.closeEntry();
   }
-  
+
   /**
    * Create new Zip entry and fill it with associated with file meta-info
    * 
@@ -122,21 +146,20 @@ class ZipEntryUtil {
       zipEntry.setSize(file.length());
     }
     zipEntry.setTime(file.lastModified());
-    
+
     ZTFilePermissions permissions = ZTFilePermissionsUtil.getDefaultStategy().getPermissions(file);
     if (permissions != null) {
       ZipEntryUtil.setZTFilePermissions(zipEntry, permissions);
     }
     return zipEntry;
   }
-  
 
   /**
-   *  Add file permissions info to ZIP entry.
-   *  Current implementation adds "ASi Unix" (tag 0x756e) extra block to entry.
-   *  
-   *  @param zipEntry ZIP entry
-   *  @param permissions permissions to assign
+   * Add file permissions info to ZIP entry.
+   * Current implementation adds "ASi Unix" (tag 0x756e) extra block to entry.
+   * 
+   * @param zipEntry ZIP entry
+   * @param permissions permissions to assign
    */
   static boolean setZTFilePermissions(ZipEntry zipEntry, ZTFilePermissions permissions) {
     try {
@@ -146,7 +169,7 @@ class ZipEntryUtil {
         asiExtraField = new AsiExtraField();
         fields.add(asiExtraField);
       }
-      
+
       asiExtraField.setDirectory(zipEntry.isDirectory());
       asiExtraField.setMode(ZTFilePermissionsUtil.toPosixFileMode(permissions));
       zipEntry.setExtra(ExtraFieldUtils.mergeLocalFileDataData(fields));
@@ -156,10 +179,11 @@ class ZipEntryUtil {
       return false;
     }
   }
-  
+
   /**
    * Get assigned to ZIP entry file permissions info. Current implementation tries to read "ASi Unix" (tag 0x756e) extra tag.
    * "ASi Unix"
+   * 
    * @param zipEntry
    * @return file permissions info or <code>null</code> if ZIP entry does not have "ASi Unix" extra field.
    */
