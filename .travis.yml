@@ -1,8 +1,10 @@
 language: java
 sudo: false
+env:
+  - JAVA_OPTS="-Dmaven.javadoc.skip=true"
 install:
   - jdk_switcher use oraclejdk8
-  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true
+  - mvn install -DskipTests=true
 jdk:
   - oraclejdk8
   - oraclejdk7
@@ -10,4 +12,4 @@ jdk:
   - openjdk6
 script:
   - jdk_switcher use $TRAVIS_JDK_VERSION
-  - mvn test -Dmaven.javadoc.skip=true
+  - mvn test
