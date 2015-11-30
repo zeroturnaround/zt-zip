@@ -1,4 +1,5 @@
 package org.zeroturnaround.zip.timestamps;
+import java.nio.file.attribute.FileTime;
 /**
  *    Copyright (C) 2012 ZeroTurnaround LLC <support@zeroturnaround.com>
  *
@@ -14,74 +15,36 @@ package org.zeroturnaround.zip.timestamps;
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.zip.ZipEntry;
 
 /**
- * This strategy will cache and call the lastModifiedTime, creationTime and
- * lastAccessTime methods through reflection. Don't use this class unless
- * you are running JDK8. It will through exceptions in that case for a 
- * fail fast approach.
+ * This strategy will call lastModifiedTime, creationTime and
+ * lastAccessTime methods (added in Java 8). Don't use this class unless
+ * you are running Java 8.
+ * 
+ * @since 1.9
  */
 public class Java8TimestampStrategy implements TimestampStrategy {
-  private final Class<?> fileTimeClass;
-  private final Method setLastModifiedTimeMethod;
-  private final Method getLastModifiedTimeMethod;
-  private final Method setCreationTime;
-  private final Method getCreationTime;
-  private final Method setLastAccessTime;
-  private final Method getLastAccessTime;
 
-  public Java8TimestampStrategy() {
-    try {
-      fileTimeClass = Class.forName("java.nio.file.attribute.FileTime");
-
-      setLastModifiedTimeMethod = ZipEntry.class.getMethod("setLastModifiedTime", fileTimeClass);
-      getLastModifiedTimeMethod = ZipEntry.class.getMethod("getLastModifiedTime");
-
-      setCreationTime = ZipEntry.class.getMethod("setCreationTime", fileTimeClass);
-      getCreationTime = ZipEntry.class.getMethod("getCreationTime");
-
-      setLastAccessTime = ZipEntry.class.getMethod("setLastAccessTime", fileTimeClass);
-      getLastAccessTime = ZipEntry.class.getMethod("getLastAccessTime");
+  public void setTime(ZipEntry newInstance, ZipEntry oldInstance) {
+    {
+      FileTime time = oldInstance.getCreationTime();
+      if (time != null) {
+        newInstance.setCreationTime(time);
+      }
     }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException("You shouldn't instanciate this class when not running JDK 8", e);
+    {
+      FileTime time = oldInstance.getLastModifiedTime();
+      if (time != null) {
+        newInstance.setLastModifiedTime(time);
+      }
     }
-    catch (NoSuchMethodException e) {
-      throw new RuntimeException("You shouldn't instanciate this class when not running JDK 8", e);
-    }
-    catch (SecurityException e) {
-      throw new RuntimeException("You shouldn't instanciate this class when not running JDK 8", e);
+    {
+      FileTime time = oldInstance.getLastAccessTime();
+      if (time != null) {
+        newInstance.setLastAccessTime(time);
+      }
     }
   }
 
-  public void preserveCreationTime(ZipEntry newInstance, ZipEntry oldInstance) {
-    invokeMethod(getCreationTime, setCreationTime, newInstance, oldInstance);
-  }
-
-  public void preserveLastModifiedTime(ZipEntry newInstance, ZipEntry oldInstance) {
-    invokeMethod(getLastModifiedTimeMethod, setLastModifiedTimeMethod, newInstance, oldInstance);
-  }
-
-  public void preserveLastAccessedTime(ZipEntry newInstance, ZipEntry oldInstance) {
-    invokeMethod(getLastAccessTime, setLastAccessTime, newInstance, oldInstance);
-  }
-
-  private void invokeMethod(Method getMethod, Method setMethod, ZipEntry newInstance, ZipEntry oldInstance) {
-    try {
-      Object prevValue = getMethod.invoke(oldInstance);
-      setMethod.invoke(newInstance, prevValue);
-    }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IllegalArgumentException e) {
-      throw new RuntimeException(e);
-    }
-    catch (InvocationTargetException e) {
-      throw new RuntimeException(e);
-    }
-  }
 }

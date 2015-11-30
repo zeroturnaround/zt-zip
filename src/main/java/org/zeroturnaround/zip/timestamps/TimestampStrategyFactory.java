@@ -20,6 +20,8 @@ import org.zeroturnaround.zip.ZTZipReflectionUtil;
 /**
  * The getInstance() of this method will return a JDK8 implementation when
  * running on JVM 8 and a no operation instance when running on older JVM.
+ * 
+ * @since 1.9
  */
 public class TimestampStrategyFactory {
   private static TimestampStrategy INSTANCE = new TimestampStrategyFactory().getStrategy();
@@ -28,11 +30,11 @@ public class TimestampStrategyFactory {
   }
 
   private TimestampStrategy getStrategy() {
-    if (ZTZipReflectionUtil.isJdk8()) {
+    if (ZTZipReflectionUtil.isClassAvailable(ZTZipReflectionUtil.JAVA8_STREAM_API)) {
       return new Java8TimestampStrategy();
     }
     else {
-      return new NOPTimestampStrategy();
+      return new PreJava8TimestampStrategy();
     }
   }
   

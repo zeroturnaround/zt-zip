@@ -19,8 +19,6 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -29,7 +27,6 @@ import org.zeroturnaround.zip.commons.IOUtils;
 import org.zeroturnaround.zip.extra.AsiExtraField;
 import org.zeroturnaround.zip.extra.ExtraFieldUtils;
 import org.zeroturnaround.zip.extra.ZipExtraField;
-import org.zeroturnaround.zip.timestamps.TimestampStrategy;
 import org.zeroturnaround.zip.timestamps.TimestampStrategyFactory;
 
 /**
@@ -109,21 +106,7 @@ class ZipEntryUtil {
     ZipEntry copy = copy(originalEntry);
 
     if (preserveTimestamps) {
-      /**
-       * If we succeed to set the modified time (works only on JDK8)
-       * then we shouldn't call the setTime method anymore as that
-       * will nullify the modified time - see
-       * http://hg.openjdk.java.net/jdk8u/jdk8u/jdk/file/f1f3f9eaf7fa/src/share/classes/java/util/zip/ZipEntry.java#l163
-       */
-      if (ZTZipReflectionUtil.isJdk8()) {
-        TimestampStrategy strategy = TimestampStrategyFactory.getInstance();
-        strategy.preserveCreationTime(copy, originalEntry);
-        strategy.preserveLastAccessedTime(copy, originalEntry);
-        strategy.preserveLastModifiedTime(copy, originalEntry);
-      }
-      else {
-        copy.setTime(originalEntry.getTime());
-      }
+      TimestampStrategyFactory.getInstance().setTime(copy, originalEntry);
     }
     else {
       copy.setTime(System.currentTimeMillis());

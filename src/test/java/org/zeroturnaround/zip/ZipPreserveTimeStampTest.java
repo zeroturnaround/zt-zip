@@ -23,8 +23,8 @@ import java.util.zip.ZipFile;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.zeroturnaround.zip.commons.FileUtils;
 
 /**
@@ -32,11 +32,13 @@ import org.zeroturnaround.zip.commons.FileUtils;
  * lastModified, create, lastAccessed times for JDK8 and
  * the tests here that target the older API would fail.
  */
-@RunWith(SkipForJava8Runner.class)
 public class ZipPreserveTimeStampTest {
   private File srcZipFile;
   private File destZipFile;
   private ZipFile zf;
+
+  @Rule
+  public final SkipIfClassNotAvailableRule skipRule = new SkipIfClassNotAvailableRule(ZTZipReflectionUtil.JAVA8_STREAM_API);
 
   @Before
   public void setUp() throws IOException {

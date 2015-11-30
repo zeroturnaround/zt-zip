@@ -19,11 +19,11 @@ import java.util.zip.ZipEntry;
 /**
  * Strategy that we use to differentiate between JDK8 and older JDK
  * ZipEntry method calls. 
+ * 
+ * @since 1.9
  */
 public interface TimestampStrategy {
-  public void preserveCreationTime(ZipEntry newInstance, ZipEntry oldInstance);
 
-  public void preserveLastModifiedTime(ZipEntry newInstance, ZipEntry oldInstance);
+  void setTime(ZipEntry newInstance, ZipEntry oldInstance);
 
-  public void preserveLastAccessedTime(ZipEntry newInstance, ZipEntry oldInstance);
 }

@@ -4,6 +4,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class ZTZipReflectionUtil {
+
+  public static final String JAVA8_STREAM_API = "java.util.stream.Stream";
+
   private ZTZipReflectionUtil() {
   }
 
@@ -42,17 +45,17 @@ public class ZTZipReflectionUtil {
       throw new ZipException(e);
     }
   }
-  
-  public static boolean isJdk8() {
+
+  public static boolean isClassAvailable(String className) {
     try {
-      Class<?> streamClass = Class.forName("java.util.stream.Stream");
+      Class.forName(className);
       return true;
     }
     catch (ClassNotFoundException e) {
-      // Ignore, we are not running Java 8
+      // Ignore
     }
     catch (SecurityException e) {
-      // Ignore, we are not running Java 8
+      // Ignore
     }
     return false;
   }

@@ -17,18 +17,17 @@ package org.zeroturnaround.zip.timestamps;
 import java.util.zip.ZipEntry;
 
 /**
- * No operation implementation of the timestamp strategy. See {@link Java8TimestampStrategy}
- * for a implementation.
+ * Setting the timestamp in pre-java-8 environments.
+ * 
+ * @since 1.9
  */
-public class NOPTimestampStrategy implements TimestampStrategy {
+public class PreJava8TimestampStrategy implements TimestampStrategy {
 
-  public void preserveCreationTime(ZipEntry newInstance, ZipEntry oldInstance) {
-  }
-
-  public void preserveLastModifiedTime(ZipEntry newInstance, ZipEntry oldInstance) {
-  }
-
-  public void preserveLastAccessedTime(ZipEntry newInstance, ZipEntry oldInstance) {
+  public void setTime(ZipEntry newInstance, ZipEntry oldInstance) {
+    long time = oldInstance.getTime();
+    if (time != -1) {
+      newInstance.setTime(time);
+    }
   }
 
 }
