@@ -9,5 +9,9 @@ jdk:
   - openjdk7
   - openjdk6
 script:
-  - jdk_switcher use $TRAVIS_JDK_VERSION
-  - mvn test -Dmaven.javadoc.skip=true
+  - jdk_switcher use oraclejdk7
+  - mvn test -Dmaven.javadoc.skip=true -Dtest.excludes=**/ZipPreserveTimeStampJava8Test.java
+  - jdk_switcher use openjdk7
+  - mvn test -Dmaven.javadoc.skip=true -Dtest.excludes=**/ZipPreserveTimeStampJava8Test.java
+  - jdk_switcher use openjdk6
+  - mvn test -Dmaven.javadoc.skip=true -Dtest.excludes=**/ZipPreserveTimeStampJava8Test.java
