@@ -3,7 +3,7 @@ package org.zeroturnaround.zip;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-class ZTZipReflectionUtil {
+public class ZTZipReflectionUtil {
   private ZTZipReflectionUtil() {
   }
 
@@ -43,4 +43,17 @@ class ZTZipReflectionUtil {
     }
   }
   
+  public static boolean isJdk8() {
+    try {
+      Class<?> streamClass = Class.forName("java.util.stream.Stream");
+      return true;
+    }
+    catch (ClassNotFoundException e) {
+      // Ignore, we are not running Java 8
+    }
+    catch (SecurityException e) {
+      // Ignore, we are not running Java 8
+    }
+    return false;
+  }
 }

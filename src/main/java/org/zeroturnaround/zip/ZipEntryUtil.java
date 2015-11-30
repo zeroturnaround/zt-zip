@@ -29,6 +29,8 @@ import org.zeroturnaround.zip.commons.IOUtils;
 import org.zeroturnaround.zip.extra.AsiExtraField;
 import org.zeroturnaround.zip.extra.ExtraFieldUtils;
 import org.zeroturnaround.zip.extra.ZipExtraField;
+import org.zeroturnaround.zip.timestamps.TimestampStrategy;
+import org.zeroturnaround.zip.timestamps.TimestampStrategyFactory;
 
 /**
  * Util class for static methods shared between ZipUtil and Zips.
@@ -113,70 +115,21 @@ class ZipEntryUtil {
        * will nullify the modified time - see
        * http://hg.openjdk.java.net/jdk8u/jdk8u/jdk/file/f1f3f9eaf7fa/src/share/classes/java/util/zip/ZipEntry.java#l163
        */
-      boolean success = tryToPreserveLatestJDKSupportedTimes(copy, originalEntry);
-      if (!success) {
+      if (ZTZipReflectionUtil.isJdk8()) {
+        TimestampStrategy strategy = TimestampStrategyFactory.getInstance();
+        strategy.preserveCreationTime(copy, originalEntry);
+        strategy.preserveLastAccessedTime(copy, originalEntry);
+        strategy.preserveLastModifiedTime(copy, originalEntry);
+      }
+      else {
         copy.setTime(originalEntry.getTime());
       }
     }
     else {
       copy.setTime(System.currentTimeMillis());
     }
+    
     addEntry(copy, new BufferedInputStream(in), out);
-  }
-
-  /**
-   * The method tries to set the last modified time. The pre-requisite for this is that
-   * the running JDK is at least 1.8 that has the necessary methods. As we need to preserve
-   * compile time compatibility with JDK 5 then we use reflection for the lookup.
-   * 
-   * See https://github.com/zeroturnaround/zt-zip/issues/73
-   * 
-   * @param target the instance we want to set the last modified time to
-   * @param original the instance we use to get the last modified time
-   */
-  private static boolean tryToPreserveLatestJDKSupportedTimes(ZipEntry target, ZipEntry original) {
-    try {
-      Class<?> fileTimeClass = Class.forName("java.nio.file.attribute.FileTime");
-      
-      // modified time handling
-      Method setLastModifiedTimeMethod = ZipEntry.class.getMethod("setLastModifiedTime", fileTimeClass);
-      Method getLastModifiedTimeMethod = ZipEntry.class.getMethod("getLastModifiedTime");
-
-      Object lastModified = getLastModifiedTimeMethod.invoke(original);
-      setLastModifiedTimeMethod.invoke(target, lastModified);
-      
-      // creation time handling
-      Method setCreationTime = ZipEntry.class.getMethod("setCreationTime", fileTimeClass);
-      Method getCreationTime = ZipEntry.class.getMethod("getCreationTime");
-
-      Object createdTime = getCreationTime.invoke(original);
-      setCreationTime.invoke(target, createdTime);
-      
-      // last access time
-      Method setLastAccessTime = ZipEntry.class.getMethod("setLastAccessTime", fileTimeClass);
-      Method getLastAccessTime = ZipEntry.class.getMethod("getLastAccessTime");
-
-      Object lastAccessTime = getLastAccessTime.invoke(original);
-      setLastAccessTime.invoke(target, lastAccessTime);
-      
-      return true;
-    }
-    catch (IllegalAccessException e) {
-      // Ignore, we are not running Java 8
-    }
-    catch (InvocationTargetException e) {
-      // Ignore, we are not running Java 8
-    }
-    catch (NoSuchMethodException e) {
-      // Ignore, we are not running Java 8
-    }
-    catch (ClassNotFoundException e) {
-      // Ignore, we are not running Java 8
-    }
-    catch (SecurityException e) {
-      // Ignore, we are not running Java 8
-    }
-    return false;
   }
 
   /**
