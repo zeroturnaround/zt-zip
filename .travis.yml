@@ -1,10 +1,10 @@
 language: java
-script:
+install:
   - jdk_switcher use oraclejdk8
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true
-  - jdk_switcher use oraclejdk7
-  - mvn test -Dmaven.javadoc.skip=true
-  - jdk_switcher use openjdk7
-  - mvn test -Dmaven.javadoc.skip=true
-  - jdk_switcher use openjdk6
-  - mvn test -Dmaven.javadoc.skip=true
+jdk:
+  - oraclejdk8
+  - oraclejdk7
+  - openjdk7
+  - openjdk6
+script: mvn test -Dmaven.javadoc.skip=true
