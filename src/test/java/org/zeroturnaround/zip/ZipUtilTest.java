@@ -43,8 +43,8 @@ import junit.framework.TestCase;
 public class ZipUtilTest extends TestCase {
 
   /** @noinspection ConstantConditions*/
-  private File file(String name) {
-    return new File(getClass().getClassLoader().getResource(name).getPath());
+  public static File file(String name) {
+    return new File(ZipUtilTest.class.getClassLoader().getResource(name).getPath());
   }
 
   public void testPackEntryStream() {
