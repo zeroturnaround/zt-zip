@@ -1348,6 +1348,26 @@ public final class ZipUtil {
   }
 
   /**
+   * Compresses the given directory and all its sub-directories into the passed in 
+   * ZIP stream. It is the responsibility of the caller to close the passed in
+   * stream properly.
+   *
+   * @param sourceDir
+   *          root directory.
+   * @param out
+   *          ZIP output stream.
+   * @param mapper
+   *          call-back for renaming the entries.
+   */
+  public static void pack(File sourceDir, ZipOutputStream out, NameMapper mapper) throws IOException {
+    log.debug("Compressing '{}' into a stream.", sourceDir);
+    if (!sourceDir.exists()) {
+      throw new ZipException("Given file '" + sourceDir + "' doesn't exist!");
+    }
+    pack(sourceDir, out, mapper, "", true);
+  }
+
+  /**
    * Compresses the given directory and all its sub-directories into a ZIP file.
    *
    * @param dir
