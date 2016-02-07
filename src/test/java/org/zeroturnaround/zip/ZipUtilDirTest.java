@@ -1,6 +1,5 @@
 package org.zeroturnaround.zip;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 
@@ -26,13 +25,13 @@ public class ZipUtilDirTest {
     FileUtils.copy(ZipUtilTest.file("TestFile-and-TestFile-II.zip"), expectedOs);
 
     // set up directory to be packed
-    File destDir = tempDir.getRoot();
-    FileUtils.copyFileToDirectory(ZipUtilTest.file("TestFile.txt"), destDir);
-    FileUtils.copyFileToDirectory(ZipUtilTest.file("TestFile-II.txt"), destDir);
+    File sourceDir = tempDir.getRoot();
+    FileUtils.copyFileToDirectory(ZipUtilTest.file("TestFile.txt"), sourceDir);
+    FileUtils.copyFileToDirectory(ZipUtilTest.file("TestFile-II.txt"), sourceDir);
     ByteArrayOutputStream actualOs = new ByteArrayOutputStream(1024);
 
     // execute test
-    ZipUtil.pack(destDir, actualOs);
+    ZipUtil.pack(sourceDir, actualOs);
 
     // verify
     Assert.assertArrayEquals(expectedOs.toByteArray(), actualOs.toByteArray());
