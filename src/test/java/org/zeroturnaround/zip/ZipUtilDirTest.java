@@ -1,5 +1,6 @@
 package org.zeroturnaround.zip;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 
@@ -16,7 +17,10 @@ import org.junit.Assert;
 public class ZipUtilDirTest {
 
   @Rule
-  public TemporaryFolder tempDir = new TemporaryFolder();
+  public TemporaryFolder tempSrcDir = new TemporaryFolder();
+
+  @Rule
+  public TemporaryFolder tempVerificationDir = new TemporaryFolder();
 
   @Test
   public void testPackDirectoryToStream() throws Exception {
@@ -25,16 +29,23 @@ public class ZipUtilDirTest {
     FileUtils.copy(ZipUtilTest.file("TestFile-and-TestFile-II.zip"), expectedOs);
 
     // set up directory to be packed
-    File sourceDir = tempDir.getRoot();
-    FileUtils.copyFileToDirectory(ZipUtilTest.file("TestFile.txt"), sourceDir);
-    FileUtils.copyFileToDirectory(ZipUtilTest.file("TestFile-II.txt"), sourceDir);
+    File sourceDir = tempSrcDir.getRoot();
+    File file1 = ZipUtilTest.file("TestFile.txt");
+    File file2 = ZipUtilTest.file("TestFile-II.txt");
+    FileUtils.copyFileToDirectory(file1, sourceDir);
+    FileUtils.copyFileToDirectory(file2, sourceDir);
     ByteArrayOutputStream actualOs = new ByteArrayOutputStream(1024);
 
     // execute test
     ZipUtil.pack(sourceDir, actualOs);
 
     // verify
-    Assert.assertArrayEquals(expectedOs.toByteArray(), actualOs.toByteArray());
+    File verificationDir = tempVerificationDir.getRoot();
+    // comparing bytes is not reliable across JDK versions, so we
+    // unpack the archive and compare files instead
+    ZipUtil.unpack(new ByteArrayInputStream(actualOs.toByteArray()), verificationDir);
+    Assert.assertTrue(FileUtils.contentEquals(file1, new File(verificationDir, file1.getName())));
+    Assert.assertTrue(FileUtils.contentEquals(file2, new File(verificationDir, file2.getName())));
   }
 
 }
