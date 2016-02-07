@@ -24,10 +24,6 @@ public class ZipUtilDirTest {
 
   @Test
   public void testPackDirectoryToStream() throws Exception {
-    // set up expected value
-    ByteArrayOutputStream expectedOs = new ByteArrayOutputStream(1024);
-    FileUtils.copy(ZipUtilTest.file("TestFile-and-TestFile-II.zip"), expectedOs);
-
     // set up directory to be packed
     File sourceDir = tempSrcDir.getRoot();
     File file1 = ZipUtilTest.file("TestFile.txt");
