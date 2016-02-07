@@ -1357,7 +1357,7 @@ public final class ZipUtil {
    * @param os
    *          output stream (will be buffered in this method).
    */
-  public static void pack(File sourceDir, OutputStream os) throws IOException {
+  public static void pack(File sourceDir, OutputStream os) {
     pack(sourceDir, os, IdentityNameMapper.INSTANCE, DEFAULT_COMPRESSION_LEVEL);
   }
 
@@ -1373,7 +1373,7 @@ public final class ZipUtil {
    * @param compressionLevel
    *          compression level
    */
-  public static void pack(File sourceDir, OutputStream os, int compressionLevel) throws IOException {
+  public static void pack(File sourceDir, OutputStream os, int compressionLevel) {
     pack(sourceDir, os, IdentityNameMapper.INSTANCE, compressionLevel);
   }
 
@@ -1389,7 +1389,7 @@ public final class ZipUtil {
    * @param mapper
    *          call-back for renaming the entries.
    */
-  public static void pack(File sourceDir, OutputStream os, NameMapper mapper) throws IOException {
+  public static void pack(File sourceDir, OutputStream os, NameMapper mapper) {
     pack(sourceDir, os, mapper, DEFAULT_COMPRESSION_LEVEL);
   }
 
@@ -1407,22 +1407,34 @@ public final class ZipUtil {
    * @param compressionLevel
    *          compression level
    */
-  public static void pack(File sourceDir, OutputStream os, NameMapper mapper, int compressionLevel) throws IOException {
+  public static void pack(File sourceDir, OutputStream os, NameMapper mapper, int compressionLevel) {
     log.debug("Compressing '{}' into a stream.", sourceDir);
     if (!sourceDir.exists()) {
       throw new ZipException("Given file '" + sourceDir + "' doesn't exist!");
     }
     ZipOutputStream out = null;
+    IOException error = null;
     try {
       out = new ZipOutputStream(new BufferedOutputStream(os));
       out.setLevel(compressionLevel);
       pack(sourceDir, out, mapper, "", true);
     }
+    catch (IOException e) {
+      error = e;
+    }
     finally {
-      if (out != null) {
-        out.finish();
-        out.flush();
+      if (out != null && error == null) {
+        try {
+          out.finish();
+          out.flush();
+        }
+        catch (IOException e) {
+          error = e;
+        }
       }
+    }
+    if (error != null) {
+      throw ZipExceptionUtil.rethrow(error);
     }
   }
 
