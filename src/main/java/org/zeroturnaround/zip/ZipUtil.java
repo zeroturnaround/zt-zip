@@ -1348,6 +1348,97 @@ public final class ZipUtil {
   }
 
   /**
+   * Compresses the given directory and all of its sub-directories into the passed in 
+   * stream. It is the responsibility of the caller to close the passed in
+   * stream properly.
+   *
+   * @param sourceDir
+   *          root directory.
+   * @param os
+   *          output stream (will be buffered in this method).
+   */
+  public static void pack(File sourceDir, OutputStream os) {
+    pack(sourceDir, os, IdentityNameMapper.INSTANCE, DEFAULT_COMPRESSION_LEVEL);
+  }
+
+  /**
+   * Compresses the given directory and all of its sub-directories into the passed in 
+   * stream. It is the responsibility of the caller to close the passed in
+   * stream properly.
+   *
+   * @param sourceDir
+   *          root directory.
+   * @param os
+   *          output stream (will be buffered in this method).
+   * @param compressionLevel
+   *          compression level
+   */
+  public static void pack(File sourceDir, OutputStream os, int compressionLevel) {
+    pack(sourceDir, os, IdentityNameMapper.INSTANCE, compressionLevel);
+  }
+
+  /**
+   * Compresses the given directory and all of its sub-directories into the passed in 
+   * stream. It is the responsibility of the caller to close the passed in
+   * stream properly.
+   *
+   * @param sourceDir
+   *          root directory.
+   * @param os
+   *          output stream (will be buffered in this method).
+   * @param mapper
+   *          call-back for renaming the entries.
+   */
+  public static void pack(File sourceDir, OutputStream os, NameMapper mapper) {
+    pack(sourceDir, os, mapper, DEFAULT_COMPRESSION_LEVEL);
+  }
+
+  /**
+   * Compresses the given directory and all of its sub-directories into the passed in 
+   * stream. It is the responsibility of the caller to close the passed in
+   * stream properly.
+   *
+   * @param sourceDir
+   *          root directory.
+   * @param os
+   *          output stream (will be buffered in this method).
+   * @param mapper
+   *          call-back for renaming the entries.
+   * @param compressionLevel
+   *          compression level
+   */
+  public static void pack(File sourceDir, OutputStream os, NameMapper mapper, int compressionLevel) {
+    log.debug("Compressing '{}' into a stream.", sourceDir);
+    if (!sourceDir.exists()) {
+      throw new ZipException("Given file '" + sourceDir + "' doesn't exist!");
+    }
+    ZipOutputStream out = null;
+    IOException error = null;
+    try {
+      out = new ZipOutputStream(new BufferedOutputStream(os));
+      out.setLevel(compressionLevel);
+      pack(sourceDir, out, mapper, "", true);
+    }
+    catch (IOException e) {
+      error = e;
+    }
+    finally {
+      if (out != null && error == null) {
+        try {
+          out.finish();
+          out.flush();
+        }
+        catch (IOException e) {
+          error = e;
+        }
+      }
+    }
+    if (error != null) {
+      throw ZipExceptionUtil.rethrow(error);
+    }
+  }
+
+  /**
    * Compresses the given directory and all its sub-directories into a ZIP file.
    *
    * @param dir
