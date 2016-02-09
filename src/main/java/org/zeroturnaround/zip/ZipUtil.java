@@ -1356,6 +1356,8 @@ public final class ZipUtil {
    *          root directory.
    * @param os
    *          output stream (will be buffered in this method).
+   * 
+   * @since 1.10
    */
   public static void pack(File sourceDir, OutputStream os) {
     pack(sourceDir, os, IdentityNameMapper.INSTANCE, DEFAULT_COMPRESSION_LEVEL);
@@ -1372,6 +1374,8 @@ public final class ZipUtil {
    *          output stream (will be buffered in this method).
    * @param compressionLevel
    *          compression level
+   * 
+   * @since 1.10
    */
   public static void pack(File sourceDir, OutputStream os, int compressionLevel) {
     pack(sourceDir, os, IdentityNameMapper.INSTANCE, compressionLevel);
@@ -1388,6 +1392,8 @@ public final class ZipUtil {
    *          output stream (will be buffered in this method).
    * @param mapper
    *          call-back for renaming the entries.
+   * 
+   * @since 1.10
    */
   public static void pack(File sourceDir, OutputStream os, NameMapper mapper) {
     pack(sourceDir, os, mapper, DEFAULT_COMPRESSION_LEVEL);
@@ -1406,6 +1412,8 @@ public final class ZipUtil {
    *          call-back for renaming the entries.
    * @param compressionLevel
    *          compression level
+   * 
+   * @since 1.10
    */
   public static void pack(File sourceDir, OutputStream os, NameMapper mapper, int compressionLevel) {
     log.debug("Compressing '{}' into a stream.", sourceDir);
