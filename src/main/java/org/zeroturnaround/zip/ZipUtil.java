@@ -1301,7 +1301,7 @@ public final class ZipUtil {
    * @param destZipFile
    *          ZIP file that will be created or overwritten.
    * @param compressionLevel
-   *          compression level
+   *          ZIP file compression level (speed versus filesize), e.g. <code>Deflater.NO_COMPRESSION</code>, <code>Deflater.BEST_SPEED</code>, or <code>Deflater.BEST_COMPRESSION</code>
    */
   public static void packEntries(File[] filesToPack, File destZipFile, int compressionLevel) {
     packEntries(filesToPack, destZipFile, IdentityNameMapper.INSTANCE, compressionLevel);
@@ -1319,7 +1319,7 @@ public final class ZipUtil {
    * @param mapper
    *          call-back for renaming the entries.
    * @param compressionLevel
-   *          compression level
+   *          ZIP file compression level (speed versus filesize), e.g. <code>Deflater.NO_COMPRESSION</code>, <code>Deflater.BEST_SPEED</code>, or <code>Deflater.BEST_COMPRESSION</code>
    */
   public static void packEntries(File[] filesToPack, File destZipFile, NameMapper mapper, int compressionLevel) {
     log.debug("Compressing '{}' into '{}'.", filesToPack, destZipFile);
