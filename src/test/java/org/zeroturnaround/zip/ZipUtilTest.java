@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -251,6 +252,36 @@ public class ZipUtilTest extends TestCase {
     assertTrue("zip file should exist with the same name as the directory that was unexploded", dir.exists());
     assertTrue("unexploding input directory should have produced zip file with the same name", !dir.isDirectory());
     assertTrue("Should be able to delete zip that was created from directory", dir.delete());
+  }
+
+  public void testPackEntriesWithCompressionLevel() throws Exception {
+    long filesizeBestCompression = 0;
+    long filesizeNoCompression = 0;
+
+    ZipFile zf = null;
+    File dest = null;
+    
+    try {
+        dest = File.createTempFile("temp-stor", null);
+        ZipUtil.packEntries(new File[]{file("TestFile.txt"), file("TestFile-II.txt")}, dest, Deflater.BEST_COMPRESSION);
+    	zf = new ZipFile(dest);
+	    filesizeBestCompression = zf.getEntry("TestFile.txt").getCompressedSize();
+    }finally {
+    	zf.close();
+    }
+    
+    try {
+        dest = File.createTempFile("temp-stor", null);
+        ZipUtil.packEntries(new File[]{file("TestFile.txt"), file("TestFile-II.txt")}, dest, Deflater.NO_COMPRESSION);
+    	zf = new ZipFile(dest);
+    	filesizeNoCompression = zf.getEntry("TestFile.txt").getCompressedSize();
+    }finally {
+    	zf.close();
+    }
+    
+    assertTrue(filesizeNoCompression > 0);
+    assertTrue(filesizeBestCompression > 0);
+    assertTrue(filesizeNoCompression > filesizeBestCompression);
   }
 
   public void testPackEntries() throws Exception {
@@ -749,15 +780,15 @@ public class ZipUtilTest extends TestCase {
   }
 
 
-  public void testAddEntryWithCompressionLevelAndDestFile() throws IOException {
-      int compressionLevel = ZipEntry.STORED;
-      doTestAddEntryWithCompressionLevelAndDestFile(compressionLevel);
+  public void testAddEntryWithCompressionMethodAndDestFile() throws IOException {
+      int compressionMethod = ZipEntry.STORED;
+      doTestAddEntryWithCompressionMethodAndDestFile(compressionMethod);
 
-      compressionLevel = ZipEntry.DEFLATED;
-      doTestAddEntryWithCompressionLevelAndDestFile(compressionLevel);
+      compressionMethod = ZipEntry.DEFLATED;
+      doTestAddEntryWithCompressionMethodAndDestFile(compressionMethod);
   }
 
-  private void doTestAddEntryWithCompressionLevelAndDestFile(int compressionLevel) throws IOException {
+  private void doTestAddEntryWithCompressionMethodAndDestFile(int compressionMethod) throws IOException {
       File src = file("demo.zip");
       final String fileName = "TestFile.txt";
       if(ZipUtil.containsEntry(src, fileName)) {
@@ -769,34 +800,34 @@ public class ZipUtilTest extends TestCase {
           is = new FileInputStream(file(fileName));
           byte[] newEntry = IOUtils.toByteArray(is);
           File dest = File.createTempFile("temp.zip", null);
-          ZipUtil.addEntry(src, fileName, newEntry, dest, compressionLevel);
+          ZipUtil.addEntry(src, fileName, newEntry, dest, compressionMethod);
           assertTrue(ZipUtil.containsEntry(dest, fileName));
 
-          assertEquals(compressionLevel, ZipUtil.getCompressionLevelOfEntry(dest, fileName));
+          assertEquals(compressionMethod, ZipUtil.getCompressionMethodOfEntry(dest, fileName));
       } finally {
           IOUtils.closeQuietly(is);
       }
   }
 
-  public void testAddEntryWithCompressionLevelStoredInPlace() throws IOException {
-      int compressionLevel = ZipEntry.STORED;
+  public void testAddEntryWithCompressionMethodStoredInPlace() throws IOException {
+      int compressionMethod = ZipEntry.STORED;
       File src = file("demo.zip");
       File srcCopy = File.createTempFile("ztr", ".zip");
       FileUtils.copyFile(src, srcCopy);
-      doTestAddEntryWithCompressionLevelInPlace(srcCopy, compressionLevel);
+      doTestAddEntryWithCompressionMethodInPlace(srcCopy, compressionMethod);
       FileUtils.forceDelete(srcCopy);
   }
 
-  public void testAddEntryWithCompressionLevelDeflatedInPlace() throws IOException {
-      int compressionLevel = ZipEntry.DEFLATED;
+  public void testAddEntryWithCompressionMethodDeflatedInPlace() throws IOException {
+      int compressionMethod = ZipEntry.DEFLATED;
       File src = file("demo.zip");
       File srcCopy = File.createTempFile("ztr", ".zip");
       FileUtils.copyFile(src, srcCopy);
-      doTestAddEntryWithCompressionLevelInPlace(srcCopy, compressionLevel);
+      doTestAddEntryWithCompressionMethodInPlace(srcCopy, compressionMethod);
       FileUtils.forceDelete(srcCopy);
   }
 
-  private void doTestAddEntryWithCompressionLevelInPlace(File src, int compressionLevel) throws IOException {
+  private void doTestAddEntryWithCompressionMethodInPlace(File src, int compressionMethod) throws IOException {
       final String fileName = "TestFile.txt";
       if(ZipUtil.containsEntry(src, fileName)) {
         ZipUtil.removeEntry(src, fileName);
@@ -806,25 +837,25 @@ public class ZipUtilTest extends TestCase {
       try {
           is = new FileInputStream(file(fileName));
           byte[] newEntry = IOUtils.toByteArray(is);
-          ZipUtil.addEntry(src, fileName, newEntry, compressionLevel);
+          ZipUtil.addEntry(src, fileName, newEntry, compressionMethod);
           assertTrue(ZipUtil.containsEntry(src, fileName));
 
-          assertEquals(compressionLevel, ZipUtil.getCompressionLevelOfEntry(src, fileName));
+          assertEquals(compressionMethod, ZipUtil.getCompressionMethodOfEntry(src, fileName));
       } finally {
           IOUtils.closeQuietly(is);
       }
   }
 
-  public void testReplaceEntryWithCompressionLevel() throws IOException {
+  public void testReplaceEntryWithCompressionMethod() throws IOException {
     File initialSrc = file("demo.zip");
     File src = File.createTempFile("ztr", ".zip");
     FileUtils.copyFile(initialSrc, src);
     final String fileName = "foo.txt";
     assertTrue(ZipUtil.containsEntry(src, fileName));
-    assertEquals(ZipEntry.STORED, ZipUtil.getCompressionLevelOfEntry(src, fileName));
-    byte[] content = "testReplaceEntryWithCompressionLevel".getBytes("UTF-8");
+    assertEquals(ZipEntry.STORED, ZipUtil.getCompressionMethodOfEntry(src, fileName));
+    byte[] content = "testReplaceEntryWithCompressionMethod".getBytes("UTF-8");
     ZipUtil.replaceEntry(src, fileName, content, ZipEntry.DEFLATED);
-    assertEquals(ZipEntry.DEFLATED, ZipUtil.getCompressionLevelOfEntry(src, fileName));
+    assertEquals(ZipEntry.DEFLATED, ZipUtil.getCompressionMethodOfEntry(src, fileName));
     FileUtils.forceDelete(src);
   }
 

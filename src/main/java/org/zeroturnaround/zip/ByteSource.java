@@ -26,7 +26,7 @@ public class ByteSource implements ZipEntrySource {
   private final String path;
   private final byte[] bytes;
   private final long time;
-  private final int compressionLevel;
+  private final int compressionMethod;
   private final long crc;
 
   public ByteSource(String path, byte[] bytes) {
@@ -36,16 +36,16 @@ public class ByteSource implements ZipEntrySource {
   public ByteSource(String path, byte[] bytes, long time) {
     this(path, bytes, time, -1);
   }
-  public ByteSource(String path, byte[] bytes, int compressionLevel) {
-    this(path, bytes, System.currentTimeMillis(), compressionLevel);
+  public ByteSource(String path, byte[] bytes, int compressionMethod) {
+    this(path, bytes, System.currentTimeMillis(), compressionMethod);
   }
 
-  public ByteSource(String path, byte[] bytes, long time, int compressionLevel) {
+  public ByteSource(String path, byte[] bytes, long time, int compressionMethod) {
     this.path = path;
     this.bytes = (byte[])bytes.clone();
     this.time = time;
-    this.compressionLevel = compressionLevel;
-    if(compressionLevel != -1) {
+    this.compressionMethod = compressionMethod;
+    if(compressionMethod != -1) {
       CRC32 crc32 = new CRC32();
       crc32.update(bytes);
       this.crc = crc32.getValue();
@@ -63,8 +63,8 @@ public class ByteSource implements ZipEntrySource {
     if (bytes != null) {
       entry.setSize(bytes.length);
     }
-    if(compressionLevel != -1) {
-      entry.setMethod(compressionLevel);
+    if(compressionMethod != -1) {
+      entry.setMethod(compressionMethod);
     }
     if(crc != -1L) {
       entry.setCrc(crc);
