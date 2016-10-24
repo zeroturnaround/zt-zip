@@ -1272,6 +1272,40 @@ public final class ZipUtil {
    *          call-back for renaming the entries.
    */
   public static void packEntries(File[] filesToPack, File destZipFile, NameMapper mapper) {
+    packEntries(filesToPack, destZipFile, mapper, DEFAULT_COMPRESSION_LEVEL);
+  }
+
+  /**
+   * Compresses the given files into a ZIP file.
+   * <p>
+   * The ZIP file must not be a directory and its parent directory must exist.
+   *
+   * @param filesToPack
+   *          files that needs to be zipped.
+   * @param destZipFile
+   *          ZIP file that will be created or overwritten.
+   * @param compressionLevel
+   *          compression level
+   */
+  public static void packEntries(File[] filesToPack, File destZipFile, int compressionLevel) {
+    packEntries(filesToPack, destZipFile, IdentityNameMapper.INSTANCE, compressionLevel);
+  }
+
+  /**
+   * Compresses the given files into a ZIP file.
+   * <p>
+   * The ZIP file must not be a directory and its parent directory must exist.
+   *
+   * @param filesToPack
+   *          files that needs to be zipped.
+   * @param destZipFile
+   *          ZIP file that will be created or overwritten.
+   * @param mapper
+   *          call-back for renaming the entries.
+   * @param compressionLevel
+   *          compression level
+   */
+  public static void packEntries(File[] filesToPack, File destZipFile, NameMapper mapper, int compressionLevel) {
     log.debug("Compressing '{}' into '{}'.", filesToPack, destZipFile);
 
     ZipOutputStream out = null;
@@ -1279,6 +1313,7 @@ public final class ZipUtil {
     try {
       fos = new FileOutputStream(destZipFile);
       out = new ZipOutputStream(new BufferedOutputStream(fos));
+      out.setLevel(compressionLevel);
 
       for (int i = 0; i < filesToPack.length; i++) {
         File fileToPack = filesToPack[i];
