@@ -260,25 +260,25 @@ public class ZipUtilTest extends TestCase {
 
     ZipFile zf = null;
     File dest = null;
-    
+
     try {
         dest = File.createTempFile("temp-stor", null);
         ZipUtil.packEntries(new File[]{file("TestFile.txt"), file("TestFile-II.txt")}, dest, Deflater.BEST_COMPRESSION);
-    	zf = new ZipFile(dest);
-	    filesizeBestCompression = zf.getEntry("TestFile.txt").getCompressedSize();
+        zf = new ZipFile(dest);
+        filesizeBestCompression = zf.getEntry("TestFile.txt").getCompressedSize();
     }finally {
-    	zf.close();
+        zf.close();
     }
-    
+
     try {
         dest = File.createTempFile("temp-stor", null);
         ZipUtil.packEntries(new File[]{file("TestFile.txt"), file("TestFile-II.txt")}, dest, Deflater.NO_COMPRESSION);
-    	zf = new ZipFile(dest);
-    	filesizeNoCompression = zf.getEntry("TestFile.txt").getCompressedSize();
+        zf = new ZipFile(dest);
+        filesizeNoCompression = zf.getEntry("TestFile.txt").getCompressedSize();
     }finally {
-    	zf.close();
+        zf.close();
     }
-    
+
     assertTrue(filesizeNoCompression > 0);
     assertTrue(filesizeBestCompression > 0);
     assertTrue(filesizeNoCompression > filesizeBestCompression);
