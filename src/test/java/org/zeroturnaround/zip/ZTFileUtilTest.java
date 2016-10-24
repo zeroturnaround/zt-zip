@@ -45,7 +45,7 @@ public class ZTFileUtilTest extends TestCase {
     Collection<File> files = ZTFileUtil.listFiles(new File("."), new FileFilter() {
 
       public boolean accept(File pathname) {
-        if (pathname.toString().endsWith("./pom.xml")) {
+        if (pathname.toString().endsWith("." + File.separator + "pom.xml")) {
           return true;
         }
         else {
