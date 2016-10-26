@@ -526,7 +526,7 @@ public class FileUtilsV2_2 {
    * not guaranteed that those operations will succeed.
    * If the modification operation fails, no indication is provided.
    *
-   * <h4>Example: Copy directories only</h4> 
+   * <h3>Example: Copy directories only</h3> 
    *  <pre>
    *  // only copy the directory structure
    *  FileUtils.copyDirectory(srcDir, destDir, DirectoryFileFilter.DIRECTORY, false);
