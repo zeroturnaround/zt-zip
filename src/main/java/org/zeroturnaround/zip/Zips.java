@@ -205,9 +205,9 @@ public class Zips {
         continue;
       }
       String entryPath = getRelativePath(file, entryFile);
-      if (File.separator.equals("\\")) {
+      if (File.separatorChar == IOUtils.DIR_SEPARATOR_WINDOWS) {
         // replace directory separators on windows as at least 7zip packs zip with entries having "/" like on linux
-        entryPath = entryPath.replace('\\', '/');
+        entryPath = entryPath.replace(IOUtils.DIR_SEPARATOR_WINDOWS, IOUtils.DIR_SEPARATOR_UNIX);
       }
       if (preserveRoot) {
         entryPath = file.getName() + entryPath;
