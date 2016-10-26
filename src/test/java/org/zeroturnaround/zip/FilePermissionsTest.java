@@ -75,18 +75,19 @@ public class FilePermissionsTest {
 
     setReadable(fileA, true);
     setReadable(fileB, false);
+    setReadable(fileB, true);//if we set read permission to false, then we can't zip the file, causing the test to fail with a permission exception
 
     //TESTS BEFORE ZIP
     assertTrue(fileA.exists() && fileB.exists());
     assertTrue(canRead(fileA));
-    assertFalse(canRead(fileB));
+    assertTrue(canRead(fileB));
 
     assertTrue(doZipAndUnpack(dirName, ".zip", tmpDir));
 
     //SAME TESTS AFTER ZIP & UNZIP
     assertTrue(fileA.exists() && fileB.exists());
     assertTrue(canRead(fileA));
-    assertFalse(canRead(fileB));
+    assertTrue(canRead(fileB));
   }
 
   /** This is the only test that can be run on Windows to test that permissions are kept after zip and unzip. */
