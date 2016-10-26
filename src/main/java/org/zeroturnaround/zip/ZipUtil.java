@@ -98,7 +98,23 @@ public final class ZipUtil {
   }
 
   /**
-   * Returns the compression level of a given entry of the ZIP file.
+   * Returns the compression method of a given entry of the ZIP file.
+   *
+   * @param zip
+   *          ZIP file.
+   * @param name
+   *          entry name.
+   * @return Returns <code>ZipEntry.STORED</code>, <code>ZipEntry.DEFLATED</code> or -1 if
+   * the ZIP file does not contain the given entry.
+   * @deprecated The compression level cannot be retrieved. This method exists only to ensure backwards compatibility with ZipUtil version 1.9, which returned the compression method, not the level.
+   */
+  @Deprecated
+  public static int getCompressionLevelOfEntry(File zip, String name) {
+    return getCompressionMethodOfEntry(zip, name);
+  }
+
+  /**
+   * Returns the compression method of a given entry of the ZIP file.
    *
    * @param zip
    *          ZIP file.
@@ -107,7 +123,7 @@ public final class ZipUtil {
    * @return Returns <code>ZipEntry.STORED</code>, <code>ZipEntry.DEFLATED</code> or -1 if
    * the ZIP file does not contain the given entry.
    */
-  public static int getCompressionLevelOfEntry(File zip, String name) {
+  public static int getCompressionMethodOfEntry(File zip, String name) {
     ZipFile zf = null;
     try {
       zf = new ZipFile(zip);
@@ -1272,6 +1288,40 @@ public final class ZipUtil {
    *          call-back for renaming the entries.
    */
   public static void packEntries(File[] filesToPack, File destZipFile, NameMapper mapper) {
+    packEntries(filesToPack, destZipFile, mapper, DEFAULT_COMPRESSION_LEVEL);
+  }
+
+  /**
+   * Compresses the given files into a ZIP file.
+   * <p>
+   * The ZIP file must not be a directory and its parent directory must exist.
+   *
+   * @param filesToPack
+   *          files that needs to be zipped.
+   * @param destZipFile
+   *          ZIP file that will be created or overwritten.
+   * @param compressionLevel
+   *          ZIP file compression level (speed versus filesize), e.g. <code>Deflater.NO_COMPRESSION</code>, <code>Deflater.BEST_SPEED</code>, or <code>Deflater.BEST_COMPRESSION</code>
+   */
+  public static void packEntries(File[] filesToPack, File destZipFile, int compressionLevel) {
+    packEntries(filesToPack, destZipFile, IdentityNameMapper.INSTANCE, compressionLevel);
+  }
+
+  /**
+   * Compresses the given files into a ZIP file.
+   * <p>
+   * The ZIP file must not be a directory and its parent directory must exist.
+   *
+   * @param filesToPack
+   *          files that needs to be zipped.
+   * @param destZipFile
+   *          ZIP file that will be created or overwritten.
+   * @param mapper
+   *          call-back for renaming the entries.
+   * @param compressionLevel
+   *          ZIP file compression level (speed versus filesize), e.g. <code>Deflater.NO_COMPRESSION</code>, <code>Deflater.BEST_SPEED</code>, or <code>Deflater.BEST_COMPRESSION</code>
+   */
+  public static void packEntries(File[] filesToPack, File destZipFile, NameMapper mapper, int compressionLevel) {
     log.debug("Compressing '{}' into '{}'.", filesToPack, destZipFile);
 
     ZipOutputStream out = null;
@@ -1279,6 +1329,7 @@ public final class ZipUtil {
     try {
       fos = new FileOutputStream(destZipFile);
       out = new ZipOutputStream(new BufferedOutputStream(fos));
+      out.setLevel(compressionLevel);
 
       for (int i = 0; i < filesToPack.length; i++) {
         File fileToPack = filesToPack[i];
@@ -1781,11 +1832,11 @@ public final class ZipUtil {
    *          new entry bytes (or <code>null</code> if directory).
    * @param destZip
    *          new ZIP file created.
-   * @param compressionLevel
-   *          the new compression level (<code>ZipEntry.STORED</code> or <code>ZipEntry.DEFLATED</code>).
+   * @param compressionMethod
+   *          the new compression method (<code>ZipEntry.STORED</code> or <code>ZipEntry.DEFLATED</code>).
    */
-  public static void addEntry(File zip, String path, byte[] bytes, File destZip, final int compressionLevel) {
-    addEntry(zip, new ByteSource(path, bytes, compressionLevel), destZip);
+  public static void addEntry(File zip, String path, byte[] bytes, File destZip, final int compressionMethod) {
+    addEntry(zip, new ByteSource(path, bytes, compressionMethod), destZip);
   }
 
   /**
@@ -1816,13 +1867,13 @@ public final class ZipUtil {
    *          new ZIP entry path.
    * @param bytes
    *          new entry bytes (or <code>null</code> if directory).
-   * @param compressionLevel
-   *          the new compression level (<code>ZipEntry.STORED</code> or <code>ZipEntry.DEFLATED</code>).
+   * @param compressionMethod
+   *          the new compression method (<code>ZipEntry.STORED</code> or <code>ZipEntry.DEFLATED</code>).
    */
-  public static void addEntry(final File zip, final String path, final byte[] bytes, final int compressionLevel) {
+  public static void addEntry(final File zip, final String path, final byte[] bytes, final int compressionMethod) {
     operateInPlace(zip, new InPlaceAction() {
       public boolean act(File tmpFile) {
-        addEntry(zip, path, bytes, tmpFile, compressionLevel);
+        addEntry(zip, path, bytes, tmpFile, compressionMethod);
         return true;
       }
     });
@@ -2250,15 +2301,15 @@ public final class ZipUtil {
    *          new ZIP entry path.
    * @param bytes
    *          new entry bytes (or <code>null</code> if directory).
-   * @param compressionLevel
-   *          the new compression level (<code>ZipEntry.STORED</code> or <code>ZipEntry.DEFLATED</code>).
+   * @param compressionMethod
+   *          the new compression method (<code>ZipEntry.STORED</code> or <code>ZipEntry.DEFLATED</code>).
    * @return <code>true</code> if the entry was replaced.
    */
   public static boolean replaceEntry(final File zip, final String path, final byte[] bytes,
-                                     final int compressionLevel) {
+                                     final int compressionMethod) {
     return operateInPlace(zip, new InPlaceAction() {
       public boolean act(File tmpFile) {
-        return replaceEntry(zip, new ByteSource(path, bytes, compressionLevel), tmpFile);
+        return replaceEntry(zip, new ByteSource(path, bytes, compressionMethod), tmpFile);
       }
     });
   }

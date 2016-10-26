@@ -65,13 +65,19 @@ public final class MainExamplesTest extends TestCase {
     File outDir = File.createTempFile("prefix", "suffix");
     outDir.delete();
     outDir.mkdir();
-    
+
     File outFile = new File(outDir, "demo");
-    
+    FileOutputStream fio = new FileOutputStream(outFile);
+
     // so the zip file will be outDir/demo <- this is a zip archive
-    FileUtils.copy(demoFile, new FileOutputStream(outFile));
+    FileUtils.copy(demoFile, fio);
+
+    // close the stream so that locks on the file can be released (on windows, not doing this prevents the file from being moved)
+    fio.close();
+
     // we explode the zip archive
     ZipUtil.explode(outFile);
+
     // we expect the outDir/demo/foo.txt to exist now
     assertTrue((new File(outFile, FOO_TXT)).exists());
   }
