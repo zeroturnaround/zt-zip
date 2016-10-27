@@ -21,7 +21,7 @@ import java.io.File;
 
 /**
  * This is a class that has been made significantly smaller (deleted a bunch of methods) and originally
- * is from the Apache commons-io package. All license and other documentation is intact.
+ * is from the Apache Commons IO 2.2 package (the latest version that supports Java 1.5). All license and other documentation is intact.
  * 
  * General filename and filepath manipulation utilities.
  * <p>
