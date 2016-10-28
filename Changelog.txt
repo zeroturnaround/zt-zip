@@ -2,6 +2,14 @@
   ZT Zip Changelog
 ********************************************
 
+2.0
+
+* Added user configurable compression level to packEntries()
+* Added more overloaded methods to the pack() method for convenience
+* Clarified compressionLevel vs compressionMethod
+* Bumped embedded Apache Commons from 1.4 to 2.2
+
+
 1.9
 
 * Bumped minimal supported Java version to Java 5
