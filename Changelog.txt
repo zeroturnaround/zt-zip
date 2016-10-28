@@ -2,7 +2,7 @@
   ZT Zip Changelog
 ********************************************
 
-2.0
+1.10
 
 * Added user configurable compression level to packEntries()
 * Added more overloaded methods to the pack() method for convenience
