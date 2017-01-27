@@ -105,8 +105,9 @@ public final class ZipUtil {
    * @param name
    *          entry name.
    * @return Returns <code>ZipEntry.STORED</code>, <code>ZipEntry.DEFLATED</code> or -1 if
-   * the ZIP file does not contain the given entry.
-   * @deprecated The compression level cannot be retrieved. This method exists only to ensure backwards compatibility with ZipUtil version 1.9, which returned the compression method, not the level.
+   *         the ZIP file does not contain the given entry.
+   * @deprecated The compression level cannot be retrieved. This method exists only to ensure backwards compatibility with ZipUtil version 1.9, which returned the compression
+   *             method, not the level.
    */
   @Deprecated
   public static int getCompressionLevelOfEntry(File zip, String name) {
@@ -121,14 +122,14 @@ public final class ZipUtil {
    * @param name
    *          entry name.
    * @return Returns <code>ZipEntry.STORED</code>, <code>ZipEntry.DEFLATED</code> or -1 if
-   * the ZIP file does not contain the given entry.
+   *         the ZIP file does not contain the given entry.
    */
   public static int getCompressionMethodOfEntry(File zip, String name) {
     ZipFile zf = null;
     try {
       zf = new ZipFile(zip);
       ZipEntry zipEntry = zf.getEntry(name);
-      if(zipEntry == null) {
+      if (zipEntry == null) {
         return -1;
       }
       return zipEntry.getMethod();
@@ -339,11 +340,11 @@ public final class ZipUtil {
       return false; // entry not found
     }
 
-    if(ze.isDirectory() || zf.getInputStream(ze) == null) {
-      if(file.isDirectory()) {
+    if (ze.isDirectory() || zf.getInputStream(ze) == null) {
+      if (file.isDirectory()) {
         return true;
       }
-      if(file.exists()) {
+      if (file.exists()) {
         FileUtils.forceDelete(file);
       }
       return file.mkdirs();
@@ -412,9 +413,35 @@ public final class ZipUtil {
    * @see #iterate(File, ZipInfoCallback)
    */
   public static void iterate(File zip, ZipEntryCallback action) {
+    iterate(zip, action, null);
+  }
+
+  /**
+   * Reads the given ZIP file and executes the given action for each entry.
+   * <p>
+   * For each entry the corresponding input stream is also passed to the action. If you want to stop the loop
+   * then throw a ZipBreakException.
+   *
+   * @param zip
+   *          input ZIP file.
+   * @param action
+   *          action to be called for each entry.
+   *
+   * @param charset
+   *          Charset used to processed the ZipFile with
+   *
+   * @see ZipEntryCallback
+   * @see #iterate(File, ZipInfoCallback)
+   */
+  public static void iterate(File zip, ZipEntryCallback action, Charset charset) {
     ZipFile zf = null;
     try {
-      zf = new ZipFile(zip);
+      if (charset == null) {
+        zf = new ZipFile(zip);
+      }
+      else {
+        zf = new ZipFile(zip, charset);
+      }
 
       Enumeration<? extends ZipEntry> en = zf.entries();
       while (en.hasMoreElements()) {
@@ -459,9 +486,35 @@ public final class ZipUtil {
    * @see #iterate(File, String[], ZipInfoCallback)
    */
   public static void iterate(File zip, String[] entryNames, ZipEntryCallback action) {
+    iterate(zip, entryNames, action, null);
+  }
+
+  /**
+   * Reads the given ZIP file and executes the given action for each given entry.
+   * <p>
+   * For each given entry the corresponding input stream is also passed to the action. If you want to stop the loop then throw a ZipBreakException.
+   *
+   * @param zip
+   *          input ZIP file.
+   * @param entryNames
+   *          names of entries to iterate
+   * @param action
+   *          action to be called for each entry.
+   * @param charset
+   *          charset used to process the zip file
+   *
+   * @see ZipEntryCallback
+   * @see #iterate(File, String[], ZipInfoCallback)
+   */
+  public static void iterate(File zip, String[] entryNames, ZipEntryCallback action, Charset charset) {
     ZipFile zf = null;
     try {
-      zf = new ZipFile(zip);
+      if (charset == null) {
+        zf = new ZipFile(zip);
+      }
+      else {
+        zf = new ZipFile(zip, charset);
+      }
 
       for (int i = 0; i < entryNames.length; i++) {
         ZipEntry e = zf.getEntry(entryNames[i]);
@@ -815,7 +868,44 @@ public final class ZipUtil {
   }
 
   /**
+   * Unpacks a ZIP file to the given directory using a specific Charset
+   * for the input file.
+   *
+   * <p>
+   * The output directory must not be a file.
+   *
+   * @param zip
+   *          input ZIP file.
+   * @param outputDir
+   *          output directory (created automatically if not found).
+   */
+  public static void unpack(File zip, final File outputDir, Charset charset) {
+    unpack(zip, outputDir, IdentityNameMapper.INSTANCE, charset);
+  }
+
+  /**
    * Unpacks a ZIP file to the given directory.
+   * <p>
+   * The output directory must not be a file.
+   *
+   * @param zip
+   *          input ZIP file.
+   * @param outputDir
+   *          output directory (created automatically if not found).
+   * @param mapper
+   *          call-back for renaming the entries.
+   * @param charset
+   *          charset used to process the zip file
+   */
+  public static void unpack(File zip, File outputDir, NameMapper mapper, Charset charset) {
+    log.debug("Extracting '{}' into '{}'.", zip, outputDir);
+    iterate(zip, new Unpacker(outputDir, mapper), charset);
+  }
+
+  /**
+   * Unpacks a ZIP file to the given directory using a specific Charset
+   * for the input file.
+   *
    * <p>
    * The output directory must not be a file.
    *
@@ -877,7 +967,23 @@ public final class ZipUtil {
    *          output directory (created automatically if not found).
    */
   public static void unpack(InputStream is, File outputDir) {
-    unpack(is, outputDir, IdentityNameMapper.INSTANCE);
+    unpack(is, outputDir, IdentityNameMapper.INSTANCE, null);
+  }
+
+  /**
+   * Unpacks a ZIP stream to the given directory.
+   * <p>
+   * The output directory must not be a file.
+   *
+   * @param is
+   *          inputstream for ZIP file.
+   * @param outputDir
+   *          output directory (created automatically if not found).
+   * @param charset
+   *          charset used to process the zip stream
+   */
+  public static void unpack(InputStream is, File outputDir, Charset charset) {
+    unpack(is, outputDir, IdentityNameMapper.INSTANCE, charset);
   }
 
   /**
@@ -893,8 +999,26 @@ public final class ZipUtil {
    *          call-back for renaming the entries.
    */
   public static void unpack(InputStream is, File outputDir, NameMapper mapper) {
+    unpack(is, outputDir, mapper, null);
+  }
+
+  /**
+   * Unpacks a ZIP stream to the given directory.
+   * <p>
+   * The output directory must not be a file.
+   *
+   * @param is
+   *          inputstream for ZIP file.
+   * @param outputDir
+   *          output directory (created automatically if not found).
+   * @param mapper
+   *          call-back for renaming the entries.
+   * @param charset
+   *          charset to use when unpacking the stream
+   */
+  public static void unpack(InputStream is, File outputDir, NameMapper mapper, Charset charset) {
     log.debug("Extracting {} into '{}'.", is, outputDir);
-    iterate(is, new Unpacker(outputDir, mapper));
+    iterate(is, new Unpacker(outputDir, mapper), charset);
   }
 
   /**
@@ -971,12 +1095,12 @@ public final class ZipUtil {
       }
     }
   }
-  
+
   /**
    * Unpacks each ZIP entries. Presumes they are packed with the backslash separator.
    * Some archives can have this problem if they are created with some software
    * that is not following the ZIP specification.
-   * 
+   *
    * @since zt-zip 1.9
    */
   public static class BackslashUnpacker implements ZipEntryCallback {
@@ -1001,9 +1125,9 @@ public final class ZipUtil {
          * separator. Also such broken archives don't have entries that
          * are just directories. Everything is a file. See the example
          *
-         * Archive:  backSlashTest.zip
-         *   testing: testDirectory\testfileInTestDirectory.txt   OK
-         *   testing: testDirectory\testSubdirectory\testFileInTestSubdirectory.txt   OK
+         * Archive: backSlashTest.zip
+         * testing: testDirectory\testfileInTestDirectory.txt OK
+         * testing: testDirectory\testSubdirectory\testFileInTestSubdirectory.txt OK
          * No errors detected in compressed data of backSlashTest.zip.
          */
         if (name.indexOf('\\') != -1) {
@@ -1011,14 +1135,14 @@ public final class ZipUtil {
           String[] dirs = name.split("\\\\");
 
           // lets create all the directories and the last entry is the file as EVERY entry is a file
-          for (int i = 0; i < dirs.length-1; i++) {
+          for (int i = 0; i < dirs.length - 1; i++) {
             File file = new File(parentDirectory, dirs[i]);
             if (!file.exists()) {
               FileUtils.forceMkdir(file);
             }
             parentDirectory = file;
           }
-          File destFile = new File(parentDirectory, dirs[dirs.length-1]);
+          File destFile = new File(parentDirectory, dirs[dirs.length - 1]);
           FileUtils.copy(in, destFile);
         }
         // it could be that there are just top level files that the unpacker is used for
@@ -1226,26 +1350,26 @@ public final class ZipUtil {
   }
 
   /**
-     * Compresses the given file into a ZIP file.
-     * <p>
-     * The ZIP file must not be a directory and its parent directory must exist.
-     *
-     * @param fileToPack
-     *          file that needs to be zipped.
-     * @param destZipFile
-     *          ZIP file that will be created or overwritten.
-     * @param fileName
-     *          the name for the file inside the archive
-     */
-    public static void packEntry(File fileToPack, File destZipFile, final String fileName) {
-        packEntry(fileToPack, destZipFile, new NameMapper() {
-          public String map(String name) {
-            return fileName;
-          }
-        });
-    }
+   * Compresses the given file into a ZIP file.
+   * <p>
+   * The ZIP file must not be a directory and its parent directory must exist.
+   *
+   * @param fileToPack
+   *          file that needs to be zipped.
+   * @param destZipFile
+   *          ZIP file that will be created or overwritten.
+   * @param fileName
+   *          the name for the file inside the archive
+   */
+  public static void packEntry(File fileToPack, File destZipFile, final String fileName) {
+    packEntry(fileToPack, destZipFile, new NameMapper() {
+      public String map(String name) {
+        return fileName;
+      }
+    });
+  }
 
-    /**
+  /**
    * Compresses the given file into a ZIP file.
    * <p>
    * The ZIP file must not be a directory and its parent directory must exist.
@@ -1301,7 +1425,8 @@ public final class ZipUtil {
    * @param destZipFile
    *          ZIP file that will be created or overwritten.
    * @param compressionLevel
-   *          ZIP file compression level (speed versus filesize), e.g. <code>Deflater.NO_COMPRESSION</code>, <code>Deflater.BEST_SPEED</code>, or <code>Deflater.BEST_COMPRESSION</code>
+   *          ZIP file compression level (speed versus filesize), e.g. <code>Deflater.NO_COMPRESSION</code>, <code>Deflater.BEST_SPEED</code>, or
+   *          <code>Deflater.BEST_COMPRESSION</code>
    */
   public static void packEntries(File[] filesToPack, File destZipFile, int compressionLevel) {
     packEntries(filesToPack, destZipFile, IdentityNameMapper.INSTANCE, compressionLevel);
@@ -1319,7 +1444,8 @@ public final class ZipUtil {
    * @param mapper
    *          call-back for renaming the entries.
    * @param compressionLevel
-   *          ZIP file compression level (speed versus filesize), e.g. <code>Deflater.NO_COMPRESSION</code>, <code>Deflater.BEST_SPEED</code>, or <code>Deflater.BEST_COMPRESSION</code>
+   *          ZIP file compression level (speed versus filesize), e.g. <code>Deflater.NO_COMPRESSION</code>, <code>Deflater.BEST_SPEED</code>, or
+   *          <code>Deflater.BEST_COMPRESSION</code>
    */
   public static void packEntries(File[] filesToPack, File destZipFile, NameMapper mapper, int compressionLevel) {
     log.debug("Compressing '{}' into '{}'.", filesToPack, destZipFile);
@@ -1334,7 +1460,7 @@ public final class ZipUtil {
       for (int i = 0; i < filesToPack.length; i++) {
         File fileToPack = filesToPack[i];
 
-        ZipEntry zipEntry =  ZipEntryUtil.fromFile(mapper.map(fileToPack.getName()), fileToPack);
+        ZipEntry zipEntry = ZipEntryUtil.fromFile(mapper.map(fileToPack.getName()), fileToPack);
         out.putNextEntry(zipEntry);
         FileUtils.copy(fileToPack, out);
         out.closeEntry();
@@ -1399,7 +1525,7 @@ public final class ZipUtil {
   }
 
   /**
-   * Compresses the given directory and all of its sub-directories into the passed in 
+   * Compresses the given directory and all of its sub-directories into the passed in
    * stream. It is the responsibility of the caller to close the passed in
    * stream properly.
    *
@@ -1407,7 +1533,7 @@ public final class ZipUtil {
    *          root directory.
    * @param os
    *          output stream (will be buffered in this method).
-   * 
+   *
    * @since 1.10
    */
   public static void pack(File sourceDir, OutputStream os) {
@@ -1415,7 +1541,7 @@ public final class ZipUtil {
   }
 
   /**
-   * Compresses the given directory and all of its sub-directories into the passed in 
+   * Compresses the given directory and all of its sub-directories into the passed in
    * stream. It is the responsibility of the caller to close the passed in
    * stream properly.
    *
@@ -1425,7 +1551,7 @@ public final class ZipUtil {
    *          output stream (will be buffered in this method).
    * @param compressionLevel
    *          compression level
-   * 
+   *
    * @since 1.10
    */
   public static void pack(File sourceDir, OutputStream os, int compressionLevel) {
@@ -1433,7 +1559,7 @@ public final class ZipUtil {
   }
 
   /**
-   * Compresses the given directory and all of its sub-directories into the passed in 
+   * Compresses the given directory and all of its sub-directories into the passed in
    * stream. It is the responsibility of the caller to close the passed in
    * stream properly.
    *
@@ -1443,7 +1569,7 @@ public final class ZipUtil {
    *          output stream (will be buffered in this method).
    * @param mapper
    *          call-back for renaming the entries.
-   * 
+   *
    * @since 1.10
    */
   public static void pack(File sourceDir, OutputStream os, NameMapper mapper) {
@@ -1451,7 +1577,7 @@ public final class ZipUtil {
   }
 
   /**
-   * Compresses the given directory and all of its sub-directories into the passed in 
+   * Compresses the given directory and all of its sub-directories into the passed in
    * stream. It is the responsibility of the caller to close the passed in
    * stream properly.
    *
@@ -1463,7 +1589,7 @@ public final class ZipUtil {
    *          call-back for renaming the entries.
    * @param compressionLevel
    *          compression level
-   * 
+   *
    * @since 1.10
    */
   public static void pack(File sourceDir, OutputStream os, NameMapper mapper, int compressionLevel) {
@@ -1717,7 +1843,7 @@ public final class ZipUtil {
    *          ZIP entries added.
    * @param os
    *          output stream for the new ZIP (does not have to be buffered)
-   * 
+   *
    * @since 1.9
    */
   public static void pack(ZipEntrySource[] entries, OutputStream os) {
@@ -1879,7 +2005,6 @@ public final class ZipUtil {
     });
   }
 
-
   /**
    * Copies an existing ZIP file and appends it with one new entry.
    *
@@ -1939,34 +2064,34 @@ public final class ZipUtil {
     }
   }
 
-    /**
-     * Copies an existing ZIP file and appends it with new entries.
-     *
-     * @param zip
-     *          an existing ZIP file (only read).
-     * @param entries
-     *          new ZIP entries appended.
-     * @param destOut
-     *          new ZIP destination output stream
-     */
-    public static void addEntries(File zip, ZipEntrySource[] entries, OutputStream destOut) {
-      if (log.isDebugEnabled()) {
-        log.debug("Copying '" + zip + "' to a stream and adding " + Arrays.asList(entries) + ".");
-      }
-
-      ZipOutputStream out = null;
-      try {
-        out = new ZipOutputStream(destOut);
-        copyEntries(zip, out);
-        for (int i = 0; i < entries.length; i++) {
-          addEntry(entries[i], out);
-        }
-        out.finish();
-      }
-      catch (IOException e) {
-        ZipExceptionUtil.rethrow(e);
-      }
+  /**
+   * Copies an existing ZIP file and appends it with new entries.
+   *
+   * @param zip
+   *          an existing ZIP file (only read).
+   * @param entries
+   *          new ZIP entries appended.
+   * @param destOut
+   *          new ZIP destination output stream
+   */
+  public static void addEntries(File zip, ZipEntrySource[] entries, OutputStream destOut) {
+    if (log.isDebugEnabled()) {
+      log.debug("Copying '" + zip + "' to a stream and adding " + Arrays.asList(entries) + ".");
     }
+
+    ZipOutputStream out = null;
+    try {
+      out = new ZipOutputStream(destOut);
+      copyEntries(zip, out);
+      for (int i = 0; i < entries.length; i++) {
+        addEntry(entries[i], out);
+      }
+      out.finish();
+    }
+    catch (IOException e) {
+      ZipExceptionUtil.rethrow(e);
+    }
+  }
 
   /**
    * Copies an existing ZIP file and appends it with new entries.
@@ -2164,7 +2289,7 @@ public final class ZipUtil {
           return;
         }
 
-        for(String dirName: dirNames) {
+        for (String dirName : dirNames) {
           if (entryName.startsWith(dirName)) {
             return;
           }
@@ -2197,7 +2322,7 @@ public final class ZipUtil {
     ZipFile zf = null;
     try {
       zf = new ZipFile(zip);
-      for(String entryName : names) {
+      for (String entryName : names) {
         ZipEntry entry = zf.getEntry(entryName);
         if (entry != null) {
           if (entry.isDirectory()) {
@@ -2306,7 +2431,7 @@ public final class ZipUtil {
    * @return <code>true</code> if the entry was replaced.
    */
   public static boolean replaceEntry(final File zip, final String path, final byte[] bytes,
-                                     final int compressionMethod) {
+      final int compressionMethod) {
     return operateInPlace(zip, new InPlaceAction() {
       public boolean act(File tmpFile) {
         return replaceEntry(zip, new ByteSource(path, bytes, compressionMethod), tmpFile);
@@ -2713,7 +2838,7 @@ public final class ZipUtil {
    */
   static Map<String, ZipEntryTransformer> transformersByPath(List<ZipEntryTransformerEntry> entries) {
     Map<String, ZipEntryTransformer> result = new HashMap<String, ZipEntryTransformer>();
-    for (ZipEntryTransformerEntry entry: entries) {
+    for (ZipEntryTransformerEntry entry : entries) {
       result.put(entry.getPath(), entry.getTransformer());
     }
     return result;
@@ -2740,8 +2865,6 @@ public final class ZipUtil {
     }
     out.closeEntry();
   }
-
-
 
   /* Comparing two ZIP files. */
 
