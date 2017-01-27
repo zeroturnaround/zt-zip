@@ -98,6 +98,9 @@ public class CharsetTest extends TestCase {
    * [1] http://stackoverflow.com/questions/1510791/how-to-create-zip-files-with-specific-encoding
    */
   public void testIterateExtractWithCharset() throws Exception {
+    if (ignoreTestIfJava6()) {
+      return;
+    }
     final File src = new File("src/test/resources/windows-1252-files.zip");
     FileInputStream inputStream = new FileInputStream(src);
 
@@ -119,6 +122,9 @@ public class CharsetTest extends TestCase {
    * If a charset is not specified for the unpack then the test will just fail.
    */
   public void testExtractWithCharset() throws Exception {
+    if (ignoreTestIfJava6()) {
+      return;
+    }
     final File src = new File("src/test/resources/windows-1252-files.zip");
 
     File tmpDir = Files.createTempDirectory("zt-zip-tests").toFile();
@@ -129,6 +135,9 @@ public class CharsetTest extends TestCase {
    * If a charset is not specified for the unpack then the test will just fail.
    */
   public void testExtractWithCharsetUsingStream() throws Exception {
+    if (ignoreTestIfJava6()) {
+      return;
+    }
     final File src = new File("src/test/resources/windows-1252-files.zip");
     FileInputStream inputStream = new FileInputStream(src);
 
