@@ -878,6 +878,9 @@ public final class ZipUtil {
    *          input ZIP file.
    * @param outputDir
    *          output directory (created automatically if not found).
+   *
+   * @param charset
+   *          charset used to unpack the zip file
    */
   public static void unpack(File zip, final File outputDir, Charset charset) {
     unpack(zip, outputDir, IdentityNameMapper.INSTANCE, charset);
