@@ -120,10 +120,20 @@ public class CharsetTest extends TestCase {
    */
   public void testExtractWithCharset() throws Exception {
     final File src = new File("src/test/resources/windows-1252-files.zip");
-    FileInputStream inputStream = new FileInputStream(src);
 
     File tmpDir = Files.createTempDirectory("zt-zip-tests").toFile();
     ZipUtil.unpack(src, tmpDir, Charset.forName("IBM437"));
+  }
+
+  /*
+   * If a charset is not specified for the unpack then the test will just fail.
+   */
+  public void testExtractWithCharsetUsingStream() throws Exception {
+    final File src = new File("src/test/resources/windows-1252-files.zip");
+    FileInputStream inputStream = new FileInputStream(src);
+
+    File tmpDir = Files.createTempDirectory("zt-zip-tests").toFile();
+    ZipUtil.unpack(inputStream, tmpDir, Charset.forName("IBM437"));
 
     inputStream.close();
   }
