@@ -69,6 +69,11 @@ boolean exists = ZipUtil.containsEntry(new File("/tmp/demo"), "foo.txt");
 byte[] bytes = ZipUtil.unpackEntry(new File("/tmp/demo.zip"), "foo.txt");
 ```
 
+#### Extract an entry from a ZIP archive with a specific Charset into a byte array
+```java
+byte[] bytes = ZipUtil.unpackEntry(new File("/tmp/demo.zip"), "foo.txt", Charset.forName("IBM437"));
+```
+
 #### Extract an entry from a ZIP archive into file system
 ```java
 ZipUtil.unpackEntry(new File("/tmp/demo.zip"), "foo.txt", new File("/tmp/bar.txt"));
