@@ -197,6 +197,38 @@ public final class ZipUtil {
   /**
    * Unpacks a single entry from a ZIP file.
    *
+   * @param zip
+   *          ZIP file.
+   * @param name
+   *          entry name.
+   *
+   * @param charset
+   *          charset to be used to process the zip
+   *
+   * @return contents of the entry or <code>null</code> if it was not found.
+   */
+  public static byte[] unpackEntry(File zip, String name, Charset charset) {
+    ZipFile zf = null;
+    try {
+      if (charset != null) {
+        zf = new ZipFile(zip, charset);
+      }
+      else {
+        zf = new ZipFile(zip);
+      }
+      return doUnpackEntry(zf, name);
+    }
+    catch (IOException e) {
+      throw ZipExceptionUtil.rethrow(e);
+    }
+    finally {
+      closeQuietly(zf);
+    }
+  }
+
+  /**
+   * Unpacks a single entry from a ZIP file.
+   *
    * @param zf
    *          ZIP file.
    * @param name
@@ -284,9 +316,33 @@ public final class ZipUtil {
    *         <code>false</code> if the entry was not found.
    */
   public static boolean unpackEntry(File zip, String name, File file) {
+    return unpackEntry(zip, name, file, null);
+  }
+
+  /**
+   * Unpacks a single file from a ZIP archive to a file.
+   *
+   * @param zip
+   *          ZIP file.
+   * @param name
+   *          entry name.
+   * @param file
+   *          target file to be created or overwritten.
+   * @param charset
+   *          charset to be used processing the zip
+   *
+   * @return <code>true</code> if the entry was found and unpacked,
+   *         <code>false</code> if the entry was not found.
+   */
+  public static boolean unpackEntry(File zip, String name, File file, Charset charset) {
     ZipFile zf = null;
     try {
-      zf = new ZipFile(zip);
+      if (charset != null) {
+        zf = new ZipFile(zip, charset);
+      }
+      else {
+        zf = new ZipFile(zip);
+      }
       return doUnpackEntry(zf, name, file);
     }
     catch (IOException e) {
