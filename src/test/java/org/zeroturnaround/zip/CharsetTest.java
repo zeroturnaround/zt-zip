@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import org.junit.Before;
-
 import junit.framework.TestCase;
 
 public class CharsetTest extends TestCase {
@@ -44,21 +42,15 @@ public class CharsetTest extends TestCase {
     }
   };
 
-  @Before
-  public void beforeMethod() {
-    org.junit.Assume.assumeTrue(isJava7OrLater());
-    // rest of setup.
-  }
-
-  /*
-   * We only test with Java 1.6 and upwords. Checking for not starting with 1.6 is
-   * enough in this configuration.
-   */
-  public boolean isJava7OrLater() {
-    return !(System.getProperty("java.version").startsWith("1.6"));
+  public boolean ignoreTestIfJava6() {
+    return (System.getProperty("java.version").startsWith("1.6"));
   }
 
   public void testIterateWithCharset() throws Exception {
+    if (ignoreTestIfJava6()) {
+      return;
+    }
+
     FileInputStream fis = new FileInputStream(file);
 
     ZipUtil.iterate(fis, new ZipEntryCallback() {
@@ -69,6 +61,10 @@ public class CharsetTest extends TestCase {
   }
 
   public void testIterateWithEntryNamesAndCharset() throws Exception {
+    if (ignoreTestIfJava6()) {
+      return;
+    }
+
     FileInputStream fis = new FileInputStream(file);
 
     String[] entryNames = (String[]) fileContents.toArray(new String[] {});
@@ -80,6 +76,10 @@ public class CharsetTest extends TestCase {
   }
 
   public void testZipFileGetEntriesWithCharset() throws Exception {
+    if (ignoreTestIfJava6()) {
+      return;
+    }
+
     ZipFile zf = ZipFileUtil.getZipFile(file, Charset.forName("UTF8"));
     Enumeration entries = zf.entries();
     while (entries.hasMoreElements()) {
@@ -98,6 +98,10 @@ public class CharsetTest extends TestCase {
    * [1] http://stackoverflow.com/questions/1510791/how-to-create-zip-files-with-specific-encoding
    */
   public void testIterateExtractWithCharset() throws Exception {
+    if (ignoreTestIfJava6()) {
+      return;
+    }
+
     final File src = new File("src/test/resources/windows-compressed.zip");
     FileInputStream inputStream = new FileInputStream(src);
 
@@ -119,6 +123,9 @@ public class CharsetTest extends TestCase {
    * If a charset is not specified for the unpack then the test will just fail.
    */
   public void testExtractWithCharset() throws Exception {
+    if (ignoreTestIfJava6()) {
+      return;
+    }
     final File src = new File("src/test/resources/windows-compressed.zip");
 
     File tmpDir = Files.createTempDirectory("zt-zip-tests").toFile();
@@ -126,6 +133,9 @@ public class CharsetTest extends TestCase {
   }
 
   public void testExtractEntryWithCharset() throws Exception {
+    if (ignoreTestIfJava6()) {
+      return;
+    }
     final File src = new File("src/test/resources/windows-compressed.zip");
 
     byte[] bytes = ZipUtil.unpackEntry(src, "windows-default-encoded/römer.txt", Charset.forName("IBM437"));
@@ -136,6 +146,9 @@ public class CharsetTest extends TestCase {
    * If a charset is not specified for the unpack then the test will just fail.
    */
   public void testExtractWithCharsetUsingStream() throws Exception {
+    if (ignoreTestIfJava6()) {
+      return;
+    }
     final File src = new File("src/test/resources/windows-compressed.zip");
     FileInputStream inputStream = new FileInputStream(src);
 
