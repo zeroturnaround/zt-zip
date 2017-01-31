@@ -2,6 +2,9 @@
   ZT Zip Changelog
 ********************************************
 
+1.11
+* Added iterate and unpack methods that accept a Charset
+
 1.10
 
 * Added user configurable compression level to packEntries()
