@@ -61,7 +61,7 @@ and these non-functional requirements:
 
 #### Check if an entry exists in a ZIP archive
 ```java
-boolean exists = ZipUtil.containsEntry(new File("/tmp/demo"), "foo.txt");
+boolean exists = ZipUtil.containsEntry(new File("/tmp/demo.zip"), "foo.txt");
 ```
 
 #### Extract an entry from a ZIP archive into a byte array
