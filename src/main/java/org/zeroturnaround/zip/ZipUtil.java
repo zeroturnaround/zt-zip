@@ -704,22 +704,24 @@ public final class ZipUtil {
   public static void iterate(InputStream is, ZipEntryCallback action, Charset charset) {
     try {
       ZipInputStream in = null;
-      if (charset == null) {
-        in = new ZipInputStream(new BufferedInputStream(is));
-      }
-      else {
-        in = ZipFileUtil.createZipInputStream(is, charset);
-      }
-      ZipEntry entry;
-      while ((entry = in.getNextEntry()) != null) {
-        try {
-          action.process(in, entry);
+      try {
+        in = newCloseShieldZipInputStream(is, charset);
+        ZipEntry entry;
+        while ((entry = in.getNextEntry()) != null) {
+          try {
+            action.process(in, entry);
+          }
+          catch (IOException ze) {
+            throw new ZipException("Failed to process zip entry '" + entry.getName() + " with action " + action, ze);
+          }
+          catch (ZipBreakException ex) {
+            break;
+          }
         }
-        catch (IOException ze) {
-          throw new ZipException("Failed to process zip entry '" + entry.getName() + " with action " + action, ze);
-        }
-        catch (ZipBreakException ex) {
-          break;
+      }
+      finally {
+        if (in != null) {
+          in.close();
         }
       }
     }
@@ -768,26 +770,28 @@ public final class ZipUtil {
     }
     try {
       ZipInputStream in = null;
-      if (charset == null) {
-        in = new ZipInputStream(new BufferedInputStream(is));
+      try {
+        in = newCloseShieldZipInputStream(is, charset);
+        ZipEntry entry;
+        while ((entry = in.getNextEntry()) != null) {
+          if (!namesSet.contains(entry.getName())) {
+            // skip the unnecessary entry
+            continue;
+          }
+          try {
+            action.process(in, entry);
+          }
+          catch (IOException ze) {
+            throw new ZipException("Failed to process zip entry '" + entry.getName() + " with action " + action, ze);
+          }
+          catch (ZipBreakException ex) {
+            break;
+          }
+        }
       }
-      else {
-        in = ZipFileUtil.createZipInputStream(is, charset);
-      }
-      ZipEntry entry;
-      while ((entry = in.getNextEntry()) != null) {
-        if (!namesSet.contains(entry.getName())) {
-          // skip the unnecessary entry
-          continue;
-        }
-        try {
-          action.process(in, entry);
-        }
-        catch (IOException ze) {
-          throw new ZipException("Failed to process zip entry '" + entry.getName() + " with action " + action, ze);
-        }
-        catch (ZipBreakException ex) {
-          break;
+      finally {
+        if (in != null) {
+          in.close();
         }
       }
     }
@@ -812,6 +816,18 @@ public final class ZipUtil {
    */
   public static void iterate(InputStream is, String[] entryNames, ZipEntryCallback action) {
     iterate(is, entryNames, action, null);
+  }
+
+  /**
+   * Creates a new {@link ZipInputStream} based on the given {@link InputStream}. It will be buffered and close-shielded.
+   * Closing the result stream flushes the buffers and frees up resources of the {@link ZipInputStream}. However the source stream itself remains open.
+   */
+  private static ZipInputStream newCloseShieldZipInputStream(final InputStream is, Charset charset) {
+    InputStream in = new BufferedInputStream(new CloseShieldInputStream(is));
+    if (charset == null) {
+      return new ZipInputStream(in);
+    }
+    return ZipFileUtil.createZipInputStream(in, charset);
   }
 
   /**
