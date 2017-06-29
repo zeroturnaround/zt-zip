@@ -40,6 +40,7 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import com.sun.javaws.exceptions.InvalidArgumentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeroturnaround.zip.commons.FileUtils;
@@ -2705,9 +2706,12 @@ public final class ZipUtil {
    *          transformer for the given ZIP entry.
    * @param destZip
    *          new ZIP file created.
+   * @throws IllegalArgumentException if the destination is the same as the location
    * @return <code>true</code> if the entry was replaced.
    */
   public static boolean transformEntry(File zip, String path, ZipEntryTransformer transformer, File destZip) {
+    if(zip.equals(destZip)){throw new IllegalArgumentException("Input (" +zip.getAbsolutePath()+ ") is the same as the destination!" +
+            "\nPlease use the transformEntry without destination for in-place transformation." );}
     return transformEntry(zip, new ZipEntryTransformerEntry(path, transformer), destZip);
   }
 
