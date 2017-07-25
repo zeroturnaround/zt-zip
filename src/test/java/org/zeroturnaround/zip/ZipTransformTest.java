@@ -35,6 +35,21 @@ import org.zeroturnaround.zip.transform.StringZipEntryTransformer;
 
 public class ZipTransformTest extends TestCase {
 
+  public void testZipTransformNotInPlaceButSameLocation() throws IOException {
+    //Create dummy file and transformer
+    File file = File.createTempFile("temp", null);
+    StreamZipEntryTransformer arrayZipEntryTransformer = new StreamZipEntryTransformer() {
+      protected void transform(ZipEntry zipEntry, InputStream in, OutputStream out) throws IOException { }
+    };
+    try {
+      ZipUtil.transformEntry(file, "", arrayZipEntryTransformer, file);
+      //This line should not be reached.
+      assertTrue(false);
+    } catch(IllegalArgumentException e){
+      //Do nothing, test passed.
+    }
+  }
+
   public void testByteArrayTransformer() throws IOException {
     final String name = "foo";
     final byte[] contents = "bar".getBytes();

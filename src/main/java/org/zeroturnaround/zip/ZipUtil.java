@@ -2710,7 +2710,7 @@ public final class ZipUtil {
    */
   public static boolean transformEntry(File zip, String path, ZipEntryTransformer transformer, File destZip) {
     if(zip.equals(destZip)){throw new IllegalArgumentException("Input (" +zip.getAbsolutePath()+ ") is the same as the destination!" +
-            "\nPlease use the transformEntry without destination for in-place transformation." );}
+            "Please use the transformEntry method without destination for in-place transformation." );}
     return transformEntry(zip, new ZipEntryTransformerEntry(path, transformer), destZip);
   }
 
