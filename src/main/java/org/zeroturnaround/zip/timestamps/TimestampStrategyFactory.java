@@ -15,7 +15,7 @@ package org.zeroturnaround.zip.timestamps;
  *    limitations under the License.
  */
 
-import org.zeroturnaround.zip.ZTZipReflectionUtil;
+import java.util.zip.ZipEntry;
 
 /**
  * The getInstance() of this method will return a JDK8 implementation when
@@ -24,13 +24,26 @@ import org.zeroturnaround.zip.ZTZipReflectionUtil;
  * @since 1.9
  */
 public class TimestampStrategyFactory {
-  private static TimestampStrategy INSTANCE = new TimestampStrategyFactory().getStrategy();
+
+  public static boolean HAS_ZIP_ENTRY_FILE_TIME_METHODS = hasZipEntryFileTimeMethods();
+
+  private static TimestampStrategy INSTANCE = getStrategy();
 
   private TimestampStrategyFactory() {
   }
 
-  private TimestampStrategy getStrategy() {
-    if (ZTZipReflectionUtil.isClassAvailable(ZTZipReflectionUtil.JAVA8_STREAM_API)) {
+  private static boolean hasZipEntryFileTimeMethods() {
+    try {
+      ZipEntry.class.getDeclaredMethod("getCreationTime");
+      return true;
+    }
+    catch (Exception e) {
+      return false;
+    }
+  }
+
+  private static TimestampStrategy getStrategy() {
+    if (HAS_ZIP_ENTRY_FILE_TIME_METHODS) {
       return new Java8TimestampStrategy();
     }
     else {

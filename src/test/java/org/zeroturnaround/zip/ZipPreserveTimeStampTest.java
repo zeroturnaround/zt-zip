@@ -38,7 +38,7 @@ public class ZipPreserveTimeStampTest {
   private ZipFile zf;
 
   @ClassRule
-  public final static SkipIfClassNotAvailableRule skipRule = new SkipIfClassNotAvailableRule(ZTZipReflectionUtil.JAVA8_STREAM_API);
+  public final static SkipIfZipEntryFileTimeNotAvailableRule skipRule = new SkipIfZipEntryFileTimeNotAvailableRule();
 
   @Before
   public void setUp() throws IOException {

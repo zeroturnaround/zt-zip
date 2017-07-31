@@ -3,9 +3,7 @@ package org.zeroturnaround.zip;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class ZTZipReflectionUtil {
-
-  public static final String JAVA8_STREAM_API = "java.util.stream.Stream";
+class ZTZipReflectionUtil {
 
   private ZTZipReflectionUtil() {
   }
@@ -46,17 +44,4 @@ public class ZTZipReflectionUtil {
     }
   }
 
-  public static boolean isClassAvailable(String className) {
-    try {
-      Class.forName(className);
-      return true;
-    }
-    catch (ClassNotFoundException e) {
-      // Ignore
-    }
-    catch (SecurityException e) {
-      // Ignore
-    }
-    return false;
-  }
 }
