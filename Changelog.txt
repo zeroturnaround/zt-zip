@@ -2,22 +2,19 @@
   ZT Zip Changelog
 ********************************************
 
-1.12
+1.12 (1st August 2017)
 * Fixed a resource leakage with ZipInputStream
 * Fixed a NoSuchMethodError on Android platforms
 
-1.11
+1.11 (31st January 2017)
 * Added iterate and unpack methods that accept a Charset
 
-1.10
-
+1.10 (28th October 2016)
 * Added user configurable compression level to packEntries()
 * Added more overloaded methods to the pack() method for convenience
 * Bumped embedded Apache Commons from 1.4 to 2.2
 
-
-1.9
-
+1.9 (20th November 2015)
 * Bumped minimal supported Java version to Java 5
 * Added support for Java 7 POSIX file permissions
 * Added ability to create and update byte-array backed ZIP streams
@@ -26,14 +23,13 @@
 * Fixed not closing InputStream after processing each ZipEntrySource
 * Fixed buffering when creating and updating ZIP streams
 
-1.8
-
+1.8 (7th July 2014)
 * Removed dependency on commons-io
 * ZipUtil.pack more memory efficient for large directories
 * Fixed preserving compressed state of copied entries
 * Fixed packing files from a directory based on an accept filter
 * Improved Charset support
 
-1.6-SNAPSHOT
+1.6-SNAPSHOT (17th September 2012)
 * Started to write a changelog 
 * Added public CI, https://travis-ci.org/
