@@ -2,6 +2,10 @@
   ZT Zip Changelog
 ********************************************
 
+1.12
+* Fixed a resource leakage with ZipInputStream
+* Fixed a NoSuchMethodError on Android platforms
+
 1.11
 * Added iterate and unpack methods that accept a Charset
 
