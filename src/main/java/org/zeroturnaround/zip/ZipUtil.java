@@ -2705,9 +2705,12 @@ public final class ZipUtil {
    *          transformer for the given ZIP entry.
    * @param destZip
    *          new ZIP file created.
+   * @throws IllegalArgumentException if the destination is the same as the location
    * @return <code>true</code> if the entry was replaced.
    */
   public static boolean transformEntry(File zip, String path, ZipEntryTransformer transformer, File destZip) {
+    if(zip.equals(destZip)){throw new IllegalArgumentException("Input (" +zip.getAbsolutePath()+ ") is the same as the destination!" +
+            "Please use the transformEntry method without destination for in-place transformation." );}
     return transformEntry(zip, new ZipEntryTransformerEntry(path, transformer), destZip);
   }
 
