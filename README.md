@@ -33,6 +33,11 @@ To include it in your maven project then you have to specify the dependency.
 Notice that [1.8](https://oss.sonatype.org/content/repositories/releases/org/zeroturnaround/zt-zip/1.8/) is the last Java 1.4 compatible release. 
 Since then Java 1.5 is required.
 
+If you are using with ProGuard, please add the following configuration
+```
+-dontwarn org.slf4j.**
+```
+
 ## Background
 
 We had the following functional requirements:
