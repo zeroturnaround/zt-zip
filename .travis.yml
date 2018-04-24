@@ -4,6 +4,7 @@ addons:
   apt:
     packages:
       - oracle-java8-installer
+      - openjdk-6-jdk
 install:
   - jdk_switcher use oraclejdk8
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true
