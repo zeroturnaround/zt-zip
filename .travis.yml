@@ -10,6 +10,8 @@ install:
 jdk:
   - oraclejdk8
   - openjdk7
+  - oraclejdk9
+  - openjdk10
 script:
   - jdk_switcher use $TRAVIS_JDK_VERSION
   - ./mvnw test -Dmaven.javadoc.skip=true
