@@ -51,6 +51,19 @@ public class DirectoryTraversalMaliciousTest extends TestCase {
     File tmpDir = file.getParentFile();
 
     try {
+      ZipUtil.unwrap(badFile, tmpDir);
+      fail();
+    }
+    catch (ZipException e) {
+      assertTrue(true);
+    }
+  }
+
+  public void testBackslashUnpackerDoesntLeaveTarget() throws Exception {
+    File file = File.createTempFile("temp", null);
+    File tmpDir = file.getParentFile();
+
+    try {
       ZipUtil.iterate(badFileBackslashes, new ZipUtil.BackslashUnpacker(tmpDir));
       fail();
     }
