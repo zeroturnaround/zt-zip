@@ -12,4 +12,4 @@ jdk:
   - openjdk7
 script:
   - jdk_switcher use $TRAVIS_JDK_VERSION
-  - mvn test -Dmaven.javadoc.skip=true
+  - ./mvnw test -Dmaven.javadoc.skip=true
