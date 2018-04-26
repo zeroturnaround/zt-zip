@@ -1028,7 +1028,7 @@ public final class ZipUtil {
    */
   public static void unwrap(File zip, File outputDir, NameMapper mapper) {
     log.debug("Unwrapping '{}' into '{}'.", zip, outputDir);
-    iterate(zip, new Unwraper(outputDir, mapper));
+    iterate(zip, new Unwrapper(outputDir, mapper));
   }
 
   /**
@@ -1128,7 +1128,7 @@ public final class ZipUtil {
    */
   public static void unwrap(InputStream is, File outputDir, NameMapper mapper) {
     log.debug("Unwrapping {} into '{}'.", is, outputDir);
-    iterate(is, new Unwraper(outputDir, mapper));
+    iterate(is, new Unwrapper(outputDir, mapper));
   }
 
   /**
@@ -1262,13 +1262,13 @@ public final class ZipUtil {
    *
    * @author Oleg Shelajev
    */
-  private static class Unwraper implements ZipEntryCallback {
+  private static class Unwrapper implements ZipEntryCallback {
 
     private final File outputDir;
     private final NameMapper mapper;
     private String rootDir;
 
-    public Unwraper(File outputDir, NameMapper mapper) {
+    public Unwrapper(File outputDir, NameMapper mapper) {
       this.outputDir = outputDir;
       this.mapper = mapper;
     }
