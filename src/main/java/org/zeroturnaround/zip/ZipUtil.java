@@ -1150,6 +1150,15 @@ public final class ZipUtil {
       String name = mapper.map(zipEntry.getName());
       if (name != null) {
         File file = new File(outputDir, name);
+
+        /* If we see the relative traversal string of ".." we need to make sure
+         * that the outputdir + name doesn't leave the outputdir. See
+         * DirectoryTraversalMaliciousTest for details.
+         */
+        if (name.indexOf("..") != -1 && !file.getCanonicalPath().startsWith(outputDir.getCanonicalPath())) {
+          throw new ZipException("The file "+name+" is trying to leave the target output directory of "+outputDir+". Ignoring this file.");
+        }
+
         if (zipEntry.isDirectory()) {
           FileUtils.forceMkdir(file);
         }
@@ -1218,11 +1227,29 @@ public final class ZipUtil {
             parentDirectory = file;
           }
           File destFile = new File(parentDirectory, dirs[dirs.length - 1]);
+
+          /* If we see the relative traversal string of ".." we need to make sure
+           * that the outputdir + name doesn't leave the outputdir. See
+           * DirectoryTraversalMaliciousTest for details.
+           */
+          if (name.indexOf("..") != -1 && !destFile.getCanonicalPath().startsWith(outputDir.getCanonicalPath())) {
+            throw new ZipException("The file "+name+" is trying to leave the target output directory of "+outputDir+". Ignoring this file.");
+          }
+
           FileUtils.copy(in, destFile);
         }
         // it could be that there are just top level files that the unpacker is used for
         else {
           File destFile = new File(outputDir, name);
+
+          /* If we see the relative traversal string of ".." we need to make sure
+           * that the outputdir + name doesn't leave the outputdir. See
+           * DirectoryTraversalMaliciousTest for details.
+           */
+          if (name.indexOf("..") != -1 && !destFile.getCanonicalPath().startsWith(outputDir.getCanonicalPath())) {
+            throw new ZipException("The file "+name+" is trying to leave the target output directory of "+outputDir+". Ignoring this file.");
+          }
+
           FileUtils.copy(in, destFile);
         }
       }
@@ -1258,6 +1285,15 @@ public final class ZipUtil {
       String name = mapper.map(getUnrootedName(root, zipEntry.getName()));
       if (name != null) {
         File file = new File(outputDir, name);
+
+        /* If we see the relative traversal string of ".." we need to make sure
+         * that the outputdir + name doesn't leave the outputdir. See
+         * DirectoryTraversalMaliciousTest for details.
+         */
+        if (name.indexOf("..") != -1 && !file.getCanonicalPath().startsWith(outputDir.getCanonicalPath())) {
+          throw new ZipException("The file "+name+" is trying to leave the target output directory of "+outputDir+". Ignoring this file.");
+        }
+
         if (zipEntry.isDirectory()) {
           FileUtils.forceMkdir(file);
         }
