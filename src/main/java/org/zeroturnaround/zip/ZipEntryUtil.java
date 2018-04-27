@@ -27,7 +27,7 @@ import org.zeroturnaround.zip.commons.IOUtils;
 import org.zeroturnaround.zip.extra.AsiExtraField;
 import org.zeroturnaround.zip.extra.ExtraFieldUtils;
 import org.zeroturnaround.zip.extra.ZipExtraField;
-import org.zeroturnaround.zip.timestamps.TimestampStrategyFactory;
+import org.zeroturnaround.zip.timestamps.TimestampStrategy;
 
 /**
  * Util class for static methods shared between ZipUtil and Zips.
@@ -106,12 +106,12 @@ class ZipEntryUtil {
     ZipEntry copy = copy(originalEntry);
 
     if (preserveTimestamps) {
-      TimestampStrategyFactory.getInstance().setTime(copy, originalEntry);
+      TimestampStrategy.setTime(copy, originalEntry);
     }
     else {
       copy.setTime(System.currentTimeMillis());
     }
-    
+
     addEntry(copy, new BufferedInputStream(in), out);
   }
 
@@ -135,7 +135,7 @@ class ZipEntryUtil {
 
   /**
    * Create new Zip entry and fill it with associated with file meta-info
-   * 
+   *
    * @param name Zip entry name
    * @param file source File
    * @return newly created Zip entry
@@ -157,7 +157,7 @@ class ZipEntryUtil {
   /**
    * Add file permissions info to ZIP entry.
    * Current implementation adds "ASi Unix" (tag 0x756e) extra block to entry.
-   * 
+   *
    * @param zipEntry ZIP entry
    * @param permissions permissions to assign
    */
@@ -183,7 +183,7 @@ class ZipEntryUtil {
   /**
    * Get assigned to ZIP entry file permissions info. Current implementation tries to read "ASi Unix" (tag 0x756e) extra tag.
    * "ASi Unix"
-   * 
+   *
    * @param zipEntry
    * @return file permissions info or <code>null</code> if ZIP entry does not have "ASi Unix" extra field.
    */

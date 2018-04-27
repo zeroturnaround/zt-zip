@@ -1,4 +1,5 @@
 package org.zeroturnaround.zip;
+
 /**
  *    Copyright (C) 2012 ZeroTurnaround LLC <support@zeroturnaround.com>
  *
@@ -23,7 +24,6 @@ import java.util.zip.ZipFile;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.zeroturnaround.zip.commons.FileUtils;
 
@@ -31,9 +31,6 @@ public class ZipPreserveTimeStampJava8Test {
   private File srcZipFile;
   private File destZipFile;
   private ZipFile zf;
-
-  @ClassRule
-  public final static SkipIfZipEntryFileTimeNotAvailableRule skipRule = new SkipIfZipEntryFileTimeNotAvailableRule();
 
   @Before
   public void setUp() throws IOException {
@@ -60,7 +57,7 @@ public class ZipPreserveTimeStampJava8Test {
       }
     });
   }
-  
+
   @Test
   public void testPreserveTime() {
     // this construct doesn't add any entries but will trigger a re-pack with
@@ -68,7 +65,7 @@ public class ZipPreserveTimeStampJava8Test {
     Zips.get(srcZipFile).addEntries(new ZipEntrySource[0]).preserveTimestamps().destination(destZipFile).process();
     validateTimeStampEquality();
   }
-  
+
   @Test
   public void testPreserveTimeWithSetter() {
     // this construct doesn't add any entries but will trigger a re-pack with
@@ -76,7 +73,7 @@ public class ZipPreserveTimeStampJava8Test {
     Zips.get(srcZipFile).addEntries(new ZipEntrySource[0]).setPreserveTimestamps(true).destination(destZipFile).process();
     validateTimeStampEquality();
   }
-  
+
   private void validateTimeStampEquality() {
     Zips.get(destZipFile).iterate(new ZipEntryCallback() {
       public void process(InputStream in, ZipEntry zipEntry) throws IOException {
