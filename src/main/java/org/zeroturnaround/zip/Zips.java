@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,10 +46,9 @@ import org.zeroturnaround.zip.transform.ZipEntryTransformer;
 import org.zeroturnaround.zip.transform.ZipEntryTransformerEntry;
 
 /**
- * Fluent api for zip handling.
+ * Fluent API for Zip handling.
  *
- * @author shelajev
- *
+ * @author Oleg Shelajev
  */
 public class Zips {
 
@@ -63,9 +63,10 @@ public class Zips {
   private File dest;
 
   /**
-   * Charset to use for entry names
+   * Charset to use for entry names. Using the default from
+   * java.util.zip.ZipOutputStream. Can be overridden.
    */
-  private Charset charset;
+  private Charset charset = StandardCharsets.UTF_8;
 
   /**
    * Flag to carry timestamps of entries on.
@@ -198,7 +199,7 @@ public class Zips {
       this.changedEntries.add(new FileSource(file.getName(), file));
       return this;
     }
-    
+
     Collection<File> files = ZTFileUtil.listFiles(file);
     for (File entryFile : files) {
       if (filter != null && !filter.accept(entryFile)) {
@@ -354,7 +355,7 @@ public class Zips {
       ZipEntryOrInfoAdapter zipEntryAdapter = null;
 
       if (destinationFile.isFile()) {
-        out = ZipFileUtil.createZipOutputStream(new BufferedOutputStream(new FileOutputStream(destinationFile)), charset);
+        out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destinationFile)), charset);
         zipEntryAdapter = new ZipEntryOrInfoAdapter(new CopyingCallback(transformers, out, preserveTimestamps), null);
       }
       else { // directory
@@ -366,7 +367,7 @@ public class Zips {
       finally {
         IOUtils.closeQuietly(out);
       }
-        handleInPlaceActions(destinationFile);
+      handleInPlaceActions(destinationFile);
     }
     catch (IOException e) {
       ZipExceptionUtil.rethrow(e);
@@ -385,8 +386,8 @@ public class Zips {
   }
 
   private File getDestinationFile() throws IOException {
-    if(isUnpack()) {
-      if(isInPlace()) {
+    if (isUnpack()) {
+      if (isInPlace()) {
         File tempFile = File.createTempFile("zips", null);
         FileUtils.deleteQuietly(tempFile);
         tempFile.mkdirs(); // temp dir created
@@ -405,11 +406,11 @@ public class Zips {
     }
     else {
       // we need a file
-      if(isInPlace()) { // no destination specified, temp file
+      if (isInPlace()) { // no destination specified, temp file
         return File.createTempFile("zips", ".zip");
       }
       else {
-        if(dest.isDirectory()) {
+        if (dest.isDirectory()) {
           // destination is a directory, actually we shouldn't be here, because this should mean we want an unpacked result.
           FileUtils.deleteQuietly(dest);
           return new File(dest.getAbsolutePath());
@@ -462,7 +463,7 @@ public class Zips {
    * @param name
    *          name of the entry to fetch bytes from
    * @return byte[]
-   *           contents of the entry by given name
+   *         contents of the entry by given name
    */
   public byte[] getEntry(String name) {
     if (src == null) {
@@ -575,7 +576,7 @@ public class Zips {
         ZipExceptionUtil.rethrow(e);
       }
       finally {
-         IOUtils.closeQuietly(entrySourceStream);
+        IOUtils.closeQuietly(entrySourceStream);
       }
     }
   }
@@ -607,7 +608,7 @@ public class Zips {
   private boolean isEntryInDir(Set<String> dirNames, String entryName) {
     // this should be done with a trie, put dirNames in a trie and check if entryName leads to
     // some node or not.
-    for(String dirName : dirNames) {
+    for (String dirName : dirNames) {
       if (entryName.startsWith(dirName)) {
         return true;
       }
@@ -625,7 +626,7 @@ public class Zips {
    *
    */
   private ZipFile getZipFile() throws IOException {
-    return ZipFileUtil.getZipFile(src, charset);
+    return new ZipFile(src, charset);
   }
 
   private static class CopyingCallback implements ZipEntryCallback {

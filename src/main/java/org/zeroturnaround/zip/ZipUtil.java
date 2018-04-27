@@ -827,7 +827,7 @@ public final class ZipUtil {
     if (charset == null) {
       return new ZipInputStream(in);
     }
-    return ZipFileUtil.createZipInputStream(in, charset);
+    return new ZipInputStream(in, charset);
   }
 
   /**
@@ -1151,12 +1151,13 @@ public final class ZipUtil {
       if (name != null) {
         File file = new File(outputDir, name);
 
-        /* If we see the relative traversal string of ".." we need to make sure
+        /*
+         * If we see the relative traversal string of ".." we need to make sure
          * that the outputdir + name doesn't leave the outputdir. See
          * DirectoryTraversalMaliciousTest for details.
          */
         if (name.indexOf("..") != -1 && !file.getCanonicalPath().startsWith(outputDir.getCanonicalPath())) {
-          throw new ZipException("The file "+name+" is trying to leave the target output directory of "+outputDir+". Ignoring this file.");
+          throw new ZipException("The file " + name + " is trying to leave the target output directory of " + outputDir + ". Ignoring this file.");
         }
 
         if (zipEntry.isDirectory()) {
@@ -1174,7 +1175,7 @@ public final class ZipUtil {
 
         ZTFilePermissions permissions = ZipEntryUtil.getZTFilePermissions(zipEntry);
         if (permissions != null) {
-          ZTFilePermissionsUtil.getDefaultStategy().setPermissions(file, permissions);
+          ZTFilePermissionsUtil.setPermissions(file, permissions);
         }
       }
     }
@@ -1228,12 +1229,13 @@ public final class ZipUtil {
           }
           File destFile = new File(parentDirectory, dirs[dirs.length - 1]);
 
-          /* If we see the relative traversal string of ".." we need to make sure
+          /*
+           * If we see the relative traversal string of ".." we need to make sure
            * that the outputdir + name doesn't leave the outputdir. See
            * DirectoryTraversalMaliciousTest for details.
            */
           if (name.indexOf("..") != -1 && !destFile.getCanonicalPath().startsWith(outputDir.getCanonicalPath())) {
-            throw new ZipException("The file "+name+" is trying to leave the target output directory of "+outputDir+". Ignoring this file.");
+            throw new ZipException("The file " + name + " is trying to leave the target output directory of " + outputDir + ". Ignoring this file.");
           }
 
           FileUtils.copy(in, destFile);
@@ -1242,12 +1244,13 @@ public final class ZipUtil {
         else {
           File destFile = new File(outputDir, name);
 
-          /* If we see the relative traversal string of ".." we need to make sure
+          /*
+           * If we see the relative traversal string of ".." we need to make sure
            * that the outputdir + name doesn't leave the outputdir. See
            * DirectoryTraversalMaliciousTest for details.
            */
           if (name.indexOf("..") != -1 && !destFile.getCanonicalPath().startsWith(outputDir.getCanonicalPath())) {
-            throw new ZipException("The file "+name+" is trying to leave the target output directory of "+outputDir+". Ignoring this file.");
+            throw new ZipException("The file " + name + " is trying to leave the target output directory of " + outputDir + ". Ignoring this file.");
           }
 
           FileUtils.copy(in, destFile);
@@ -1286,12 +1289,13 @@ public final class ZipUtil {
       if (name != null) {
         File file = new File(outputDir, name);
 
-        /* If we see the relative traversal string of ".." we need to make sure
+        /*
+         * If we see the relative traversal string of ".." we need to make sure
          * that the outputdir + name doesn't leave the outputdir. See
          * DirectoryTraversalMaliciousTest for details.
          */
         if (name.indexOf("..") != -1 && !file.getCanonicalPath().startsWith(outputDir.getCanonicalPath())) {
-          throw new ZipException("The file "+name+" is trying to leave the target output directory of "+outputDir+". Ignoring this file.");
+          throw new ZipException("The file " + name + " is trying to leave the target output directory of " + outputDir + ". Ignoring this file.");
         }
 
         if (zipEntry.isDirectory()) {
@@ -2745,8 +2749,10 @@ public final class ZipUtil {
    * @return <code>true</code> if the entry was replaced.
    */
   public static boolean transformEntry(File zip, String path, ZipEntryTransformer transformer, File destZip) {
-    if(zip.equals(destZip)){throw new IllegalArgumentException("Input (" +zip.getAbsolutePath()+ ") is the same as the destination!" +
-            "Please use the transformEntry method without destination for in-place transformation." );}
+    if (zip.equals(destZip)) {
+      throw new IllegalArgumentException("Input (" + zip.getAbsolutePath() + ") is the same as the destination!" +
+          "Please use the transformEntry method without destination for in-place transformation.");
+    }
     return transformEntry(zip, new ZipEntryTransformerEntry(path, transformer), destZip);
   }
 

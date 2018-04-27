@@ -199,10 +199,6 @@ public class ZipsTest extends TestCase {
   }
 
   public void testCharsetEntry() throws IOException {
-    if (!ZipFileUtil.isCharsetSupported()) {
-      return; // skip
-    }
-
     File src = new File(MainExamplesTest.DEMO_ZIP);
     final String fileName = "TestFile.txt";
     assertFalse(ZipUtil.containsEntry(src, fileName));
@@ -228,7 +224,7 @@ public class ZipsTest extends TestCase {
 
     ZipFile zf = null;
     try {
-      zf = ZipFileUtil.getZipFile(dest, charset);
+      zf = new ZipFile(dest, charset);
       assertNotNull("Entry '" + entryName + "' was not added", zf.getEntry(entryName));
     }
     finally {
@@ -310,8 +306,8 @@ public class ZipsTest extends TestCase {
   }
 
   public void testPreserveRootWithSubdirectories() throws Exception {
-	    File dest = File.createTempFile("temp", ".zip");
-	    File parent = new File("src/test/resources/testDirectory");
+    File dest = File.createTempFile("temp", ".zip");
+    File parent = new File("src/test/resources/testDirectory");
     Zips.create().destination(dest).addFile(parent, true).process();
     String entryName = "testDirectory/testSubdirectory/testFileInTestSubdirectory.txt";
     assertContainsEntryWithSeparatorrs(dest, entryName, "/"); // this failed on windows
@@ -423,6 +419,7 @@ public class ZipsTest extends TestCase {
           assertEquals(new String(contents), s);
           return s.toUpperCase().getBytes();
         }
+
         protected boolean preserveTimestamps() {
           // transformed entries preserve timestamps thanks to this.
           return true;

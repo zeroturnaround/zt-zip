@@ -147,7 +147,7 @@ class ZipEntryUtil {
     }
     zipEntry.setTime(file.lastModified());
 
-    ZTFilePermissions permissions = ZTFilePermissionsUtil.getDefaultStategy().getPermissions(file);
+    ZTFilePermissions permissions = ZTFilePermissionsUtil.getPermissions(file);
     if (permissions != null) {
       ZipEntryUtil.setZTFilePermissions(zipEntry, permissions);
     }

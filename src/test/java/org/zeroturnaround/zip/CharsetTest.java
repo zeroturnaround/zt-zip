@@ -80,11 +80,12 @@ public class CharsetTest extends TestCase {
       return;
     }
 
-    ZipFile zf = ZipFileUtil.getZipFile(file, Charset.forName("UTF8"));
-    Enumeration entries = zf.entries();
-    while (entries.hasMoreElements()) {
-      ZipEntry ze = (ZipEntry) entries.nextElement();
-      assertTrue(ze.getName(), fileContents.contains(ze.getName()));
+    try (ZipFile zf = new ZipFile(file, Charset.forName("UTF8"))) {
+      Enumeration<? extends ZipEntry> entries = zf.entries();
+      while (entries.hasMoreElements()) {
+        ZipEntry ze = entries.nextElement();
+        assertTrue(ze.getName(), fileContents.contains(ze.getName()));
+      }
     }
   }
 
