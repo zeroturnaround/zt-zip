@@ -24,7 +24,7 @@ import java.util.zip.ZipEntry;
 
 /**
  * @author Toomas Romer
- * @author shelajev
+ * @author Oleg Shelajev
  * @author Innokenty Shuvalov
  */
 public class FileSource implements ZipEntrySource {
