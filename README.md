@@ -24,7 +24,7 @@ To include it in your maven project then you have to specify the dependency.
 <dependency>
     <groupId>org.zeroturnaround</groupId>
     <artifactId>zt-zip</artifactId>
-    <version>1.12</version>
+    <version>1.13</version>
     <type>jar</type>
 </dependency>
 ...

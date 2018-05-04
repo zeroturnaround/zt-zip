@@ -2,6 +2,10 @@
   ZT Zip Changelog
 ********************************************
 
+1.13 (2nd May 2018)
+* Fixed a possible security vulnerability reported by Snyk Security Research Team
+* Fixed same-zip bug for transformEntry method
+
 1.12 (1st August 2017)
 * Fixed a resource leakage with ZipInputStream
 * Fixed a NoSuchMethodError on Android platforms
