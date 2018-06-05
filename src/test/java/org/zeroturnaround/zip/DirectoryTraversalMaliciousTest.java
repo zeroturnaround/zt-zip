@@ -41,7 +41,7 @@ public class DirectoryTraversalMaliciousTest extends TestCase {
       ZipUtil.unpack(badFile, tmpDir);
       fail();
     }
-    catch (ZipException e) {
+    catch (MaliciousZipException e) {
       assertTrue(true);
     }
   }
@@ -54,7 +54,7 @@ public class DirectoryTraversalMaliciousTest extends TestCase {
       ZipUtil.unwrap(badFile, tmpDir);
       fail();
     }
-    catch (ZipException e) {
+    catch (MaliciousZipException e) {
       assertTrue(true);
     }
   }
@@ -67,7 +67,7 @@ public class DirectoryTraversalMaliciousTest extends TestCase {
       ZipUtil.iterate(badFileBackslashes, new ZipUtil.BackslashUnpacker(tmpDir));
       fail();
     }
-    catch (ZipException e) {
+    catch (MaliciousZipException e) {
       assertTrue(true);
     }
   }
