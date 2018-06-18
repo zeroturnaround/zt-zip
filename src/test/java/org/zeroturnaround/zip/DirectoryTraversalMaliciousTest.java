@@ -24,13 +24,24 @@ public class DirectoryTraversalMaliciousTest extends TestCase {
    * This is the contents of the file. There is one evil file that tries to get out of the
    * target.
    *
-   * $ unzip -t zip-slip.zip
-   * Archive: zip-slip.zip
+   * $ unzip -t zip-malicious-traversal.zip
+   * Archive: zip-malicious-traversal.zip
    * testing: good.txt OK
    * testing: ../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../tmp/evil.txt OK
-   * No errors detected in compressed data of zip-slip.zip.
+   * No errors detected in compressed data of zip-malicious-traversal.zip.
    */
   private static final File badFile = new File("src/test/resources/zip-malicious-traversal.zip");
+
+  /*
+   * This is the contents of the file. There is one evil file that tries to get out of the
+   * target.
+   *
+   * $ unzip -t zip-malicious-traversal-backslashes.zip
+   * Archive: zip-malicious-traversal-backslashes.zip
+   * testing: someroot/good.txt OK
+   * testing: ..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\..\home\evil.txt OK
+   * No errors detected in compressed data of zip-malicious-traversal-backslashes.zip.
+   */
   private static final File badFileBackslashes = new File("src/test/resources/zip-malicious-traversal-backslashes.zip");
 
   public void testUnpackDoesntLeaveTarget() throws Exception {
