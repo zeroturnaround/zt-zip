@@ -36,6 +36,18 @@ public class DirectoryTraversalMaliciousTest extends TestCase {
    * This is the contents of the file. There is one evil file that tries to get out of the
    * target.
    *
+   * $ unzip -t zip-malicious-traversal-root.zip
+   * Archive: zip-malicious-traversal-root.zip
+   * testing: someroot/good.txt OK
+   * testing: someroot/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../home/evil.txt OK
+   * No errors detected in compressed data of zip-malicious-traversal-root.zip.
+   */
+  private static final File badFileWithRoot = new File("src/test/resources/zip-malicious-traversal-root.zip");
+
+  /*
+   * This is the contents of the file. There is one evil file that tries to get out of the
+   * target.
+   *
    * $ unzip -t zip-malicious-traversal-backslashes.zip
    * Archive: zip-malicious-traversal-backslashes.zip
    * testing: someroot/good.txt OK
@@ -62,7 +74,7 @@ public class DirectoryTraversalMaliciousTest extends TestCase {
     File tmpDir = file.getParentFile();
 
     try {
-      ZipUtil.unwrap(badFile, tmpDir);
+      ZipUtil.unwrap(badFileWithRoot, tmpDir);
       fail();
     }
     catch (MaliciousZipException e) {
