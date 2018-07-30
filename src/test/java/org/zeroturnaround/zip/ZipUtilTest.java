@@ -549,6 +549,28 @@ public class ZipUtilTest extends TestCase {
       FileUtils.deleteQuietly(dest);
     }
   }
+  
+  public void testRemoveDirsOutputStream() throws IOException {
+    File src = file("demo-dirs.zip");
+
+    File dest = File.createTempFile("temp", null);
+    FileOutputStream out = null;
+    try {
+      out = new FileOutputStream(dest);
+      ZipUtil.removeEntries(src, new String[] { "bar.txt", "a/b" }, out);
+
+      assertFalse("Result zip still contains 'bar.txt'", ZipUtil.containsEntry(dest, "bar.txt"));
+      assertFalse("Result zip still contains dir 'a/b'", ZipUtil.containsEntry(dest, "a/b"));
+      assertTrue("Result doesn't contain 'attic'", ZipUtil.containsEntry(dest, "attic/treasure.txt"));
+      assertTrue("Entry whose prefix is dir name is removed too: 'b.txt'", ZipUtil.containsEntry(dest, "a/b.txt"));
+      assertFalse("Entry in a removed dir is still there: 'a/b/c.txt'", ZipUtil.containsEntry(dest, "a/b/c.txt"));
+
+    }
+    finally {
+      IOUtils.closeQuietly(out);
+      FileUtils.deleteQuietly(dest);
+    }
+  }
 
   public void testHandle() {
     File src = file("demo.zip");

@@ -2297,6 +2297,32 @@ public final class ZipUtil {
       IOUtils.closeQuietly(out);
     }
   }
+  
+  /**
+   * Copies an existing ZIP file and removes entries with given paths.
+   *
+   * @param zip
+   *          an existing ZIP file (only read)
+   * @param paths
+   *          paths of the entries to remove
+   * @param destOut
+   *          new ZIP destination output stream
+   * @since 1.14
+   */
+  public static void removeEntries(File zip, String[] paths, OutputStream destOut) {
+    if (log.isDebugEnabled()) {
+      log.debug("Copying '" + zip + "' to an output stream and removing paths " + Arrays.asList(paths) + ".");
+    }
+
+    ZipOutputStream out = null;
+    try {
+      out = new ZipOutputStream(destOut);
+      copyEntries(zip, out, new HashSet<String>(Arrays.asList(paths)));
+    }
+    finally {
+      IOUtils.closeQuietly(out);
+    }
+  }
 
   /**
    * Changes an existing ZIP file: removes entries with given paths.
