@@ -1,5 +1,5 @@
 /**
- *    Copyright (C) 2012 ZeroTurnaround LLC <support@zeroturnaround.com>
+ *    Copyright (C) 2018 ZeroTurnaround LLC <support@zeroturnaround.com>
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -18,17 +18,24 @@ package org.zeroturnaround.zip;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,37 +49,57 @@ import java.util.zip.ZipOutputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zeroturnaround.zip.commons.FileUtils;
 import org.zeroturnaround.zip.commons.FilenameUtils;
 import org.zeroturnaround.zip.commons.IOUtils;
+import org.zeroturnaround.zip.commons.PathUtils;
 import org.zeroturnaround.zip.transform.ZipEntryTransformer;
 import org.zeroturnaround.zip.transform.ZipEntryTransformerEntry;
 
 /**
  * ZIP file manipulation utilities.
  *
- * @author Rein Raudjärv
- * @author Innokenty Shuvalov
+ * @author Andres Luuk
  *
- * @see #containsEntry(File, String)
- * @see #unpackEntry(File, String)
- * @see #unpack(File, File)
- * @see #pack(File, File)
+ * @see #containsEntry(Path, String)
+ * @see #unpackEntry(Path, String)
+ * @see #unpack(Path, Path)
+ * @see #pack(Path, Path)
  */
-public final class ZipUtil extends ZipPathUtil {
+public class ZipPathUtil {
 
   private static final String PATH_SEPARATOR = "/";
 
   /** Default compression level */
   public static final int DEFAULT_COMPRESSION_LEVEL = Deflater.DEFAULT_COMPRESSION;
 
-  // Use / instead of . to work around an issue with Maven Shade Plugin
   private static final Logger log = LoggerFactory.getLogger("org/zeroturnaround/zip/ZipUtil".replace('/', '.')); // NOSONAR
 
-  private ZipUtil() {
+  ZipPathUtil() {
   }
 
-  /* Extracting single entries from ZIP files. */
+  /**
+   * Returns a zip file system
+   * 
+   * @param zipFilename to construct the file system from
+   * @param create true if the zip file should be created
+   * @return a zip file system
+   * @throws IOException
+   */
+  private static FileSystem createZipFileSystem(Path zip, Charset charset) throws IOException {
+    // TODO remove when done
+    // http://fahdshariff.blogspot.com/2011/08/java-7-working-with-zip-files.html
+    // https://stackoverflow.com/questions/14733496/is-it-possible-to-create-a-new-zip-file-using-the-java-filesystem
+
+    // convert the filename to a URI
+    final URI uri = URI.create("jar:file:" + zip.toUri().getPath());
+
+    final Map<String, String> env = new HashMap<>();
+    env.put("create", String.valueOf(Files.notExists(zip)));
+    if (charset != null) {
+      env.put("encoding", charset.toString());
+    }
+    return FileSystems.newFileSystem(uri, env);
+  }
 
   /**
    * Checks if the ZIP file contains the given entry.
@@ -83,35 +110,14 @@ public final class ZipUtil extends ZipPathUtil {
    *          entry name.
    * @return <code>true</code> if the ZIP file contains the given entry.
    */
-  public static boolean containsEntry(File zip, String name) {
-    ZipFile zf = null;
-    try {
-      zf = new ZipFile(zip);
-      return zf.getEntry(name) != null;
+  public static boolean containsEntry(Path zip, String name) {
+    try (FileSystem zipfs = createZipFileSystem(zip, null)) {
+      Path item = zipfs.getPath(name);
+      return Files.exists(item);
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
     }
-    finally {
-      closeQuietly(zf);
-    }
-  }
-
-  /**
-   * Returns the compression method of a given entry of the ZIP file.
-   *
-   * @param zip
-   *          ZIP file.
-   * @param name
-   *          entry name.
-   * @return Returns <code>ZipEntry.STORED</code>, <code>ZipEntry.DEFLATED</code> or -1 if
-   *         the ZIP file does not contain the given entry.
-   * @deprecated The compression level cannot be retrieved. This method exists only to ensure backwards compatibility with ZipUtil version 1.9, which returned the compression
-   *             method, not the level.
-   */
-  @Deprecated
-  public static int getCompressionLevelOfEntry(File zip, String name) {
-    return getCompressionMethodOfEntry(zip, name);
   }
 
   /**
@@ -124,10 +130,10 @@ public final class ZipUtil extends ZipPathUtil {
    * @return Returns <code>ZipEntry.STORED</code>, <code>ZipEntry.DEFLATED</code> or -1 if
    *         the ZIP file does not contain the given entry.
    */
-  public static int getCompressionMethodOfEntry(File zip, String name) {
-    ZipFile zf = null;
-    try {
-      zf = new ZipFile(zip);
+  public static int getCompressionMethodOfEntry(Path zip, String name) {
+    // TODO check this:
+    // https://stackoverflow.com/questions/28239621/java-nio-zip-filesystem-equivalent-of-setmethod-in-java-util-zip-zipentry
+    try (ZipFile zf = new ZipFile(zip.toFile())) {
       ZipEntry zipEntry = zf.getEntry(name);
       if (zipEntry == null) {
         return -1;
@@ -136,9 +142,6 @@ public final class ZipUtil extends ZipPathUtil {
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
-    }
-    finally {
-      closeQuietly(zf);
     }
   }
 
@@ -152,12 +155,10 @@ public final class ZipUtil extends ZipPathUtil {
    * @return <code>true</code> if the ZIP file contains any of the given
    *         entries.
    */
-  public static boolean containsAnyEntry(File zip, String[] names) {
-    ZipFile zf = null;
-    try {
-      zf = new ZipFile(zip);
+  public static boolean containsAnyEntry(Path zip, String[] names) {
+    try (FileSystem zipfs = createZipFileSystem(zip, null)) {
       for (int i = 0; i < names.length; i++) {
-        if (zf.getEntry(names[i]) != null) {
+        if (Files.exists(zipfs.getPath(names[i]))) {
           return true;
         }
       }
@@ -165,9 +166,6 @@ public final class ZipUtil extends ZipPathUtil {
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
-    }
-    finally {
-      closeQuietly(zf);
     }
   }
 
@@ -180,18 +178,8 @@ public final class ZipUtil extends ZipPathUtil {
    *          entry name.
    * @return contents of the entry or <code>null</code> if it was not found.
    */
-  public static byte[] unpackEntry(File zip, String name) {
-    ZipFile zf = null;
-    try {
-      zf = new ZipFile(zip);
-      return doUnpackEntry(zf, name);
-    }
-    catch (IOException e) {
-      throw ZipExceptionUtil.rethrow(e);
-    }
-    finally {
-      closeQuietly(zf);
-    }
+  public static byte[] unpackEntry(Path zip, String name) {
+    return unpackEntry(zip, name, (Charset) null);
   }
 
   /**
@@ -207,37 +195,9 @@ public final class ZipUtil extends ZipPathUtil {
    *
    * @return contents of the entry or <code>null</code> if it was not found.
    */
-  public static byte[] unpackEntry(File zip, String name, Charset charset) {
-    ZipFile zf = null;
-    try {
-      if (charset != null) {
-        zf = new ZipFile(zip, charset);
-      }
-      else {
-        zf = new ZipFile(zip);
-      }
-      return doUnpackEntry(zf, name);
-    }
-    catch (IOException e) {
-      throw ZipExceptionUtil.rethrow(e);
-    }
-    finally {
-      closeQuietly(zf);
-    }
-  }
-
-  /**
-   * Unpacks a single entry from a ZIP file.
-   *
-   * @param zf
-   *          ZIP file.
-   * @param name
-   *          entry name.
-   * @return contents of the entry or <code>null</code> if it was not found.
-   */
-  public static byte[] unpackEntry(ZipFile zf, String name) {
-    try {
-      return doUnpackEntry(zf, name);
+  public static byte[] unpackEntry(Path zip, String name, Charset charset) {
+    try (FileSystem zipfs = createZipFileSystem(zip, charset)) {
+      return doUnpackEntry(zipfs, name);
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
@@ -253,19 +213,13 @@ public final class ZipUtil extends ZipPathUtil {
    *          entry name.
    * @return contents of the entry or <code>null</code> if it was not found.
    */
-  private static byte[] doUnpackEntry(ZipFile zf, String name) throws IOException {
-    ZipEntry ze = zf.getEntry(name);
-    if (ze == null) {
+  private static byte[] doUnpackEntry(FileSystem zipfs, String name) throws IOException {
+    Path file = zipfs.getPath(name);
+    if (!Files.exists(file)) {
       return null; // entry not found
     }
 
-    InputStream is = zf.getInputStream(ze);
-    try {
-      return IOUtils.toByteArray(is);
-    }
-    finally {
-      IOUtils.closeQuietly(is);
-    }
+    return Files.readAllBytes(file);
   }
 
   /**
@@ -315,7 +269,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @return <code>true</code> if the entry was found and unpacked,
    *         <code>false</code> if the entry was not found.
    */
-  public static boolean unpackEntry(File zip, String name, File file) {
+  public static boolean unpackEntry(Path zip, String name, Path file) {
     return unpackEntry(zip, name, file, null);
   }
 
@@ -334,40 +288,9 @@ public final class ZipUtil extends ZipPathUtil {
    * @return <code>true</code> if the entry was found and unpacked,
    *         <code>false</code> if the entry was not found.
    */
-  public static boolean unpackEntry(File zip, String name, File file, Charset charset) {
-    ZipFile zf = null;
-    try {
-      if (charset != null) {
-        zf = new ZipFile(zip, charset);
-      }
-      else {
-        zf = new ZipFile(zip);
-      }
-      return doUnpackEntry(zf, name, file);
-    }
-    catch (IOException e) {
-      throw ZipExceptionUtil.rethrow(e);
-    }
-    finally {
-      closeQuietly(zf);
-    }
-  }
-
-  /**
-   * Unpacks a single file from a ZIP archive to a file.
-   *
-   * @param zf
-   *          ZIP file.
-   * @param name
-   *          entry name.
-   * @param file
-   *          target file to be created or overwritten.
-   * @return <code>true</code> if the entry was found and unpacked,
-   *         <code>false</code> if the entry was not found.
-   */
-  public static boolean unpackEntry(ZipFile zf, String name, File file) {
-    try {
-      return doUnpackEntry(zf, name, file);
+  public static boolean unpackEntry(Path zip, String name, Path file, Charset charset) {
+    try (FileSystem zipfs = createZipFileSystem(zip, charset)) {
+      return doUnpackEntry(zipfs, name, file);
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
@@ -386,33 +309,27 @@ public final class ZipUtil extends ZipPathUtil {
    * @return <code>true</code> if the entry was found and unpacked,
    *         <code>false</code> if the entry was not found.
    */
-  private static boolean doUnpackEntry(ZipFile zf, String name, File file) throws IOException {
+  private static boolean doUnpackEntry(FileSystem zipfs, String name, Path file) throws IOException {
     if (log.isTraceEnabled()) {
-      log.trace("Extracting '" + zf.getName() + "' entry '" + name + "' into '" + file + "'.");
+      log.trace("Extracting '" + zipfs + "' entry '" + name + "' into '" + file + "'.");
     }
 
-    ZipEntry ze = zf.getEntry(name);
-    if (ze == null) {
+    Path ze = zipfs.getPath(name);
+    if (!Files.exists(ze)) {
       return false; // entry not found
     }
 
-    if (ze.isDirectory() || zf.getInputStream(ze) == null) {
-      if (file.isDirectory()) {
+    if (Files.isDirectory(ze)) {
+      if (Files.isDirectory(file)) {
         return true;
       }
-      if (file.exists()) {
-        FileUtils.forceDelete(file);
+      if (Files.exists(file)) {
+        Files.delete(file);
       }
-      return file.mkdirs();
+      Files.createDirectories(file);
+      return true;
     }
-
-    InputStream in = new BufferedInputStream(zf.getInputStream(ze));
-    try {
-      FileUtils.copy(in, file);
-    }
-    finally {
-      IOUtils.closeQuietly(in);
-    }
+    Files.copy(ze, file);
     return true;
   }
 
@@ -429,27 +346,27 @@ public final class ZipUtil extends ZipPathUtil {
    *         <code>false</code> if the entry was not found.
    * @throws java.io.IOException if file is not found or writing to it fails
    */
-  public static boolean unpackEntry(InputStream is, String name, File file) throws IOException {
-    return handle(is, name, new FileUnpacker(file));
+  public static boolean unpackEntry(InputStream is, String name, Path file) throws IOException {
+    Files.deleteIfExists(file);
+    try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(file))) {
+      return handle(is, name, new OutputStreamUnpacker(os));
+    }
   }
 
   /**
-   * Copies an entry into a File.
-   *
-   * @author Rein Raudjärv
+   * Copies an entry into a OutputStream.
    */
-  private static class FileUnpacker implements ZipEntryCallback {
+  private static class OutputStreamUnpacker implements ZipEntryCallback {
 
-    private final File file;
+    private final OutputStream os;
 
-    public FileUnpacker(File file) {
-      this.file = file;
+    public OutputStreamUnpacker(OutputStream os) {
+      this.os = os;
     }
 
     public void process(InputStream in, ZipEntry zipEntry) throws IOException {
-      FileUtils.copy(in, file);
+      IOUtils.copy(in, os);
     }
-
   }
 
   /* Traversing ZIP files */
@@ -466,9 +383,9 @@ public final class ZipUtil extends ZipPathUtil {
    *          action to be called for each entry.
    *
    * @see ZipEntryCallback
-   * @see #iterate(File, ZipInfoCallback)
+   * @see #iterate(Path, ZipInfoCallback)
    */
-  public static void iterate(File zip, ZipEntryCallback action) {
+  public static void iterate(Path zip, ZipEntryCallback action) {
     iterate(zip, action, null);
   }
 
@@ -487,42 +404,14 @@ public final class ZipUtil extends ZipPathUtil {
    *          Charset used to processed the ZipFile with
    *
    * @see ZipEntryCallback
-   * @see #iterate(File, ZipInfoCallback)
+   * @see #iterate(Path, ZipInfoCallback)
    */
-  public static void iterate(File zip, ZipEntryCallback action, Charset charset) {
-    ZipFile zf = null;
-    try {
-      if (charset == null) {
-        zf = new ZipFile(zip);
-      }
-      else {
-        zf = new ZipFile(zip, charset);
-      }
-
-      Enumeration<? extends ZipEntry> en = zf.entries();
-      while (en.hasMoreElements()) {
-        ZipEntry e = (ZipEntry) en.nextElement();
-
-        InputStream is = zf.getInputStream(e);
-        try {
-          action.process(is, e);
-        }
-        catch (IOException ze) {
-          throw new ZipException("Failed to process zip entry '" + e.getName() + "' with action " + action, ze);
-        }
-        catch (ZipBreakException ex) {
-          break;
-        }
-        finally {
-          IOUtils.closeQuietly(is);
-        }
-      }
+  public static void iterate(Path zip, ZipEntryCallback action, Charset charset) {
+    try (InputStream is = Files.newInputStream(zip)) {
+      iterate(is, action, charset);
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
-    }
-    finally {
-      closeQuietly(zf);
     }
   }
 
@@ -539,9 +428,9 @@ public final class ZipUtil extends ZipPathUtil {
    *          action to be called for each entry.
    *
    * @see ZipEntryCallback
-   * @see #iterate(File, String[], ZipInfoCallback)
+   * @see #iterate(Path, String[], ZipInfoCallback)
    */
-  public static void iterate(File zip, String[] entryNames, ZipEntryCallback action) {
+  public static void iterate(Path zip, String[] entryNames, ZipEntryCallback action) {
     iterate(zip, entryNames, action, null);
   }
 
@@ -560,43 +449,14 @@ public final class ZipUtil extends ZipPathUtil {
    *          charset used to process the zip file
    *
    * @see ZipEntryCallback
-   * @see #iterate(File, String[], ZipInfoCallback)
+   * @see #iterate(Path, String[], ZipInfoCallback)
    */
-  public static void iterate(File zip, String[] entryNames, ZipEntryCallback action, Charset charset) {
-    ZipFile zf = null;
-    try {
-      if (charset == null) {
-        zf = new ZipFile(zip);
-      }
-      else {
-        zf = new ZipFile(zip, charset);
-      }
-
-      for (int i = 0; i < entryNames.length; i++) {
-        ZipEntry e = zf.getEntry(entryNames[i]);
-        if (e == null) {
-          continue;
-        }
-        InputStream is = zf.getInputStream(e);
-        try {
-          action.process(is, e);
-        }
-        catch (IOException ze) {
-          throw new ZipException("Failed to process zip entry '" + e.getName() + " with action " + action, ze);
-        }
-        catch (ZipBreakException ex) {
-          break;
-        }
-        finally {
-          IOUtils.closeQuietly(is);
-        }
-      }
+  public static void iterate(Path zip, String[] entryNames, ZipEntryCallback action, Charset charset) {
+    try (InputStream is = Files.newInputStream(zip)) {
+      iterate(is, entryNames, action, charset);
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
-    }
-    finally {
-      closeQuietly(zf);
     }
   }
 
@@ -612,21 +472,17 @@ public final class ZipUtil extends ZipPathUtil {
    *          action to be called for each entry.
    *
    * @see ZipInfoCallback
-   * @see #iterate(File, ZipEntryCallback)
+   * @see #iterate(Path, ZipEntryCallback)
    */
-  public static void iterate(File zip, ZipInfoCallback action) {
-    ZipFile zf = null;
-    try {
-      zf = new ZipFile(zip);
-
-      Enumeration<? extends ZipEntry> en = zf.entries();
-      while (en.hasMoreElements()) {
-        ZipEntry e = (ZipEntry) en.nextElement();
+  public static void iterate(Path zip, ZipInfoCallback action) {
+    try (ZipInputStream zf = new ZipInputStream(Files.newInputStream(zip))) {
+      ZipEntry entry;
+      while ((entry = zf.getNextEntry()) != null) {
         try {
-          action.process(e);
+          action.process(entry);
         }
         catch (IOException ze) {
-          throw new ZipException("Failed to process zip entry '" + e.getName() + " with action " + action, ze);
+          throw new ZipException("Failed to process zip entry '" + entry.getName() + " with action " + action, ze);
         }
         catch (ZipBreakException ex) {
           break;
@@ -635,9 +491,6 @@ public final class ZipUtil extends ZipPathUtil {
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
-    }
-    finally {
-      closeQuietly(zf);
     }
   }
 
@@ -654,23 +507,24 @@ public final class ZipUtil extends ZipPathUtil {
    *          action to be called for each entry.
    *
    * @see ZipInfoCallback
-   * @see #iterate(File, String[], ZipEntryCallback)
+   * @see #iterate(Path, String[], ZipEntryCallback)
    */
-  public static void iterate(File zip, String[] entryNames, ZipInfoCallback action) {
-    ZipFile zf = null;
-    try {
-      zf = new ZipFile(zip);
-
-      for (int i = 0; i < entryNames.length; i++) {
-        ZipEntry e = zf.getEntry(entryNames[i]);
-        if (e == null) {
+  public static void iterate(Path zip, String[] entryNames, ZipInfoCallback action) {
+    Set<String> entries = new HashSet<>();
+    for (String s : entryNames) {
+      entries.add(s);
+    }
+    try (ZipInputStream zf = new ZipInputStream(Files.newInputStream(zip))) {
+      ZipEntry entry;
+      while ((entry = zf.getNextEntry()) != null) {
+        if (!entries.contains(entry.getName())) {
           continue;
         }
         try {
-          action.process(e);
+          action.process(entry);
         }
         catch (IOException ze) {
-          throw new ZipException("Failed to process zip entry '" + e.getName() + " with action " + action, ze);
+          throw new ZipException("Failed to process zip entry '" + entry.getName() + " with action " + action, ze);
         }
         catch (ZipBreakException ex) {
           break;
@@ -679,9 +533,6 @@ public final class ZipUtil extends ZipPathUtil {
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
-    }
-    finally {
-      closeQuietly(zf);
     }
   }
 
@@ -699,29 +550,20 @@ public final class ZipUtil extends ZipPathUtil {
    *          charset to process entries in
    *
    * @see ZipEntryCallback
-   * @see #iterate(File, ZipEntryCallback)
+   * @see #iterate(Path, ZipEntryCallback)
    */
   public static void iterate(InputStream is, ZipEntryCallback action, Charset charset) {
-    try {
-      ZipInputStream in = null;
-      try {
-        in = newCloseShieldZipInputStream(is, charset);
-        ZipEntry entry;
-        while ((entry = in.getNextEntry()) != null) {
-          try {
-            action.process(in, entry);
-          }
-          catch (IOException ze) {
-            throw new ZipException("Failed to process zip entry '" + entry.getName() + " with action " + action, ze);
-          }
-          catch (ZipBreakException ex) {
-            break;
-          }
+    try (ZipInputStream in = newCloseShieldZipInputStream(is, charset)) {
+      ZipEntry entry;
+      while ((entry = in.getNextEntry()) != null) {
+        try {
+          action.process(in, entry);
         }
-      }
-      finally {
-        if (in != null) {
-          in.close();
+        catch (IOException ze) {
+          throw new ZipException("Failed to process zip entry '" + entry.getName() + " with action " + action, ze);
+        }
+        catch (ZipBreakException ex) {
+          break;
         }
       }
     }
@@ -740,7 +582,7 @@ public final class ZipUtil extends ZipPathUtil {
    *          action to be called for each entry.
    *
    * @see ZipEntryCallback
-   * @see #iterate(File, ZipEntryCallback)
+   * @see #iterate(Path, ZipEntryCallback)
    */
   public static void iterate(InputStream is, ZipEntryCallback action) {
     iterate(is, action, null);
@@ -761,37 +603,28 @@ public final class ZipUtil extends ZipPathUtil {
    *          charset to process entries in
    *
    * @see ZipEntryCallback
-   * @see #iterate(File, String[], ZipEntryCallback)
+   * @see #iterate(Path, String[], ZipEntryCallback)
    */
   public static void iterate(InputStream is, String[] entryNames, ZipEntryCallback action, Charset charset) {
     Set<String> namesSet = new HashSet<String>();
     for (int i = 0; i < entryNames.length; i++) {
       namesSet.add(entryNames[i]);
     }
-    try {
-      ZipInputStream in = null;
-      try {
-        in = newCloseShieldZipInputStream(is, charset);
-        ZipEntry entry;
-        while ((entry = in.getNextEntry()) != null) {
-          if (!namesSet.contains(entry.getName())) {
-            // skip the unnecessary entry
-            continue;
-          }
-          try {
-            action.process(in, entry);
-          }
-          catch (IOException ze) {
-            throw new ZipException("Failed to process zip entry '" + entry.getName() + " with action " + action, ze);
-          }
-          catch (ZipBreakException ex) {
-            break;
-          }
+    try (ZipInputStream in = newCloseShieldZipInputStream(is, charset)) {
+      ZipEntry entry;
+      while ((entry = in.getNextEntry()) != null) {
+        if (!namesSet.contains(entry.getName())) {
+          // skip the unnecessary entry
+          continue;
         }
-      }
-      finally {
-        if (in != null) {
-          in.close();
+        try {
+          action.process(in, entry);
+        }
+        catch (IOException ze) {
+          throw new ZipException("Failed to process zip entry '" + entry.getName() + " with action " + action, ze);
+        }
+        catch (ZipBreakException ex) {
+          break;
         }
       }
     }
@@ -812,7 +645,7 @@ public final class ZipUtil extends ZipPathUtil {
    *          action to be called for each entry.
    *
    * @see ZipEntryCallback
-   * @see #iterate(File, String[], ZipEntryCallback)
+   * @see #iterate(Path, String[], ZipEntryCallback)
    */
   public static void iterate(InputStream is, String[] entryNames, ZipEntryCallback action) {
     iterate(is, entryNames, action, null);
@@ -824,10 +657,7 @@ public final class ZipUtil extends ZipPathUtil {
    */
   private static ZipInputStream newCloseShieldZipInputStream(final InputStream is, Charset charset) {
     InputStream in = new BufferedInputStream(new CloseShieldInputStream(is));
-    if (charset == null) {
-      return new ZipInputStream(in);
-    }
-    return new ZipInputStream(in, charset);
+    return new ZipInputStream(in, charset != null ? charset : StandardCharsets.UTF_8);
   }
 
   /**
@@ -844,30 +674,12 @@ public final class ZipUtil extends ZipPathUtil {
    *
    * @see ZipEntryCallback
    */
-  public static boolean handle(File zip, String name, ZipEntryCallback action) {
-    ZipFile zf = null;
-    try {
-      zf = new ZipFile(zip);
-
-      ZipEntry ze = zf.getEntry(name);
-      if (ze == null) {
-        return false; // entry not found
-      }
-
-      InputStream in = new BufferedInputStream(zf.getInputStream(ze));
-      try {
-        action.process(in, ze);
-      }
-      finally {
-        IOUtils.closeQuietly(in);
-      }
-      return true;
+  public static boolean handle(Path zip, String name, ZipEntryCallback action) {
+    try (InputStream is = Files.newInputStream(zip)) {
+      return handle(is, name, action);
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
-    }
-    finally {
-      closeQuietly(zf);
     }
   }
 
@@ -935,7 +747,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param outputDir
    *          output directory (created automatically if not found).
    */
-  public static void unpack(File zip, final File outputDir) {
+  public static void unpack(Path zip, final Path outputDir) {
     unpack(zip, outputDir, IdentityNameMapper.INSTANCE);
   }
 
@@ -954,7 +766,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param charset
    *          charset used to unpack the zip file
    */
-  public static void unpack(File zip, final File outputDir, Charset charset) {
+  public static void unpack(Path zip, final Path outputDir, Charset charset) {
     unpack(zip, outputDir, IdentityNameMapper.INSTANCE, charset);
   }
 
@@ -972,7 +784,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param charset
    *          charset used to process the zip file
    */
-  public static void unpack(File zip, File outputDir, NameMapper mapper, Charset charset) {
+  public static void unpack(Path zip, Path outputDir, NameMapper mapper, Charset charset) {
     log.debug("Extracting '{}' into '{}'.", zip, outputDir);
     iterate(zip, new Unpacker(outputDir, mapper), charset);
   }
@@ -991,7 +803,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param mapper
    *          call-back for renaming the entries.
    */
-  public static void unpack(File zip, File outputDir, NameMapper mapper) {
+  public static void unpack(Path zip, Path outputDir, NameMapper mapper) {
     log.debug("Extracting '{}' into '{}'.", zip, outputDir);
     iterate(zip, new Unpacker(outputDir, mapper));
   }
@@ -1008,7 +820,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param outputDir
    *          output directory (created automatically if not found).
    */
-  public static void unwrap(File zip, final File outputDir) {
+  public static void unwrap(Path zip, final Path outputDir) {
     unwrap(zip, outputDir, IdentityNameMapper.INSTANCE);
   }
 
@@ -1026,7 +838,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param mapper
    *          call-back for renaming the entries.
    */
-  public static void unwrap(File zip, File outputDir, NameMapper mapper) {
+  public static void unwrap(Path zip, Path outputDir, NameMapper mapper) {
     log.debug("Unwrapping '{}' into '{}'.", zip, outputDir);
     iterate(zip, new Unwrapper(outputDir, mapper));
   }
@@ -1041,7 +853,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param outputDir
    *          output directory (created automatically if not found).
    */
-  public static void unpack(InputStream is, File outputDir) {
+  public static void unpack(InputStream is, Path outputDir) {
     unpack(is, outputDir, IdentityNameMapper.INSTANCE, null);
   }
 
@@ -1057,7 +869,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param charset
    *          charset used to process the zip stream
    */
-  public static void unpack(InputStream is, File outputDir, Charset charset) {
+  public static void unpack(InputStream is, Path outputDir, Charset charset) {
     unpack(is, outputDir, IdentityNameMapper.INSTANCE, charset);
   }
 
@@ -1073,7 +885,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param mapper
    *          call-back for renaming the entries.
    */
-  public static void unpack(InputStream is, File outputDir, NameMapper mapper) {
+  public static void unpack(InputStream is, Path outputDir, NameMapper mapper) {
     unpack(is, outputDir, mapper, null);
   }
 
@@ -1091,7 +903,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param charset
    *          charset to use when unpacking the stream
    */
-  public static void unpack(InputStream is, File outputDir, NameMapper mapper, Charset charset) {
+  public static void unpack(InputStream is, Path outputDir, NameMapper mapper, Charset charset) {
     log.debug("Extracting {} into '{}'.", is, outputDir);
     iterate(is, new Unpacker(outputDir, mapper), charset);
   }
@@ -1108,7 +920,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param outputDir
    *          output directory (created automatically if not found).
    */
-  public static void unwrap(InputStream is, File outputDir) {
+  public static void unwrap(InputStream is, Path outputDir) {
     unwrap(is, outputDir, IdentityNameMapper.INSTANCE);
   }
 
@@ -1126,22 +938,23 @@ public final class ZipUtil extends ZipPathUtil {
    * @param mapper
    *          call-back for renaming the entries.
    */
-  public static void unwrap(InputStream is, File outputDir, NameMapper mapper) {
+  public static void unwrap(InputStream is, Path outputDir, NameMapper mapper) {
     log.debug("Unwrapping {} into '{}'.", is, outputDir);
     iterate(is, new Unwrapper(outputDir, mapper));
   }
 
-  private static File makeDestinationFile(File outputDir, String name) throws IOException {
-    return checkDestinationFileForTraversal(outputDir, name, new File(outputDir, name));
+  private static Path makeDestinationFile(Path outputDir, String name) throws IOException {
+    return checkDestinationFileForTraversal(outputDir, name, outputDir.resolve(name.startsWith("/") ? name.substring(1) : name));
   }
 
-  private static File checkDestinationFileForTraversal(File outputDir, String name, File destFile) throws IOException {
-    /* If we see the relative traversal string of ".." we need to make sure
+  private static Path checkDestinationFileForTraversal(Path outputDir, String name, Path destFile) throws IOException {
+    /*
+     * If we see the relative traversal string of ".." we need to make sure
      * that the outputdir + name doesn't leave the outputdir. See
      * DirectoryTraversalMaliciousTest for details.
      */
-    if (name.indexOf("..") != -1 && !destFile.getCanonicalPath().startsWith(outputDir.getCanonicalPath())) {
-      throw new MaliciousZipException(outputDir.toPath(), name);
+    if (!destFile.normalize().startsWith(outputDir.normalize())) {
+      throw new MaliciousZipException(outputDir, name);
     }
     return destFile;
   }
@@ -1153,10 +966,10 @@ public final class ZipUtil extends ZipPathUtil {
    */
   private static class Unpacker implements ZipEntryCallback {
 
-    private final File outputDir;
+    private final Path outputDir;
     private final NameMapper mapper;
 
-    public Unpacker(File outputDir, NameMapper mapper) {
+    public Unpacker(Path outputDir, NameMapper mapper) {
       this.outputDir = outputDir;
       this.mapper = mapper;
     }
@@ -1164,24 +977,24 @@ public final class ZipUtil extends ZipPathUtil {
     public void process(InputStream in, ZipEntry zipEntry) throws IOException {
       String name = mapper.map(zipEntry.getName());
       if (name != null) {
-        File file = makeDestinationFile(outputDir, name);
+        Path file = makeDestinationFile(outputDir, name);
 
         if (zipEntry.isDirectory()) {
-          FileUtils.forceMkdir(file);
+          Files.createDirectories(file);
         }
         else {
-          FileUtils.forceMkdir(file.getParentFile());
+          Files.createDirectories(file.getParent());
 
-          if (log.isDebugEnabled() && file.exists()) {
+          if (log.isDebugEnabled() && Files.exists(file)) {
             log.debug("Overwriting file '{}'.", zipEntry.getName());
           }
 
-          FileUtils.copy(in, file);
+          Files.copy(in, file);
         }
 
         ZTFilePermissions permissions = ZipEntryUtil.getZTFilePermissions(zipEntry);
         if (permissions != null) {
-          ZTFilePermissionsUtil.setPermissions(file.toPath(), permissions);
+          ZTFilePermissionsUtil.setPermissions(file, permissions);
         }
       }
     }
@@ -1196,15 +1009,15 @@ public final class ZipUtil extends ZipPathUtil {
    */
   public static class BackslashUnpacker implements ZipEntryCallback {
 
-    private final File outputDir;
+    private final Path outputDir;
     private final NameMapper mapper;
 
-    public BackslashUnpacker(File outputDir, NameMapper mapper) {
+    public BackslashUnpacker(Path outputDir, NameMapper mapper) {
       this.outputDir = outputDir;
       this.mapper = mapper;
     }
 
-    public BackslashUnpacker(File outputDir) {
+    public BackslashUnpacker(Path outputDir) {
       this(outputDir, IdentityNameMapper.INSTANCE);
     }
 
@@ -1222,27 +1035,27 @@ public final class ZipUtil extends ZipPathUtil {
          * No errors detected in compressed data of backSlashTest.zip.
          */
         if (name.indexOf('\\') != -1) {
-          File parentDirectory = outputDir;
+          Path parentDirectory = outputDir;
           String[] dirs = name.split("\\\\");
 
           // lets create all the directories and the last entry is the file as EVERY entry is a file
           for (int i = 0; i < dirs.length - 1; i++) {
-            File file = new File(parentDirectory, dirs[i]);
-            if (!file.exists()) {
-              FileUtils.forceMkdir(file);
+            Path file = parentDirectory.resolve(dirs[i]);
+            if (!Files.exists(file)) {
+              Files.createDirectories(file);
             }
             parentDirectory = file;
           }
-          File destFile = checkDestinationFileForTraversal(outputDir, name,
-            new File(parentDirectory, dirs[dirs.length - 1]));
+          Path dest = checkDestinationFileForTraversal(outputDir, name,
+              parentDirectory.resolve(dirs[dirs.length - 1]));
 
-          FileUtils.copy(in, destFile);
+          Files.copy(in, dest);
         }
         // it could be that there are just top level files that the unpacker is used for
         else {
-          File destFile = makeDestinationFile(outputDir, name);
+          Path dest = makeDestinationFile(outputDir, name);
 
-          FileUtils.copy(in, destFile);
+          Files.copy(in, dest);
         }
       }
     }
@@ -1256,11 +1069,11 @@ public final class ZipUtil extends ZipPathUtil {
    */
   private static class Unwrapper implements ZipEntryCallback {
 
-    private final File outputDir;
+    private final Path outputDir;
     private final NameMapper mapper;
     private String rootDir;
 
-    public Unwrapper(File outputDir, NameMapper mapper) {
+    public Unwrapper(Path outputDir, NameMapper mapper) {
       this.outputDir = outputDir;
       this.mapper = mapper;
     }
@@ -1276,19 +1089,18 @@ public final class ZipUtil extends ZipPathUtil {
 
       String name = mapper.map(getUnrootedName(root, zipEntry.getName()));
       if (name != null) {
-        File file = makeDestinationFile(outputDir, name);
+        Path file = makeDestinationFile(outputDir, name);
 
         if (zipEntry.isDirectory()) {
-          FileUtils.forceMkdir(file);
+          Files.createDirectories(file);
         }
         else {
-          FileUtils.forceMkdir(file.getParentFile());
+          Files.createDirectories(file.getParent());
 
-          if (log.isDebugEnabled() && file.exists()) {
+          if (log.isDebugEnabled() && Files.exists(file)) {
             log.debug("Overwriting file '{}'.", zipEntry.getName());
           }
-
-          FileUtils.copy(in, file);
+          Files.copy(in, file);
         }
       }
     }
@@ -1316,22 +1128,25 @@ public final class ZipUtil extends ZipPathUtil {
    * @param zip
    *          input ZIP file as well as the target directory.
    *
-   * @see #unpack(File, File)
+   * @see #unpack(Path, Path)
    */
-  public static void explode(File zip) {
+  public static void explode(Path zip) {
+    if (Files.isDirectory(zip)) {
+      return;
+    }
     try {
       // Find a new unique name is the same directory
-      File tempFile = FileUtils.getTempFileFor(zip);
+      Path temp = PathUtils.getTempFileFor(zip);
 
       // Rename the archive
-      FileUtils.moveFile(zip, tempFile);
+      Files.move(zip, temp);
 
       // Unpack it
-      unpack(tempFile, zip);
+      unpack(temp, zip);
 
       // Delete the archive
-      if (!tempFile.delete()) {
-        throw new IOException("Unable to delete file: " + tempFile);
+      if (!Files.deleteIfExists(temp)) {
+        throw new IOException("Unable to delete file: " + temp);
       }
     }
     catch (IOException e) {
@@ -1347,21 +1162,15 @@ public final class ZipUtil extends ZipPathUtil {
    * @param file file to be compressed.
    * @return ZIP file created.
    */
-  public static byte[] packEntry(File file) {
+  public static byte[] packEntry(Path file) {
     log.trace("Compressing '{}' into a ZIP file with single entry.", file);
 
     ByteArrayOutputStream result = new ByteArrayOutputStream();
-    try {
-      ZipOutputStream out = new ZipOutputStream(result);
-      ZipEntry entry = ZipEntryUtil.fromFile(file.getName(), file.toPath());
-      InputStream in = new BufferedInputStream(new FileInputStream(file));
-      try {
+    try (ZipOutputStream out = new ZipOutputStream(result)) {
+      ZipEntry entry = ZipEntryUtil.fromFile(file.getFileName().toString(), file);
+      try (InputStream in = new BufferedInputStream(Files.newInputStream(file))) {
         ZipEntryUtil.addEntry(entry, in, out);
       }
-      finally {
-        IOUtils.closeQuietly(in);
-      }
-      out.close();
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
@@ -1382,7 +1191,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param zip
    *          ZIP file that will be created or overwritten.
    */
-  public static void pack(File rootDir, File zip) {
+  public static void pack(Path rootDir, Path zip) {
     pack(rootDir, zip, DEFAULT_COMPRESSION_LEVEL);
   }
 
@@ -1399,7 +1208,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param compressionLevel
    *          compression level
    */
-  public static void pack(File rootDir, File zip, int compressionLevel) {
+  public static void pack(Path rootDir, Path zip, int compressionLevel) {
     pack(rootDir, zip, IdentityNameMapper.INSTANCE, compressionLevel);
   }
 
@@ -1416,9 +1225,9 @@ public final class ZipUtil extends ZipPathUtil {
    * @param preserveRoot
    *          true if the resulted archive should have the top directory entry
    */
-  public static void pack(final File sourceDir, final File targetZipFile, final boolean preserveRoot) {
+  public static void pack(final Path sourceDir, final Path targetZipFile, final boolean preserveRoot) {
     if (preserveRoot) {
-      final String parentName = sourceDir.getName();
+      final String parentName = sourceDir.getFileName().toString();
       pack(sourceDir, targetZipFile, new NameMapper() {
         public String map(String name) {
           return parentName + PATH_SEPARATOR + name;
@@ -1440,7 +1249,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param destZipFile
    *          ZIP file that will be created or overwritten.
    */
-  public static void packEntry(File fileToPack, File destZipFile) {
+  public static void packEntry(Path fileToPack, Path destZipFile) {
     packEntry(fileToPack, destZipFile, IdentityNameMapper.INSTANCE);
   }
 
@@ -1456,7 +1265,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param fileName
    *          the name for the file inside the archive
    */
-  public static void packEntry(File fileToPack, File destZipFile, final String fileName) {
+  public static void packEntry(Path fileToPack, Path destZipFile, final String fileName) {
     packEntry(fileToPack, destZipFile, new NameMapper() {
       public String map(String name) {
         return fileName;
@@ -1476,8 +1285,8 @@ public final class ZipUtil extends ZipPathUtil {
    * @param mapper
    *          call-back for renaming the entries.
    */
-  public static void packEntry(File fileToPack, File destZipFile, NameMapper mapper) {
-    packEntries(new File[] { fileToPack }, destZipFile, mapper);
+  public static void packEntry(Path fileToPack, Path destZipFile, NameMapper mapper) {
+    packEntries(new Path[] { fileToPack }, destZipFile, mapper);
   }
 
   /**
@@ -1490,7 +1299,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param destZipFile
    *          ZIP file that will be created or overwritten.
    */
-  public static void packEntries(File[] filesToPack, File destZipFile) {
+  public static void packEntries(Path[] filesToPack, Path destZipFile) {
     packEntries(filesToPack, destZipFile, IdentityNameMapper.INSTANCE);
   }
 
@@ -1506,7 +1315,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param mapper
    *          call-back for renaming the entries.
    */
-  public static void packEntries(File[] filesToPack, File destZipFile, NameMapper mapper) {
+  public static void packEntries(Path[] filesToPack, Path destZipFile, NameMapper mapper) {
     packEntries(filesToPack, destZipFile, mapper, DEFAULT_COMPRESSION_LEVEL);
   }
 
@@ -1523,7 +1332,7 @@ public final class ZipUtil extends ZipPathUtil {
    *          ZIP file compression level (speed versus filesize), e.g. <code>Deflater.NO_COMPRESSION</code>, <code>Deflater.BEST_SPEED</code>, or
    *          <code>Deflater.BEST_COMPRESSION</code>
    */
-  public static void packEntries(File[] filesToPack, File destZipFile, int compressionLevel) {
+  public static void packEntries(Path[] filesToPack, Path destZipFile, int compressionLevel) {
     packEntries(filesToPack, destZipFile, IdentityNameMapper.INSTANCE, compressionLevel);
   }
 
@@ -1542,31 +1351,27 @@ public final class ZipUtil extends ZipPathUtil {
    *          ZIP file compression level (speed versus filesize), e.g. <code>Deflater.NO_COMPRESSION</code>, <code>Deflater.BEST_SPEED</code>, or
    *          <code>Deflater.BEST_COMPRESSION</code>
    */
-  public static void packEntries(File[] filesToPack, File destZipFile, NameMapper mapper, int compressionLevel) {
+  public static void packEntries(Path[] filesToPack, Path destZipFile, NameMapper mapper, int compressionLevel) {
     log.debug("Compressing '{}' into '{}'.", filesToPack, destZipFile);
-
-    ZipOutputStream out = null;
-    FileOutputStream fos = null;
     try {
-      fos = new FileOutputStream(destZipFile);
-      out = new ZipOutputStream(new BufferedOutputStream(fos));
-      out.setLevel(compressionLevel);
+      Files.deleteIfExists(destZipFile);
 
-      for (int i = 0; i < filesToPack.length; i++) {
-        File fileToPack = filesToPack[i];
+      try (ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(destZipFile)))) {
 
-        ZipEntry zipEntry = ZipEntryUtil.fromFile(mapper.map(fileToPack.getName()), fileToPack.toPath());
-        out.putNextEntry(zipEntry);
-        FileUtils.copy(fileToPack, out);
-        out.closeEntry();
+        out.setLevel(compressionLevel);
+
+        for (int i = 0; i < filesToPack.length; i++) {
+          Path fileToPack = filesToPack[i];
+
+          ZipEntry zipEntry = ZipEntryUtil.fromFile(mapper.map(fileToPack.getFileName().toString()), fileToPack);
+          out.putNextEntry(zipEntry);
+          Files.copy(fileToPack, out);
+          out.closeEntry();
+        }
       }
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
-    }
-    finally {
-      IOUtils.closeQuietly(out);
-      IOUtils.closeQuietly(fos);
     }
   }
 
@@ -1582,7 +1387,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param mapper
    *          call-back for renaming the entries.
    */
-  public static void pack(File sourceDir, File targetZip, NameMapper mapper) {
+  public static void pack(Path sourceDir, Path targetZip, NameMapper mapper) {
     pack(sourceDir, targetZip, mapper, DEFAULT_COMPRESSION_LEVEL);
   }
 
@@ -1600,22 +1405,17 @@ public final class ZipUtil extends ZipPathUtil {
    * @param compressionLevel
    *          compression level
    */
-  public static void pack(File sourceDir, File targetZip, NameMapper mapper, int compressionLevel) {
+  public static void pack(Path sourceDir, Path targetZip, NameMapper mapper, int compressionLevel) {
     log.debug("Compressing '{}' into '{}'.", sourceDir, targetZip);
-    if (!sourceDir.exists()) {
+    if (!Files.exists(sourceDir)) {
       throw new ZipException("Given file '" + sourceDir + "' doesn't exist!");
     }
-    ZipOutputStream out = null;
-    try {
-      out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(targetZip)));
+    try (ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(targetZip)))) {
       out.setLevel(compressionLevel);
       pack(sourceDir, out, mapper, "", true);
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
-    }
-    finally {
-      IOUtils.closeQuietly(out);
     }
   }
 
@@ -1631,7 +1431,7 @@ public final class ZipUtil extends ZipPathUtil {
    *
    * @since 1.10
    */
-  public static void pack(File sourceDir, OutputStream os) {
+  public static void pack(Path sourceDir, OutputStream os) {
     pack(sourceDir, os, IdentityNameMapper.INSTANCE, DEFAULT_COMPRESSION_LEVEL);
   }
 
@@ -1649,7 +1449,7 @@ public final class ZipUtil extends ZipPathUtil {
    *
    * @since 1.10
    */
-  public static void pack(File sourceDir, OutputStream os, int compressionLevel) {
+  public static void pack(Path sourceDir, OutputStream os, int compressionLevel) {
     pack(sourceDir, os, IdentityNameMapper.INSTANCE, compressionLevel);
   }
 
@@ -1667,7 +1467,7 @@ public final class ZipUtil extends ZipPathUtil {
    *
    * @since 1.10
    */
-  public static void pack(File sourceDir, OutputStream os, NameMapper mapper) {
+  public static void pack(Path sourceDir, OutputStream os, NameMapper mapper) {
     pack(sourceDir, os, mapper, DEFAULT_COMPRESSION_LEVEL);
   }
 
@@ -1687,9 +1487,9 @@ public final class ZipUtil extends ZipPathUtil {
    *
    * @since 1.10
    */
-  public static void pack(File sourceDir, OutputStream os, NameMapper mapper, int compressionLevel) {
+  public static void pack(Path sourceDir, OutputStream os, NameMapper mapper, int compressionLevel) {
     log.debug("Compressing '{}' into a stream.", sourceDir);
-    if (!sourceDir.exists()) {
+    if (!Files.exists(sourceDir)) {
       throw new ZipException("Given file '" + sourceDir + "' doesn't exist!");
     }
     ZipOutputStream out = null;
@@ -1732,47 +1532,48 @@ public final class ZipUtil extends ZipPathUtil {
    * @param mustHaveChildren
    *          if true, but directory to pack doesn't have any files, throw an exception.
    */
-  private static void pack(File dir, ZipOutputStream out, NameMapper mapper, String pathPrefix, boolean mustHaveChildren) throws IOException {
-    String[] filenames = dir.list();
-    if (filenames == null) {
-      if (!dir.exists()) {
-        throw new ZipException("Given file '" + dir + "' doesn't exist!");
-      }
+  private static void pack(Path dir, ZipOutputStream out, NameMapper mapper, String pathPrefix, boolean mustHaveChildren) throws IOException {
+    if (!Files.exists(dir)) {
+      throw new ZipException("Given file '" + dir + "' doesn't exist!");
+    }
+    if (!Files.isDirectory(dir)) {
       throw new IOException("Given file is not a directory '" + dir + "'");
     }
 
-    if (mustHaveChildren && filenames.length == 0) {
-      throw new ZipException("Given directory '" + dir + "' doesn't contain any files!");
-    }
-
-    for (int i = 0; i < filenames.length; i++) {
-      String filename = filenames[i];
-      File file = new File(dir, filename);
-      boolean isDir = file.isDirectory();
-      String path = pathPrefix + file.getName(); // NOSONAR
-      if (isDir) {
-        path += PATH_SEPARATOR; // NOSONAR
-      }
-
-      // Create a ZIP entry
-      String name = mapper.map(path);
-      if (name != null) {
-        ZipEntry zipEntry = ZipEntryUtil.fromFile(name, file.toPath());
-
-        out.putNextEntry(zipEntry);
-
-        // Copy the file content
-        if (!isDir) {
-          FileUtils.copy(file, out);
+    boolean hasAny = false;
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir);) {
+      for (Path file : stream) {
+        hasAny = true;
+        boolean isDir = Files.isDirectory(file);
+        String path = pathPrefix + file.getFileName();
+        if (isDir) {
+          path += PATH_SEPARATOR; // NOSONAR
         }
 
-        out.closeEntry();
-      }
+        // Create a ZIP entry
+        String name = mapper.map(path);
+        if (name != null) {
+          ZipEntry zipEntry = ZipEntryUtil.fromFile(name, file);
 
-      // Traverse the directory
-      if (isDir) {
-        pack(file, out, mapper, path, false);
+          out.putNextEntry(zipEntry);
+
+          // Copy the file content
+          if (!isDir) {
+            Files.copy(file, out);
+          }
+
+          out.closeEntry();
+        }
+
+        // Traverse the directory
+        if (isDir) {
+          pack(file, out, mapper, path, false);
+        }
       }
+    }
+
+    if (mustHaveChildren && !hasAny) {
+      throw new ZipException("Given directory '" + dir + "' doesn't contain any files!");
     }
   }
 
@@ -1787,17 +1588,14 @@ public final class ZipUtil extends ZipPathUtil {
    * @param compressionLevel
    *          compression level.
    */
-  public static void repack(File srcZip, File dstZip, int compressionLevel) {
-
+  public static void repack(Path srcZip, Path dstZip, int compressionLevel) {
     log.debug("Repacking '{}' into '{}'.", srcZip, dstZip);
 
-    RepackZipEntryCallback callback = new RepackZipEntryCallback(dstZip, compressionLevel);
-
-    try {
+    try (RepackZipEntryCallback callback = new RepackZipEntryCallback(dstZip, compressionLevel)) {
       iterate(srcZip, callback);
     }
-    finally {
-      callback.closeStream();
+    catch (IOException e) {
+      throw ZipExceptionUtil.rethrow(e);
     }
   }
 
@@ -1812,17 +1610,15 @@ public final class ZipUtil extends ZipPathUtil {
    * @param compressionLevel
    *          compression level.
    */
-  public static void repack(InputStream is, File dstZip, int compressionLevel) {
+  public static void repack(InputStream is, Path dstZip, int compressionLevel) {
 
     log.debug("Repacking from input stream into '{}'.", dstZip);
 
-    RepackZipEntryCallback callback = new RepackZipEntryCallback(dstZip, compressionLevel);
-
-    try {
+    try (RepackZipEntryCallback callback = new RepackZipEntryCallback(dstZip, compressionLevel)) {
       iterate(is, callback);
     }
-    finally {
-      callback.closeStream();
+    catch (IOException e) {
+      throw ZipExceptionUtil.rethrow(e);
     }
   }
 
@@ -1835,19 +1631,19 @@ public final class ZipUtil extends ZipPathUtil {
    * @param compressionLevel
    *          compression level.
    */
-  public static void repack(File zip, int compressionLevel) {
+  public static void repack(Path zip, int compressionLevel) {
     try {
-      File tmpZip = FileUtils.getTempFileFor(zip);
+      Path tmpZip = PathUtils.getTempFileFor(zip);
 
       repack(zip, tmpZip, compressionLevel);
 
       // Delete original zip
-      if (!zip.delete()) {
+      if (!Files.deleteIfExists(zip)) {
         throw new IOException("Unable to delete the file: " + zip);
       }
 
       // Rename the archive
-      FileUtils.moveFile(tmpZip, zip);
+      Files.move(tmpZip, zip);
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
@@ -1859,26 +1655,21 @@ public final class ZipUtil extends ZipPathUtil {
    *
    * @author Pavel Grigorenko
    */
-  private static final class RepackZipEntryCallback implements ZipEntryCallback {
+  private static final class RepackZipEntryCallback implements ZipEntryCallback, Closeable {
 
     private ZipOutputStream out;
 
-    private RepackZipEntryCallback(File dstZip, int compressionLevel) {
-      try {
-        this.out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(dstZip)));
-        this.out.setLevel(compressionLevel);
-      }
-      catch (IOException e) {
-        ZipExceptionUtil.rethrow(e);
-      }
+    private RepackZipEntryCallback(Path dstZip, int compressionLevel) throws IOException {
+      this.out = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(dstZip)));
+      this.out.setLevel(compressionLevel);
     }
 
     public void process(InputStream in, ZipEntry zipEntry) throws IOException {
       ZipEntryUtil.copyEntry(zipEntry, in, out);
     }
 
-    private void closeStream() {
-      IOUtils.closeQuietly(out);
+    public void close() throws IOException {
+      out.close();
     }
   }
 
@@ -1892,9 +1683,9 @@ public final class ZipUtil extends ZipPathUtil {
    * @param dir
    *          input directory as well as the target ZIP file.
    *
-   * @see #pack(File, File)
+   * @see #pack(Path, Path)
    */
-  public static void unexplode(File dir) {
+  public static void unexplode(Path dir) {
     unexplode(dir, DEFAULT_COMPRESSION_LEVEL);
   }
 
@@ -1910,21 +1701,21 @@ public final class ZipUtil extends ZipPathUtil {
    * @param compressionLevel
    *          compression level
    *
-   * @see #pack(File, File)
+   * @see #pack(Path, Path)
    */
-  public static void unexplode(File dir, int compressionLevel) {
+  public static void unexplode(Path dir, int compressionLevel) {
     try {
       // Find a new unique name is the same directory
-      File zip = FileUtils.getTempFileFor(dir);
+      Path zip = PathUtils.getTempFileFor(dir);
 
       // Pack it
       pack(dir, zip, compressionLevel);
 
       // Delete the directory
-      FileUtils.deleteDirectory(dir);
+      PathUtils.deleteDir(dir);
 
       // Rename the archive
-      FileUtils.moveFile(zip, dir);
+      Files.move(zip, dir, StandardCopyOption.REPLACE_EXISTING);
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
@@ -1973,21 +1764,16 @@ public final class ZipUtil extends ZipPathUtil {
    * @param zip
    *          new ZIP file created.
    */
-  public static void pack(ZipEntrySource[] entries, File zip) {
+  public static void pack(ZipEntrySource[] entries, Path zip) {
     if (log.isDebugEnabled()) {
       log.debug("Creating '{}' from {}.", zip, Arrays.asList(entries));
     }
 
-    OutputStream out = null;
-    try {
-      out = new BufferedOutputStream(new FileOutputStream(zip));
+    try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(zip))) {
       pack(entries, out, true);
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
-    }
-    finally {
-      IOUtils.closeQuietly(out);
     }
   }
 
@@ -2003,8 +1789,8 @@ public final class ZipUtil extends ZipPathUtil {
    * @param destZip
    *          new ZIP file created.
    */
-  public static void addEntry(File zip, String path, File file, File destZip) {
-    addEntry(zip, new FileSource(path, file), destZip);
+  public static void addEntry(Path zip, String path, Path file, Path destZip) {
+    addEntry(zip, new PathSource(path, file), destZip);
   }
 
   /**
@@ -2017,9 +1803,9 @@ public final class ZipUtil extends ZipPathUtil {
    * @param file
    *          new entry to be added.
    */
-  public static void addEntry(final File zip, final String path, final File file) {
+  public static void addEntry(final Path zip, final String path, final Path file) {
     operateInPlace(zip, new InPlaceAction() {
-      public boolean act(File tmpFile) {
+      public boolean act(Path tmpFile) {
         addEntry(zip, path, file, tmpFile);
         return true;
       }
@@ -2038,7 +1824,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param destZip
    *          new ZIP file created.
    */
-  public static void addEntry(File zip, String path, byte[] bytes, File destZip) {
+  public static void addEntry(Path zip, String path, byte[] bytes, Path destZip) {
     addEntry(zip, new ByteSource(path, bytes), destZip);
   }
 
@@ -2056,7 +1842,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param compressionMethod
    *          the new compression method (<code>ZipEntry.STORED</code> or <code>ZipEntry.DEFLATED</code>).
    */
-  public static void addEntry(File zip, String path, byte[] bytes, File destZip, final int compressionMethod) {
+  public static void addEntry(Path zip, String path, byte[] bytes, Path destZip, final int compressionMethod) {
     addEntry(zip, new ByteSource(path, bytes, compressionMethod), destZip);
   }
 
@@ -2070,9 +1856,9 @@ public final class ZipUtil extends ZipPathUtil {
    * @param bytes
    *          new entry bytes (or <code>null</code> if directory).
    */
-  public static void addEntry(final File zip, final String path, final byte[] bytes) {
+  public static void addEntry(final Path zip, final String path, final byte[] bytes) {
     operateInPlace(zip, new InPlaceAction() {
-      public boolean act(File tmpFile) {
+      public boolean act(Path tmpFile) {
         addEntry(zip, path, bytes, tmpFile);
         return true;
       }
@@ -2091,9 +1877,9 @@ public final class ZipUtil extends ZipPathUtil {
    * @param compressionMethod
    *          the new compression method (<code>ZipEntry.STORED</code> or <code>ZipEntry.DEFLATED</code>).
    */
-  public static void addEntry(final File zip, final String path, final byte[] bytes, final int compressionMethod) {
+  public static void addEntry(final Path zip, final String path, final byte[] bytes, final int compressionMethod) {
     operateInPlace(zip, new InPlaceAction() {
-      public boolean act(File tmpFile) {
+      public boolean act(Path tmpFile) {
         addEntry(zip, path, bytes, tmpFile, compressionMethod);
         return true;
       }
@@ -2110,7 +1896,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param destZip
    *          new ZIP file created.
    */
-  public static void addEntry(File zip, ZipEntrySource entry, File destZip) {
+  public static void addEntry(Path zip, ZipEntrySource entry, Path destZip) {
     addEntries(zip, new ZipEntrySource[] { entry }, destZip);
   }
 
@@ -2122,9 +1908,9 @@ public final class ZipUtil extends ZipPathUtil {
    * @param entry
    *          new ZIP entry appended.
    */
-  public static void addEntry(final File zip, final ZipEntrySource entry) {
+  public static void addEntry(final Path zip, final ZipEntrySource entry) {
     operateInPlace(zip, new InPlaceAction() {
-      public boolean act(File tmpFile) {
+      public boolean act(Path tmpFile) {
         addEntry(zip, entry, tmpFile);
         return true;
       }
@@ -2141,21 +1927,16 @@ public final class ZipUtil extends ZipPathUtil {
    * @param destZip
    *          new ZIP file created.
    */
-  public static void addEntries(File zip, ZipEntrySource[] entries, File destZip) {
+  public static void addEntries(Path zip, ZipEntrySource[] entries, Path destZip) {
     if (log.isDebugEnabled()) {
       log.debug("Copying '" + zip + "' to '" + destZip + "' and adding " + Arrays.asList(entries) + ".");
     }
 
-    OutputStream destOut = null;
-    try {
-      destOut = new BufferedOutputStream(new FileOutputStream(destZip));
+    try (OutputStream destOut = new BufferedOutputStream(Files.newOutputStream(destZip))) {
       addEntries(zip, entries, destOut);
     }
     catch (IOException e) {
       ZipExceptionUtil.rethrow(e);
-    }
-    finally {
-      IOUtils.closeQuietly(destOut);
     }
   }
 
@@ -2169,7 +1950,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param destOut
    *          new ZIP destination output stream
    */
-  public static void addEntries(File zip, ZipEntrySource[] entries, OutputStream destOut) {
+  public static void addEntries(Path zip, ZipEntrySource[] entries, OutputStream destOut) {
     if (log.isDebugEnabled()) {
       log.debug("Copying '" + zip + "' to a stream and adding " + Arrays.asList(entries) + ".");
     }
@@ -2227,9 +2008,9 @@ public final class ZipUtil extends ZipPathUtil {
    * @param entries
    *          new ZIP entries appended.
    */
-  public static void addEntries(final File zip, final ZipEntrySource[] entries) {
+  public static void addEntries(final Path zip, final ZipEntrySource[] entries) {
     operateInPlace(zip, new InPlaceAction() {
-      public boolean act(File tmpFile) {
+      public boolean act(Path tmpFile) {
         addEntries(zip, entries, tmpFile);
         return true;
       }
@@ -2247,7 +2028,7 @@ public final class ZipUtil extends ZipPathUtil {
    *          new ZIP file created.
    * @since 1.7
    */
-  public static void removeEntry(File zip, String path, File destZip) {
+  public static void removeEntry(Path zip, String path, Path destZip) {
     removeEntries(zip, new String[] { path }, destZip);
   }
 
@@ -2260,9 +2041,9 @@ public final class ZipUtil extends ZipPathUtil {
    *          path of the entry to remove
    * @since 1.7
    */
-  public static void removeEntry(final File zip, final String path) {
+  public static void removeEntry(final Path zip, final String path) {
     operateInPlace(zip, new InPlaceAction() {
-      public boolean act(File tmpFile) {
+      public boolean act(Path tmpFile) {
         removeEntry(zip, path, tmpFile);
         return true;
       }
@@ -2280,24 +2061,19 @@ public final class ZipUtil extends ZipPathUtil {
    *          new ZIP file created.
    * @since 1.7
    */
-  public static void removeEntries(File zip, String[] paths, File destZip) {
+  public static void removeEntries(Path zip, String[] paths, Path destZip) {
     if (log.isDebugEnabled()) {
       log.debug("Copying '" + zip + "' to '" + destZip + "' and removing paths " + Arrays.asList(paths) + ".");
     }
 
-    ZipOutputStream out = null;
-    try {
-      out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destZip)));
+    try (ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(destZip)))) {
       copyEntries(zip, out, new HashSet<String>(Arrays.asList(paths)));
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
     }
-    finally {
-      IOUtils.closeQuietly(out);
-    }
   }
-  
+
   /**
    * Copies an existing ZIP file and removes entries with given paths.
    *
@@ -2309,7 +2085,7 @@ public final class ZipUtil extends ZipPathUtil {
    *          new ZIP destination output stream
    * @since 1.14
    */
-  public static void removeEntries(File zip, String[] paths, OutputStream destOut) {
+  public static void removeEntries(Path zip, String[] paths, OutputStream destOut) {
     if (log.isDebugEnabled()) {
       log.debug("Copying '" + zip + "' to an output stream and removing paths " + Arrays.asList(paths) + ".");
     }
@@ -2333,9 +2109,9 @@ public final class ZipUtil extends ZipPathUtil {
    *          paths of the entries to remove
    * @since 1.7
    */
-  public static void removeEntries(final File zip, final String[] paths) {
+  public static void removeEntries(final Path zip, final String[] paths) {
     operateInPlace(zip, new InPlaceAction() {
-      public boolean act(File tmpFile) {
+      public boolean act(Path tmpFile) {
         removeEntries(zip, paths, tmpFile);
         return true;
       }
@@ -2350,7 +2126,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param out
    *          target ZIP stream.
    */
-  private static void copyEntries(File zip, final ZipOutputStream out) {
+  private static void copyEntries(Path zip, final ZipOutputStream out) {
     // this one doesn't call copyEntries with ignoredEntries, because that has poorer performance
     final Set<String> names = new HashSet<String>();
     iterate(zip, new ZipEntryCallback() {
@@ -2400,7 +2176,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @param ignoredEntries
    *          paths of entries not to copy
    */
-  private static void copyEntries(File zip, final ZipOutputStream out, final Set<String> ignoredEntries) {
+  private static void copyEntries(Path zip, final ZipOutputStream out, final Set<String> ignoredEntries) {
     final Set<String> names = new HashSet<String>();
     final Set<String> dirNames = filterDirEntries(zip, ignoredEntries);
     iterate(zip, new ZipEntryCallback() {
@@ -2435,33 +2211,27 @@ public final class ZipUtil extends ZipPathUtil {
    * @return Set<String> names of entries that are dirs.
    *
    */
-  static Set<String> filterDirEntries(File zip, Collection<String> names) {
+  static Set<String> filterDirEntries(Path zip, Collection<String> names) {
     Set<String> dirs = new HashSet<String>();
     if (zip == null) {
       return dirs;
     }
-    ZipFile zf = null;
-    try {
-      zf = new ZipFile(zip);
-      for (String entryName : names) {
-        ZipEntry entry = zf.getEntry(entryName);
-        if (entry != null) {
-          if (entry.isDirectory()) {
-            dirs.add(entry.getName());
-          }
-          else if (zf.getInputStream(entry) == null) {
-            // no input stream means that this is a dir.
-            dirs.add(entry.getName() + PATH_SEPARATOR);
-          }
+
+    Set<String> entries = new HashSet<>();
+    for (String s : names) {
+      entries.add(s);
+    }
+    try (ZipInputStream zf = new ZipInputStream(Files.newInputStream(zip))) {
+      ZipEntry entry;
+      while ((entry = zf.getNextEntry()) != null) {
+        if (entry.isDirectory() && (entries.contains(entry.getName()) ||
+            entry.getName().endsWith("/") && entries.contains(entry.getName().substring(0, entry.getName().length() - 1)))) {
+          dirs.add(entry.getName());
         }
       }
-
     }
     catch (IOException e) {
       ZipExceptionUtil.rethrow(e);
-    }
-    finally {
-      closeQuietly(zf);
     }
     return dirs;
   }
@@ -2479,8 +2249,8 @@ public final class ZipUtil extends ZipPathUtil {
    *          new ZIP file created.
    * @return <code>true</code> if the entry was replaced.
    */
-  public static boolean replaceEntry(File zip, String path, File file, File destZip) {
-    return replaceEntry(zip, new FileSource(path, file), destZip);
+  public static boolean replaceEntry(Path zip, String path, Path file, Path destZip) {
+    return replaceEntry(zip, new PathSource(path, file), destZip);
   }
 
   /**
@@ -2494,10 +2264,10 @@ public final class ZipUtil extends ZipPathUtil {
    *          new entry.
    * @return <code>true</code> if the entry was replaced.
    */
-  public static boolean replaceEntry(final File zip, final String path, final File file) {
+  public static boolean replaceEntry(final Path zip, final String path, final Path file) {
     return operateInPlace(zip, new InPlaceAction() {
-      public boolean act(File tmpFile) {
-        return replaceEntry(zip, new FileSource(path, file), tmpFile);
+      public boolean act(Path tmpFile) {
+        return replaceEntry(zip, new PathSource(path, file), tmpFile);
       }
     });
   }
@@ -2515,7 +2285,7 @@ public final class ZipUtil extends ZipPathUtil {
    *          new ZIP file created.
    * @return <code>true</code> if the entry was replaced.
    */
-  public static boolean replaceEntry(File zip, String path, byte[] bytes, File destZip) {
+  public static boolean replaceEntry(Path zip, String path, byte[] bytes, Path destZip) {
     return replaceEntry(zip, new ByteSource(path, bytes), destZip);
   }
 
@@ -2530,9 +2300,9 @@ public final class ZipUtil extends ZipPathUtil {
    *          new entry bytes (or <code>null</code> if directory).
    * @return <code>true</code> if the entry was replaced.
    */
-  public static boolean replaceEntry(final File zip, final String path, final byte[] bytes) {
+  public static boolean replaceEntry(final Path zip, final String path, final byte[] bytes) {
     return operateInPlace(zip, new InPlaceAction() {
-      public boolean act(File tmpFile) {
+      public boolean act(Path tmpFile) {
         return replaceEntry(zip, new ByteSource(path, bytes), tmpFile);
       }
     });
@@ -2551,10 +2321,10 @@ public final class ZipUtil extends ZipPathUtil {
    *          the new compression method (<code>ZipEntry.STORED</code> or <code>ZipEntry.DEFLATED</code>).
    * @return <code>true</code> if the entry was replaced.
    */
-  public static boolean replaceEntry(final File zip, final String path, final byte[] bytes,
+  public static boolean replaceEntry(final Path zip, final String path, final byte[] bytes,
       final int compressionMethod) {
     return operateInPlace(zip, new InPlaceAction() {
-      public boolean act(File tmpFile) {
+      public boolean act(Path tmpFile) {
         return replaceEntry(zip, new ByteSource(path, bytes, compressionMethod), tmpFile);
       }
     });
@@ -2571,7 +2341,7 @@ public final class ZipUtil extends ZipPathUtil {
    *          new ZIP file created.
    * @return <code>true</code> if the entry was replaced.
    */
-  public static boolean replaceEntry(File zip, ZipEntrySource entry, File destZip) {
+  public static boolean replaceEntry(Path zip, ZipEntrySource entry, Path destZip) {
     return replaceEntries(zip, new ZipEntrySource[] { entry }, destZip);
   }
 
@@ -2584,9 +2354,9 @@ public final class ZipUtil extends ZipPathUtil {
    *          new ZIP entry.
    * @return <code>true</code> if the entry was replaced.
    */
-  public static boolean replaceEntry(final File zip, final ZipEntrySource entry) {
+  public static boolean replaceEntry(final Path zip, final ZipEntrySource entry) {
     return operateInPlace(zip, new InPlaceAction() {
-      public boolean act(File tmpFile) {
+      public boolean act(Path tmpFile) {
         return replaceEntry(zip, entry, tmpFile);
       }
     });
@@ -2603,37 +2373,31 @@ public final class ZipUtil extends ZipPathUtil {
    *          new ZIP file created.
    * @return <code>true</code> if at least one entry was replaced.
    */
-  public static boolean replaceEntries(File zip, ZipEntrySource[] entries, File destZip) {
+  public static boolean replaceEntries(Path zip, ZipEntrySource[] entries, Path destZip) {
     if (log.isDebugEnabled()) {
       log.debug("Copying '" + zip + "' to '" + destZip + "' and replacing entries " + Arrays.asList(entries) + ".");
     }
 
     final Map<String, ZipEntrySource> entryByPath = entriesByPath(entries);
     final int entryCount = entryByPath.size();
-    try {
-      final ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destZip)));
-      try {
-        final Set<String> names = new HashSet<String>();
-        iterate(zip, new ZipEntryCallback() {
-          public void process(InputStream in, ZipEntry zipEntry) throws IOException {
-            if (names.add(zipEntry.getName())) {
-              ZipEntrySource entry = (ZipEntrySource) entryByPath.remove(zipEntry.getName());
-              if (entry != null) {
-                addEntry(entry, out);
-              }
-              else {
-                ZipEntryUtil.copyEntry(zipEntry, in, out);
-              }
+    try (ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(destZip)))) {
+      final Set<String> names = new HashSet<String>();
+      iterate(zip, new ZipEntryCallback() {
+        public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+          if (names.add(zipEntry.getName())) {
+            ZipEntrySource entry = (ZipEntrySource) entryByPath.remove(zipEntry.getName());
+            if (entry != null) {
+              addEntry(entry, out);
             }
-            else if (log.isDebugEnabled()) {
-              log.debug("Duplicate entry: {}", zipEntry.getName());
+            else {
+              ZipEntryUtil.copyEntry(zipEntry, in, out);
             }
           }
-        });
-      }
-      finally {
-        IOUtils.closeQuietly(out);
-      }
+          else if (log.isDebugEnabled()) {
+            log.debug("Duplicate entry: {}", zipEntry.getName());
+          }
+        }
+      });
     }
     catch (IOException e) {
       ZipExceptionUtil.rethrow(e);
@@ -2650,9 +2414,9 @@ public final class ZipUtil extends ZipPathUtil {
    *          new ZIP entries to be replaced with.
    * @return <code>true</code> if at least one entry was replaced.
    */
-  public static boolean replaceEntries(final File zip, final ZipEntrySource[] entries) {
+  public static boolean replaceEntries(final Path zip, final ZipEntrySource[] entries) {
     return operateInPlace(zip, new InPlaceAction() {
-      public boolean act(File tmpFile) {
+      public boolean act(Path tmpFile) {
         return replaceEntries(zip, entries, tmpFile);
       }
     });
@@ -2668,42 +2432,35 @@ public final class ZipUtil extends ZipPathUtil {
    * @param destZip
    *          new ZIP file created.
    */
-  public static void addOrReplaceEntries(File zip, ZipEntrySource[] entries, File destZip) {
+  public static void addOrReplaceEntries(Path zip, ZipEntrySource[] entries, Path destZip) {
     if (log.isDebugEnabled()) {
-      log.debug("Copying '" + zip + "' to '" + destZip + "' and adding/replacing entries " + Arrays.asList(entries)
-          + ".");
+      log.debug("Copying '" + zip + "' to '" + destZip + "' and adding/replacing entries " + Arrays.asList(entries) + ".");
     }
 
     final Map<String, ZipEntrySource> entryByPath = entriesByPath(entries);
-    try {
-      final ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destZip)));
-      try {
-        // Copy and replace entries
-        final Set<String> names = new HashSet<String>();
-        iterate(zip, new ZipEntryCallback() {
-          public void process(InputStream in, ZipEntry zipEntry) throws IOException {
-            if (names.add(zipEntry.getName())) {
-              ZipEntrySource entry = (ZipEntrySource) entryByPath.remove(zipEntry.getName());
-              if (entry != null) {
-                addEntry(entry, out);
-              }
-              else {
-                ZipEntryUtil.copyEntry(zipEntry, in, out);
-              }
+    try (ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(destZip)))) {
+      // Copy and replace entries
+      final Set<String> names = new HashSet<String>();
+      iterate(zip, new ZipEntryCallback() {
+        public void process(InputStream in, ZipEntry zipEntry) throws IOException {
+          if (names.add(zipEntry.getName())) {
+            ZipEntrySource entry = (ZipEntrySource) entryByPath.remove(zipEntry.getName());
+            if (entry != null) {
+              addEntry(entry, out);
             }
-            else if (log.isDebugEnabled()) {
-              log.debug("Duplicate entry: {}", zipEntry.getName());
+            else {
+              ZipEntryUtil.copyEntry(zipEntry, in, out);
             }
           }
-        });
-
-        // Add new entries
-        for (ZipEntrySource zipEntrySource : entryByPath.values()) {
-          addEntry(zipEntrySource, out);
+          else if (log.isDebugEnabled()) {
+            log.debug("Duplicate entry: {}", zipEntry.getName());
+          }
         }
-      }
-      finally {
-        IOUtils.closeQuietly(out);
+      });
+
+      // Add new entries
+      for (ZipEntrySource zipEntrySource : entryByPath.values()) {
+        addEntry(zipEntrySource, out);
       }
     }
     catch (IOException e) {
@@ -2719,9 +2476,9 @@ public final class ZipUtil extends ZipPathUtil {
    * @param entries
    *          ZIP entries to be replaced or added.
    */
-  public static void addOrReplaceEntries(final File zip, final ZipEntrySource[] entries) {
+  public static void addOrReplaceEntries(final Path zip, final ZipEntrySource[] entries) {
     operateInPlace(zip, new InPlaceAction() {
-      public boolean act(File tmpFile) {
+      public boolean act(Path tmpFile) {
         addOrReplaceEntries(zip, entries, tmpFile);
         return true;
       }
@@ -2754,10 +2511,15 @@ public final class ZipUtil extends ZipPathUtil {
    * @throws IllegalArgumentException if the destination is the same as the location
    * @return <code>true</code> if the entry was replaced.
    */
-  public static boolean transformEntry(File zip, String path, ZipEntryTransformer transformer, File destZip) {
-    if (zip.equals(destZip)) {
-      throw new IllegalArgumentException("Input (" + zip.getAbsolutePath() + ") is the same as the destination!" +
-          "Please use the transformEntry method without destination for in-place transformation.");
+  public static boolean transformEntry(Path zip, String path, ZipEntryTransformer transformer, Path destZip) {
+    try {
+      if (Files.isSameFile(zip, destZip)) {
+        throw new IllegalArgumentException("Input (" + zip.normalize() + ") is the same as the destination!" +
+            "Please use the transformEntry method without destination for in-place transformation.");
+      }
+    }
+    catch (IOException e) {
+      throw ZipExceptionUtil.rethrow(e);
     }
     return transformEntry(zip, new ZipEntryTransformerEntry(path, transformer), destZip);
   }
@@ -2773,9 +2535,9 @@ public final class ZipUtil extends ZipPathUtil {
    *          transformer for the given ZIP entry.
    * @return <code>true</code> if the entry was replaced.
    */
-  public static boolean transformEntry(final File zip, final String path, final ZipEntryTransformer transformer) {
+  public static boolean transformEntry(final Path zip, final String path, final ZipEntryTransformer transformer) {
     return operateInPlace(zip, new InPlaceAction() {
-      public boolean act(File tmpFile) {
+      public boolean act(Path tmpFile) {
         return transformEntry(zip, path, transformer, tmpFile);
       }
     });
@@ -2792,7 +2554,7 @@ public final class ZipUtil extends ZipPathUtil {
    *          new ZIP file created.
    * @return <code>true</code> if the entry was replaced.
    */
-  public static boolean transformEntry(File zip, ZipEntryTransformerEntry entry, File destZip) {
+  public static boolean transformEntry(Path zip, ZipEntryTransformerEntry entry, Path destZip) {
     return transformEntries(zip, new ZipEntryTransformerEntry[] { entry }, destZip);
   }
 
@@ -2805,9 +2567,9 @@ public final class ZipUtil extends ZipPathUtil {
    *          transformer for a ZIP entry.
    * @return <code>true</code> if the entry was replaced.
    */
-  public static boolean transformEntry(final File zip, final ZipEntryTransformerEntry entry) {
+  public static boolean transformEntry(final Path zip, final ZipEntryTransformerEntry entry) {
     return operateInPlace(zip, new InPlaceAction() {
-      public boolean act(File tmpFile) {
+      public boolean act(Path tmpFile) {
         return transformEntry(zip, entry, tmpFile);
       }
     });
@@ -2824,20 +2586,14 @@ public final class ZipUtil extends ZipPathUtil {
    *          new ZIP file created.
    * @return <code>true</code> if at least one entry was replaced.
    */
-  public static boolean transformEntries(File zip, ZipEntryTransformerEntry[] entries, File destZip) {
+  public static boolean transformEntries(Path zip, ZipEntryTransformerEntry[] entries, Path destZip) {
     if (log.isDebugEnabled())
       log.debug("Copying '" + zip + "' to '" + destZip + "' and transforming entries " + Arrays.asList(entries) + ".");
 
-    try {
-      ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destZip)));
-      try {
-        TransformerZipEntryCallback action = new TransformerZipEntryCallback(Arrays.asList(entries), out);
-        iterate(zip, action);
-        return action.found();
-      }
-      finally {
-        IOUtils.closeQuietly(out);
-      }
+    try (ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(destZip)))) {
+      TransformerZipEntryCallback action = new TransformerZipEntryCallback(Arrays.asList(entries), out);
+      iterate(zip, action);
+      return action.found();
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
@@ -2853,9 +2609,9 @@ public final class ZipUtil extends ZipPathUtil {
    *          ZIP entry transformers.
    * @return <code>true</code> if the entry was replaced.
    */
-  public static boolean transformEntries(final File zip, final ZipEntryTransformerEntry[] entries) {
+  public static boolean transformEntries(final Path zip, final ZipEntryTransformerEntry[] entries) {
     return operateInPlace(zip, new InPlaceAction() {
-      public boolean act(File tmpFile) {
+      public boolean act(Path tmpFile) {
         return transformEntries(zip, entries, tmpFile);
       }
     });
@@ -2980,14 +2736,8 @@ public final class ZipUtil extends ZipPathUtil {
    */
   private static void addEntry(ZipEntrySource entry, ZipOutputStream out) throws IOException {
     out.putNextEntry(entry.getEntry());
-    InputStream in = entry.getInputStream();
-    if (in != null) {
-      try {
-        IOUtils.copy(in, out);
-      }
-      finally {
-        IOUtils.closeQuietly(in);
-      }
+    try (InputStream in = entry.getInputStream()) {
+      IOUtils.copy(in, out);
     }
     out.closeEntry();
   }
@@ -3027,10 +2777,10 @@ public final class ZipUtil extends ZipPathUtil {
    *         <code>false</code> if a difference was found or an error occurred
    *         during the comparison.
    */
-  public static boolean archiveEquals(File f1, File f2) {
+  public static boolean archiveEquals(Path f1, Path f2) {
     try {
       // Check the files byte-by-byte
-      if (FileUtils.contentEquals(f1, f2)) {
+      if (PathUtils.contentEquals(f1, f2)) {
         return true;
       }
 
@@ -3050,135 +2800,66 @@ public final class ZipUtil extends ZipPathUtil {
     }
   }
 
-  private static boolean archiveEqualsInternal(File f1, File f2) throws IOException {
-    ZipFile zf1 = null;
-    ZipFile zf2 = null;
-    try {
-      zf1 = new ZipFile(f1);
-      zf2 = new ZipFile(f2);
-
-      // Check the number of entries
-      if (zf1.size() != zf2.size()) {
-        log.debug("Number of entries changed (" + zf1.size() + " vs " + zf2.size() + ").");
-        return false;
-      }
-      /*
-       * As there are same number of entries in both archives we can traverse
-       * all entries of one of the archives and get the corresponding entries
-       * from the other archive.
-       *
-       * If a corresponding entry is missing from the second archive the
-       * archives are different and we finish the comparison.
-       *
-       * We guarantee that no entry of the second archive is skipped as there
-       * are same number of unique entries in both archives.
-       */
-      Enumeration<? extends ZipEntry> en = zf1.entries();
-      while (en.hasMoreElements()) {
-        ZipEntry e1 = (ZipEntry) en.nextElement();
-        String path = e1.getName();
-        ZipEntry e2 = zf2.getEntry(path);
-
-        // Check meta data
-        if (!metaDataEquals(path, e1, e2)) {
-          return false;
-        }
-
-        // Check the content
-        InputStream is1 = null;
-        InputStream is2 = null;
-        try {
-          is1 = zf1.getInputStream(e1);
-          is2 = zf2.getInputStream(e2);
-
-          if (!IOUtils.contentEquals(is1, is2)) {
-            log.debug("Entry '{}' content changed.", path);
-            return false;
+  private static boolean archiveEqualsInternal(Path f1, Path f2) throws IOException {
+    try (FileSystem zipfs1 = createZipFileSystem(f1, null);
+        FileSystem zipfs2 = createZipFileSystem(f2, null)) {
+      Path root1 = zipfs1.getPath("/");
+      Path root2 = zipfs2.getPath("/");
+      Files.walkFileTree(root1, new SimpleFileVisitor<Path>() {
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+          FileVisitResult result = super.preVisitDirectory(dir, attrs);
+          Path relativize = root1.relativize(dir);
+          Path otherDir = root2.resolve(relativize);
+          Set<String> names = new HashSet<>();
+          Set<String> otherNames = new HashSet<>();
+          try (DirectoryStream<Path> children = Files.newDirectoryStream(dir)) {
+            children.forEach((e) -> names.add(e.getFileName().toString()));
           }
+          try (DirectoryStream<Path> children = Files.newDirectoryStream(otherDir)) {
+            children.forEach((e) -> otherNames.add(e.getFileName().toString()));
+          }
+          if (!names.equals(otherNames)) {
+            throw new ZipsDiffer("Directory  '" + dir + "' content changed.");
+          }
+          return result;
         }
-        finally {
-          IOUtils.closeQuietly(is1);
-          IOUtils.closeQuietly(is2);
-        }
-      }
-    }
-    finally {
-      closeQuietly(zf1);
-      closeQuietly(zf2);
-    }
 
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+          FileVisitResult result = super.visitFile(file, attrs);
+
+          // get the relative file name from path "one"
+          Path relativize = root1.relativize(file);
+          // construct the path for the counterpart file in "other"
+          Path fileInOther = root2.resolve(relativize);
+
+          if (!PathUtils.contentEquals(file, fileInOther)) {
+            throw new ZipsDiffer("Entry '" + relativize + "' content changed.");
+          }
+          return result;
+        }
+      });
+    }
+    catch (ZipsDiffer e) {
+      log.debug(f1 + " and " + f2 + " are different in :" + e.toString());
+      return false;
+    }
+    catch (IOException e) {
+      throw ZipExceptionUtil.rethrow(e);
+    }
     log.debug("Archives are the same.");
 
     return true;
   }
 
-  /**
-   * Compares meta-data of two ZIP entries.
-   * <p>
-   * Two entries are considered the same if
-   * <ol>
-   * <li>both entries exist,</li>
-   * <li>both entries are either directories or files,</li>
-   * <li>both entries have the same size,</li>
-   * <li>both entries have the same CRC.</li>
-   * </ol>
-   *
-   * @param path
-   *          name of the entries.
-   * @param e1
-   *          first entry (required).
-   * @param e2
-   *          second entry (may be <code>null</code>).
-   * @return <code>true</code> if no difference was found.
-   */
-  private static boolean metaDataEquals(String path, ZipEntry e1, ZipEntry e2) throws IOException {
-    // Check if the same entry exists in the second archive
-    if (e2 == null) {
-      log.debug("Entry '{}' removed.", path);
-      return false;
-    }
+  private static class ZipsDiffer extends RuntimeException {
 
-    // Check the directory flag
-    if (e1.isDirectory()) {
-      if (e2.isDirectory()) {
-        return true; // Let's skip the directory as there is nothing to compare
-      }
-      else {
-        log.debug("Entry '{}' not a directory any more.", path);
-        return false;
-      }
-    }
-    else if (e2.isDirectory()) {
-      log.debug("Entry '{}' now a directory.", path);
-      return false;
-    }
+    private static final long serialVersionUID = 1L;
 
-    // Check the size
-    long size1 = e1.getSize();
-    long size2 = e2.getSize();
-    if (size1 != -1 && size2 != -1 && size1 != size2) {
-      log.debug("Entry '" + path + "' size changed (" + size1 + " vs " + size2 + ").");
-      return false;
+    ZipsDiffer(String msg) {
+      super(msg);
     }
-
-    // Check the CRC
-    long crc1 = e1.getCrc();
-    long crc2 = e2.getCrc();
-    if (crc1 != -1 && crc2 != -1 && crc1 != crc2) {
-      log.debug("Entry '" + path + "' CRC changed (" + crc1 + " vs " + crc2 + ").");
-      return false;
-    }
-
-    // Check the time (ignored, logging only)
-    if (log.isTraceEnabled()) {
-      long time1 = e1.getTime();
-      long time2 = e2.getTime();
-      if (time1 != -1 && time2 != -1 && time1 != time2) {
-        log.trace("Entry '" + path + "' time changed (" + new Date(time1) + " vs " + new Date(time2) + ").");
-      }
-    }
-
-    return true;
   }
 
   /**
@@ -3193,7 +2874,7 @@ public final class ZipUtil extends ZipPathUtil {
    * @return <code>true</code> if the contents of the entry was same in both ZIP
    *         files.
    */
-  public static boolean entryEquals(File f1, File f2, String path) {
+  public static boolean entryEquals(Path f1, Path f2, String path) {
     return entryEquals(f1, f2, path, path);
   }
 
@@ -3210,22 +2891,15 @@ public final class ZipUtil extends ZipPathUtil {
    *          name of the second entry.
    * @return <code>true</code> if the contents of the entries were same.
    */
-  public static boolean entryEquals(File f1, File f2, String path1, String path2) {
-    ZipFile zf1 = null;
-    ZipFile zf2 = null;
-
-    try {
-      zf1 = new ZipFile(f1);
-      zf2 = new ZipFile(f2);
-
-      return doEntryEquals(zf1, zf2, path1, path2);
+  public static boolean entryEquals(Path f1, Path f2, String path1, String path2) {
+    try (FileSystem zipfs1 = createZipFileSystem(f1, null);
+        FileSystem zipfs2 = createZipFileSystem(f2, null)) {
+      Path p1 = zipfs1.getPath(path1);
+      Path p2 = zipfs2.getPath(path1);
+      return PathUtils.contentEquals(p1, p2);
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
-    }
-    finally {
-      closeQuietly(zf1);
-      closeQuietly(zf2);
     }
   }
 
@@ -3265,22 +2939,19 @@ public final class ZipUtil extends ZipPathUtil {
    * @return <code>true</code> if the contents of the entries were same.
    */
   private static boolean doEntryEquals(ZipFile zf1, ZipFile zf2, String path1, String path2) throws IOException {
-    InputStream is1 = null;
-    InputStream is2 = null;
-    try {
-      ZipEntry e1 = zf1.getEntry(path1);
-      ZipEntry e2 = zf2.getEntry(path2);
+    ZipEntry e1 = zf1.getEntry(path1);
+    ZipEntry e2 = zf2.getEntry(path2);
 
-      if (e1 == null && e2 == null) {
-        return true;
-      }
+    if (e1 == null && e2 == null) {
+      return true;
+    }
 
-      if (e1 == null || e2 == null) {
-        return false;
-      }
+    if (e1 == null || e2 == null) {
+      return false;
+    }
 
-      is1 = zf1.getInputStream(e1);
-      is2 = zf2.getInputStream(e2);
+    try (InputStream is1 = zf1.getInputStream(e1);
+        InputStream is2 = zf2.getInputStream(e2)) {
       if (is1 == null && is2 == null) {
         return true;
       }
@@ -3289,10 +2960,6 @@ public final class ZipUtil extends ZipPathUtil {
       }
 
       return IOUtils.contentEquals(is1, is2);
-    }
-    finally {
-      IOUtils.closeQuietly(is1);
-      IOUtils.closeQuietly(is2);
     }
   }
 
@@ -3322,7 +2989,7 @@ public final class ZipUtil extends ZipPathUtil {
     /**
      * @return true if something has been changed during the action.
      */
-    abstract boolean act(File tmpFile);
+    abstract boolean act(Path tmpFile);
   }
 
   /**
@@ -3336,14 +3003,14 @@ public final class ZipUtil extends ZipPathUtil {
    *
    * @return result of the action
    */
-  private static boolean operateInPlace(File src, InPlaceAction action) {
-    File tmp = null;
+  private static boolean operateInPlace(Path src, InPlaceAction action) {
+    Path tmp = null;
     try {
-      tmp = File.createTempFile("zt-zip-tmp", ".zip");
+      tmp = Files.createTempFile("zt-zip-tmp", ".zip");
       boolean result = action.act(tmp);
       if (result) { // else nothing changes
-        FileUtils.forceDelete(src);
-        FileUtils.moveFile(tmp, src);
+        PathUtils.deleteDir(src);
+        Files.move(tmp, src);
       }
       return result;
     }
@@ -3351,8 +3018,12 @@ public final class ZipUtil extends ZipPathUtil {
       throw ZipExceptionUtil.rethrow(e);
     }
     finally {
-      FileUtils.deleteQuietly(tmp);
+      try {
+        Files.deleteIfExists(tmp);
+      }
+      catch (IOException e) {
+        throw ZipExceptionUtil.rethrow(e);
+      }
     }
   }
-
 }

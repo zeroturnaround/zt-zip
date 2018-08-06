@@ -41,8 +41,8 @@ public class FileSource implements ZipEntrySource {
     return path;
   }
 
-  public ZipEntry getEntry() {
-    ZipEntry entry = ZipEntryUtil.fromFile(path, file);
+  public ZipEntry getEntry() throws IOException {
+    ZipEntry entry = ZipEntryUtil.fromFile(path, file.toPath());
     return entry;
   }
 

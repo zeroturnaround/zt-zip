@@ -34,9 +34,11 @@ public interface ZipEntrySource {
 
   /**
    * @return meta-data of the given entry (not <code>null</code>).
+   * 
+   * @throws IOException if anything goes wrong
    */
-  ZipEntry getEntry();
-  
+  ZipEntry getEntry() throws IOException;
+
   /**
    * @throws IOException can throw getting the InputStream
    * @return an input stream of the given entry 

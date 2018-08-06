@@ -1,10 +1,10 @@
 package org.zeroturnaround.zip;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashSet;
 import java.util.Set;
@@ -84,18 +84,44 @@ class ZTFilePermissionsUtil {
     return permissions;
   }
 
-  public static ZTFilePermissions getPermissions(File file) {
+  public static ZTFilePermissions getPermissions(Path file) {
     if (!isPosix()) {
-      throw new ZipException("File system does not support POSIX file attributes");
+      // Windows is not posix
+      ZTFilePermissions permissions = new ZTFilePermissions();
+
+      permissions.setDirectory(Files.isDirectory(file));
+
+      if (Files.isExecutable(file)) {
+        // set execute flag only for owner
+        permissions.setOwnerCanExecute(true);
+      }
+
+      if (Files.isWritable(file)) {
+        // 0644 for files and 0666 for directories
+        // this is a quite common choice for shared installations
+        permissions.setOwnerCanWrite(true);
+        if (Files.isDirectory(file)) {
+          permissions.setGroupCanWrite(true);
+          permissions.setOthersCanWrite(true);
+        }
+      }
+
+      if (Files.isReadable(file)) {
+        permissions.setOwnerCanRead(true);
+        permissions.setGroupCanRead(true);
+        permissions.setOthersCanRead(true);
+      }
+
+      return permissions;
     }
 
     ZTFilePermissions permissions = new ZTFilePermissions();
-    permissions.setDirectory(file.isDirectory());
+    permissions.setDirectory(Files.isDirectory(file));
 
     Set<?> posixFilePermissions = null;
 
     try {
-      posixFilePermissions = Files.getPosixFilePermissions(file.toPath(), new LinkOption[] { LinkOption.NOFOLLOW_LINKS });
+      posixFilePermissions = Files.getPosixFilePermissions(file, new LinkOption[] { LinkOption.NOFOLLOW_LINKS });
     }
     catch (IOException e) {
       throw new ZipException(e);
@@ -116,9 +142,13 @@ class ZTFilePermissionsUtil {
     return permissions;
   }
 
-  public static void setPermissions(File file, ZTFilePermissions permissions) {
+  public static void setPermissions(Path file, ZTFilePermissions permissions) {
     if (!isPosix()) {
-      throw new ZipException("File system does not support POSIX file attributes");
+      // Windows is not posix
+      file.toFile().setExecutable(permissions.isOwnerCanExecute(), !permissions.isGroupCanExecute() && !permissions.isOthersCanExecute());
+      file.toFile().setWritable(permissions.isOwnerCanWrite(), !permissions.isGroupCanWrite() && !permissions.isOthersCanWrite());
+      file.toFile().setReadable(permissions.isOwnerCanRead(), !permissions.isGroupCanRead() && !permissions.isOthersCanRead());
+      return;
     }
 
     Set<PosixFilePermission> set = new HashSet<PosixFilePermission>();
@@ -136,7 +166,7 @@ class ZTFilePermissionsUtil {
     addIf(permissions.isOthersCanExecute(), set, PosixFilePermission.OTHERS_EXECUTE);
 
     try {
-      Files.setPosixFilePermissions(file.toPath(), set);
+      Files.setPosixFilePermissions(file, set);
     }
     catch (IOException e) {
       throw new ZipException(e);

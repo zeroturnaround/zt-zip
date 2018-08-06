@@ -39,23 +39,23 @@ public class FilePermissionsTest {
     FileUtils.copyFile(testFile, fileA);
     FileUtils.copyFile(testFile, fileB);
 
-    Assume.assumeTrue(setExecutable(fileA, false));
+    Assume.assumeTrue(fileA.setExecutable(false));
     //Avoids failing test on Windows: File.setExecutable(): "If executable is false and the underlying file system does not implement an execute permission, then the operation will fail."
 
-    setExecutable(fileA, true);
-    setExecutable(fileB, false);
+    fileA.setExecutable(true);
+    fileB.setExecutable(false);
 
     //TESTS BEFORE ZIP
     assertTrue(fileA.exists() && fileB.exists());
-    assertTrue(canExecute(fileA));
-    assertFalse(canExecute(fileB));
+    assertTrue(fileA.canExecute());
+    assertFalse(fileB.canExecute());
 
     assertTrue(doZipAndUnpack(dirName, ".zip", tmpDir));
 
     //SAME TESTS AFTER ZIP & UNZIP
     assertTrue(fileA.exists() && fileB.exists());
-    assertTrue(canExecute(fileA));
-    assertFalse(canExecute(fileB));
+    assertTrue(fileA.canExecute());
+    assertFalse(fileB.canExecute());
   }
 
   @Test
@@ -70,24 +70,24 @@ public class FilePermissionsTest {
     FileUtils.copyFile(testFile, fileA);
     FileUtils.copyFile(testFile, fileB);
 
-    Assume.assumeTrue(setReadable(fileA, false));
+    Assume.assumeTrue(fileA.setReadable(false));
     //Avoids failing test on Windows: File.setReadable(): "If readable is false and the underlying file system does not implement a read permission, then the operation will fail."
 
-    setReadable(fileA, true);
-    setReadable(fileB, false);
-    setReadable(fileB, true);//if we set read permission to false, then we can't zip the file, causing the test to fail with a permission exception
+    fileA.setReadable(true);
+    fileB.setReadable(false);
+    fileB.setReadable(true);//if we set read permission to false, then we can't zip the file, causing the test to fail with a permission exception
 
     //TESTS BEFORE ZIP
     assertTrue(fileA.exists() && fileB.exists());
-    assertTrue(canRead(fileA));
-    assertTrue(canRead(fileB));
+    assertTrue(fileA.canRead());
+    assertTrue(fileB.canRead());
 
     assertTrue(doZipAndUnpack(dirName, ".zip", tmpDir));
 
     //SAME TESTS AFTER ZIP & UNZIP
     assertTrue(fileA.exists() && fileB.exists());
-    assertTrue(canRead(fileA));
-    assertTrue(canRead(fileB));
+    assertTrue(fileA.canRead());
+    assertTrue(fileB.canRead());
   }
 
   /** This is the only test that can be run on Windows to test that permissions are kept after zip and unzip. */
@@ -106,20 +106,20 @@ public class FilePermissionsTest {
     //Assume.assumeTrue(setWritable(fileA, false));
     //this is commented because there is no OS-specific logic for returning false in File.setWritable(), only "The operation will fail if the user does not have permission to change the access permissions of this abstract pathname."
 
-    setWritable(fileA, true);
-    setWritable(fileB, false);
+    fileA.setWritable(true);
+    fileB.setWritable(false);
 
     //TESTS BEFORE ZIP
     assertTrue(fileA.exists() && fileB.exists());
-    assertTrue(canWrite(fileA));
-    assertFalse(canWrite(fileB));
+    assertTrue(fileA.canWrite());
+    assertFalse(fileB.canWrite());
 
     assertTrue(doZipAndUnpack(dirName, ".zip", tmpDir));
 
     //SAME TESTS AFTER ZIP & UNZIP
     assertTrue(fileA.exists() && fileB.exists());
-    assertTrue(canWrite(fileA));
-    assertFalse(canWrite(fileB));
+    assertTrue(fileA.canWrite());
+    assertFalse(fileB.canWrite());
   }
 
   private boolean doZipAndUnpack(String prefix, String suffix, File rootDir) throws IOException {
@@ -134,29 +134,5 @@ public class FilePermissionsTest {
   private static boolean directoryHasFiles(File directory) {
     if(directory==null || !directory.exists() || directory.listFiles()==null) {return false;}
     return directory.listFiles().length > 0;
-  }
-
-  private boolean canExecute(File file) throws Exception {
-    return (Boolean) File.class.getDeclaredMethod("canExecute").invoke(file);
-  }
-
-  private boolean setExecutable(File file, boolean executable) throws Exception {
-    return (Boolean) File.class.getDeclaredMethod("setExecutable", boolean.class).invoke(file, executable);
-  }
-
-  private boolean canWrite(File file) throws Exception {
-    return (Boolean) File.class.getDeclaredMethod("canWrite").invoke(file);
-  }
-
-  private boolean setWritable(File file, boolean writable) throws Exception {
-    return (Boolean) File.class.getDeclaredMethod("setWritable", boolean.class).invoke(file, writable);
-  }
-
-  private boolean canRead(File file) throws Exception {
-    return (Boolean) File.class.getDeclaredMethod("canRead").invoke(file);
-  }
-
-  private boolean setReadable(File file, boolean readable) throws Exception {
-    return (Boolean) File.class.getDeclaredMethod("setReadable", boolean.class).invoke(file, readable);
   }
 }

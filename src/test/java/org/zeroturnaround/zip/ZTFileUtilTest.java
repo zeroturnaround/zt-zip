@@ -42,7 +42,7 @@ public class ZTFileUtilTest extends TestCase {
   }
 
   public void testListFiles() {
-    Collection<File> files = ZTFileUtil.listFiles(new File("."), new FileFilter() {
+    Collection<File> files = FileUtils.listFiles(new File("."), new FileFilter() {
 
       public boolean accept(File pathname) {
         if (pathname.toString().endsWith("." + File.separator + "pom.xml")) {
@@ -58,12 +58,12 @@ public class ZTFileUtilTest extends TestCase {
   }
 
   public void testListFilesFromFile() {
-    Collection files = ZTFileUtil.listFiles(new File("pom.xml"), null);
+    Collection files = FileUtils.listFiles(new File("pom.xml"), null);
     assertEquals(files.size(), 0);
   }
 
   public void testListFilesFromNonExistent() {
-    Collection files = ZTFileUtil.listFiles(new File("don'tExist"), null);
+    Collection files = FileUtils.listFiles(new File("don'tExist"), null);
     assertEquals(files.size(), 0);
   }
 }

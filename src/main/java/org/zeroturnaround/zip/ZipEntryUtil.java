@@ -16,9 +16,10 @@ package org.zeroturnaround.zip;
  *    limitations under the License.
  */
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -112,7 +113,7 @@ class ZipEntryUtil {
       copy.setTime(System.currentTimeMillis());
     }
 
-    addEntry(copy, new BufferedInputStream(in), out);
+    addEntry(copy, in != null ? new BufferedInputStream(in) : null, out);
   }
 
   /**
@@ -139,13 +140,17 @@ class ZipEntryUtil {
    * @param name Zip entry name
    * @param file source File
    * @return newly created Zip entry
+   * @throws IOException 
    */
-  static ZipEntry fromFile(String name, File file) {
-    ZipEntry zipEntry = new ZipEntry(name);
-    if (!file.isDirectory()) {
-      zipEntry.setSize(file.length());
+  static ZipEntry fromFile(String name, Path file) throws IOException {
+    if (Files.isDirectory(file) && !name.endsWith("/")) {
+      name += "/";
     }
-    zipEntry.setTime(file.lastModified());
+    ZipEntry zipEntry = new ZipEntry(name.replace('\\', '/'));
+    if (!Files.isDirectory(file)) {
+      zipEntry.setSize(Files.size(file));
+    }
+    zipEntry.setTime(Files.getLastModifiedTime(file).toMillis());
 
     ZTFilePermissions permissions = ZTFilePermissionsUtil.getPermissions(file);
     if (permissions != null) {

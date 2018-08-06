@@ -1,23 +1,5 @@
-package org.zeroturnaround.zip;
-/**
- *    Copyright (C) 2012 ZeroTurnaround LLC <support@zeroturnaround.com>
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
+package org.zeroturnaround.zip.path;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -26,30 +8,31 @@ import java.nio.file.Path;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import junit.framework.TestCase;
-
-import org.zeroturnaround.zip.commons.FileUtils;
+import org.zeroturnaround.zip.ZipPathUtil;
 import org.zeroturnaround.zip.commons.IOUtils;
 import org.zeroturnaround.zip.transform.ByteArrayZipEntryTransformer;
-import org.zeroturnaround.zip.transform.FileZipEntryTransformer;
 import org.zeroturnaround.zip.transform.PathZipEntryTransformer;
 import org.zeroturnaround.zip.transform.StreamZipEntryTransformer;
 import org.zeroturnaround.zip.transform.StringZipEntryTransformer;
 
-public class ZipTransformTest extends TestCase {
+import junit.framework.TestCase;
+
+public class ZipPathUtilTransformTest extends TestCase {
 
   public void testZipTransformNotInPlaceButSameLocation() throws IOException {
-    //Create dummy file and transformer
-    File file = File.createTempFile("temp", null);
+    // Create dummy file and transformer
+    Path file = Files.createTempFile("temp", null);
     StreamZipEntryTransformer arrayZipEntryTransformer = new StreamZipEntryTransformer() {
-      protected void transform(ZipEntry zipEntry, InputStream in, OutputStream out) throws IOException { }
+      protected void transform(ZipEntry zipEntry, InputStream in, OutputStream out) throws IOException {
+      }
     };
     try {
-      ZipUtil.transformEntry(file, "", arrayZipEntryTransformer, file);
-      //This line should not be reached.
+      ZipPathUtil.transformEntry(file, "", arrayZipEntryTransformer, file);
+      // This line should not be reached.
       assertTrue(false);
-    } catch(IllegalArgumentException e){
-      //Do nothing, test passed.
+    }
+    catch (IllegalArgumentException e) {
+      // Do nothing, test passed.
     }
   }
 
@@ -57,11 +40,11 @@ public class ZipTransformTest extends TestCase {
     final String name = "foo";
     final byte[] contents = "bar".getBytes();
 
-    File file1 = File.createTempFile("temp", null);
-    File file2 = File.createTempFile("temp", null);
+    Path file1 = Files.createTempFile("temp", null);
+    Path file2 = Files.createTempFile("temp", null);
     try {
       // Create the ZIP file
-      ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(file1));
+      ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(file1));
       try {
         zos.putNextEntry(new ZipEntry(name));
         zos.write(contents);
@@ -72,7 +55,7 @@ public class ZipTransformTest extends TestCase {
       }
 
       // Transform the ZIP file
-      ZipUtil.transformEntry(file1, name, new ByteArrayZipEntryTransformer() {
+      ZipPathUtil.transformEntry(file1, name, new ByteArrayZipEntryTransformer() {
         protected byte[] transform(ZipEntry zipEntry, byte[] input) throws IOException {
           String s = new String(input);
           assertEquals(new String(contents), s);
@@ -80,14 +63,14 @@ public class ZipTransformTest extends TestCase {
         }
       }, file2);
 
-      // Test the ZipUtil
-      byte[] actual = ZipUtil.unpackEntry(file2, name);
+      // Test the ZipPathUtil
+      byte[] actual = ZipPathUtil.unpackEntry(file2, name);
       assertNotNull(actual);
       assertEquals(new String(contents).toUpperCase(), new String(actual));
     }
     finally {
-      FileUtils.deleteQuietly(file1);
-      FileUtils.deleteQuietly(file2);
+      Files.deleteIfExists(file1);
+      Files.deleteIfExists(file2);
     }
   }
 
@@ -95,11 +78,11 @@ public class ZipTransformTest extends TestCase {
     final String name = "foo";
     final byte[] contents = "bar".getBytes();
 
-    File file1 = File.createTempFile("temp", null);
-    File file2 = File.createTempFile("temp", null);
+    Path file1 = Files.createTempFile("temp", null);
+    Path file2 = Files.createTempFile("temp", null);
     try {
       // Create the ZIP file
-      ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(file1));
+      ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(file1));
       try {
         zos.putNextEntry(new ZipEntry(name));
         zos.write(contents);
@@ -110,20 +93,20 @@ public class ZipTransformTest extends TestCase {
       }
 
       // Transform the ZIP file
-      ZipUtil.transformEntry(file1, name, new StreamZipEntryTransformer() {
+      ZipPathUtil.transformEntry(file1, name, new StreamZipEntryTransformer() {
         protected void transform(ZipEntry zipEntry, InputStream in, OutputStream out) throws IOException {
           IOUtils.copy(in, out);
         }
       }, file2);
 
-      // Test the ZipUtil
-      byte[] actual = ZipUtil.unpackEntry(file2, name);
+      // Test the ZipPathUtil
+      byte[] actual = ZipPathUtil.unpackEntry(file2, name);
       assertNotNull(actual);
       assertEquals(new String(contents), new String(actual));
     }
     finally {
-      FileUtils.deleteQuietly(file1);
-      FileUtils.deleteQuietly(file2);
+      Files.deleteIfExists(file1);
+      Files.deleteIfExists(file2);
     }
   }
 
@@ -132,11 +115,11 @@ public class ZipTransformTest extends TestCase {
     final byte[] contents = "bar".getBytes();
     final byte[] transformed = "cbs".getBytes();
 
-    File file1 = File.createTempFile("temp", null);
-    File file2 = File.createTempFile("temp", null);
+    Path file1 = Files.createTempFile("temp", null);
+    Path file2 = Files.createTempFile("temp", null);
     try {
       // Create the ZIP file
-      ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(file1));
+      ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(file1));
       try {
         zos.putNextEntry(new ZipEntry(name));
         zos.write(contents);
@@ -147,7 +130,7 @@ public class ZipTransformTest extends TestCase {
       }
 
       // Transform the ZIP file
-      ZipUtil.transformEntry(file1, name, new StreamZipEntryTransformer() {
+      ZipPathUtil.transformEntry(file1, name, new StreamZipEntryTransformer() {
         protected void transform(ZipEntry zipEntry, InputStream in, OutputStream out) throws IOException {
           int b;
           while ((b = in.read()) != -1)
@@ -155,14 +138,14 @@ public class ZipTransformTest extends TestCase {
         }
       }, file2);
 
-      // Test the ZipUtil
-      byte[] actual = ZipUtil.unpackEntry(file2, name);
+      // Test the ZipPathUtil
+      byte[] actual = ZipPathUtil.unpackEntry(file2, name);
       assertNotNull(actual);
       assertEquals(new String(transformed), new String(actual));
     }
     finally {
-      FileUtils.deleteQuietly(file1);
-      FileUtils.deleteQuietly(file2);
+      Files.deleteIfExists(file1);
+      Files.deleteIfExists(file2);
     }
   }
 
@@ -170,11 +153,11 @@ public class ZipTransformTest extends TestCase {
     final String name = "foo";
     final byte[] contents = "bar".getBytes();
 
-    File file1 = File.createTempFile("temp", null);
-    File file2 = File.createTempFile("temp", null);
+    Path file1 = Files.createTempFile("temp", null);
+    Path file2 = Files.createTempFile("temp", null);
     try {
       // Create the ZIP file
-      ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(file1));
+      ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(file1));
       try {
         zos.putNextEntry(new ZipEntry(name));
         zos.write(contents);
@@ -185,13 +168,10 @@ public class ZipTransformTest extends TestCase {
       }
 
       // Transform the ZIP file
-      FileInputStream in = null;
-      FileOutputStream out = null;
-      try {
-        in = new FileInputStream(file1);
-        out = new FileOutputStream(file2);
-        
-        ZipUtil.transformEntry(in, name, new ByteArrayZipEntryTransformer() {
+      try (InputStream in = Files.newInputStream(file1);
+          OutputStream out = Files.newOutputStream(file2);) {
+
+        ZipPathUtil.transformEntry(in, name, new ByteArrayZipEntryTransformer() {
           protected byte[] transform(ZipEntry zipEntry, byte[] input) throws IOException {
             String s = new String(input);
             assertEquals(new String(contents), s);
@@ -199,31 +179,27 @@ public class ZipTransformTest extends TestCase {
           }
         }, out);
       }
-      finally {
-        IOUtils.closeQuietly(in);
-        IOUtils.closeQuietly(out);
-      }
 
-      // Test the ZipUtil
-      byte[] actual = ZipUtil.unpackEntry(file2, name);
+      // Test the ZipPathUtil
+      byte[] actual = ZipPathUtil.unpackEntry(file2, name);
       assertNotNull(actual);
       assertEquals(new String(contents).toUpperCase(), new String(actual));
     }
     finally {
-      FileUtils.deleteQuietly(file1);
-      FileUtils.deleteQuietly(file2);
+      Files.deleteIfExists(file1);
+      Files.deleteIfExists(file2);
     }
   }
-  
+
   public void testFileZipEntryTransformerInStream() throws IOException {
     final String name = "foo";
     final byte[] contents = "bar".getBytes();
 
-    File file1 = File.createTempFile("temp", null);
-    File file2 = File.createTempFile("temp", null);
+    Path file1 = Files.createTempFile("temp", null);
+    Path file2 = Files.createTempFile("temp", null);
     try {
       // Create the ZIP file
-      ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(file1));
+      ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(file1));
       try {
         zos.putNextEntry(new ZipEntry(name));
         zos.write(contents);
@@ -234,36 +210,28 @@ public class ZipTransformTest extends TestCase {
       }
 
       // Transform the ZIP file
-      FileInputStream in = null;
-      FileOutputStream out = null;
-      try {
-        in = new FileInputStream(file1);
-        out = new FileOutputStream(file2);
-        
-        ZipUtil.transformEntry(in, name, new FileZipEntryTransformer() {
-          protected void transform(ZipEntry zipEntry, File in, File out) throws IOException {
-            FileWriter fw = new FileWriter(out);
-            fw.write("CAFEBABE");
-            fw.close();
+
+      try (InputStream in = Files.newInputStream(file1);
+          OutputStream out = Files.newOutputStream(file2);) {
+
+        ZipPathUtil.transformEntry(in, name, new PathZipEntryTransformer() {
+          protected void transform(ZipEntry zipEntry, Path in, Path out) throws IOException {
+            Files.write(out, "CAFEBABE".getBytes());
           }
         }, out);
       }
-      finally {
-        IOUtils.closeQuietly(in);
-        IOUtils.closeQuietly(out);
-      }
 
-      // Test the ZipUtil
-      byte[] actual = ZipUtil.unpackEntry(file2, name);
+      // Test the ZipPathUtil
+      byte[] actual = ZipPathUtil.unpackEntry(file2, name);
       assertNotNull(actual);
       assertEquals("CAFEBABE", new String(actual));
     }
     finally {
-      FileUtils.deleteQuietly(file1);
-      FileUtils.deleteQuietly(file2);
+      Files.deleteIfExists(file1);
+      Files.deleteIfExists(file2);
     }
   }
-  
+
   public void testPathZipEntryTransformerInStream() throws IOException {
     final String name = "foo";
     final byte[] contents = "bar".getBytes();
@@ -282,15 +250,15 @@ public class ZipTransformTest extends TestCase {
       try (InputStream in = Files.newInputStream(file1);
           OutputStream out = Files.newOutputStream(file2)) {
 
-        ZipUtil.transformEntry(in, name, new PathZipEntryTransformer() {
+        ZipPathUtil.transformEntry(in, name, new PathZipEntryTransformer() {
           protected void transform(ZipEntry zipEntry, Path in, Path out) throws IOException {
             Files.write(out, "CAFEBABE".getBytes());
           }
         }, out);
       }
 
-      // Test the ZipUtil
-      byte[] actual = ZipUtil.unpackEntry(file2, name);
+      // Test the ZipPathUtil
+      byte[] actual = ZipPathUtil.unpackEntry(file2, name);
       assertNotNull(actual);
       assertEquals("CAFEBABE", new String(actual));
     }
@@ -305,11 +273,11 @@ public class ZipTransformTest extends TestCase {
     String FILE_CONTENTS = "bar";
     final byte[] contents = FILE_CONTENTS.getBytes();
 
-    File file1 = File.createTempFile("temp", null);
-    File file2 = File.createTempFile("temp", null);
+    Path file1 = Files.createTempFile("temp", null);
+    Path file2 = Files.createTempFile("temp", null);
     try {
       // Create the ZIP file
-      ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(file1));
+      ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(file1));
       try {
         zos.putNextEntry(new ZipEntry(name));
         zos.write(contents);
@@ -320,30 +288,23 @@ public class ZipTransformTest extends TestCase {
       }
 
       // Transform the ZIP file
-      FileInputStream in = null;
-      FileOutputStream out = null;
-      try {
-        in = new FileInputStream(file1);
-        out = new FileOutputStream(file2);
-        
-        ZipUtil.transformEntry(in, name, new StringZipEntryTransformer("UTF-8") {
+      try (InputStream in = Files.newInputStream(file1);
+          OutputStream out = Files.newOutputStream(file2);) {
+
+        ZipPathUtil.transformEntry(in, name, new StringZipEntryTransformer("UTF-8") {
           protected String transform(ZipEntry zipEntry, String input) throws IOException {
             return input.toUpperCase();
           }
-        } , out);
-      }
-      finally {
-        IOUtils.closeQuietly(in);
-        IOUtils.closeQuietly(out);
+        }, out);
       }
 
-      // Test the ZipUtil
-      byte[] actual = ZipUtil.unpackEntry(file2, name);
+      // Test the ZipPathUtil
+      byte[] actual = ZipPathUtil.unpackEntry(file2, name);
       assertEquals(FILE_CONTENTS.toUpperCase(), new String(actual));
     }
     finally {
-      FileUtils.deleteQuietly(file1);
-      FileUtils.deleteQuietly(file2);
+      Files.deleteIfExists(file1);
+      Files.deleteIfExists(file2);
     }
   }
 }

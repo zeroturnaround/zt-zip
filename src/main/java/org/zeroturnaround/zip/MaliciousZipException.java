@@ -1,10 +1,10 @@
 package org.zeroturnaround.zip;
 
-import java.io.File;
+import java.nio.file.Path;
 
 public class MaliciousZipException extends ZipException {
 
-  public MaliciousZipException(File outputDir, String name) {
+  public MaliciousZipException(Path outputDir, String name) {
     super("The file " + name + " is trying to leave the target output directory of " + outputDir);
   }
 

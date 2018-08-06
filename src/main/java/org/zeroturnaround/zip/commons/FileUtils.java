@@ -3,11 +3,14 @@ package org.zeroturnaround.zip.commons;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * This class adds some convenience methods on top of Apache CommonsIO FileUtils.
@@ -76,5 +79,48 @@ public class FileUtils extends FileUtilsV2_2 {
     }
     while (result.exists());
     return result;
+  }
+
+  public static Collection<File> listFiles(File dir) {
+    return listFiles(dir, null);
+  }
+
+  public static Collection<File> listFiles(File dir, FileFilter filter) {
+    Collection<File> accumulator = new ArrayList<File>();
+
+    if (dir.isFile()) {
+      return accumulator;
+    }
+
+    if (filter == null) {
+      // Set default filter to accept any file
+      filter = new FileFilter() {
+        public boolean accept(File pathname) {
+          return true;
+        }
+      };
+    }
+
+    innerListFiles(dir, accumulator, filter);
+    return accumulator;
+  }
+
+  private static void innerListFiles(File dir, Collection<File> accumulator, FileFilter filter) {
+
+    String[] filenames = dir.list();
+
+    if (filenames != null) {
+      for (int i = 0; i < filenames.length; i++) {
+        File file = new File(dir, filenames[i]);
+        if (file.isDirectory()) {
+          innerListFiles(file, accumulator, filter);
+        }
+        else {
+          if (filter != null && filter.accept(file)) {
+            accumulator.add(file);
+          }
+        }
+      }
+    }
   }
 }

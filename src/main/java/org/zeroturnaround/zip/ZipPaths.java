@@ -2,7 +2,7 @@
  *    Copyright (C) 2012 ZeroTurnaround LLC <support@zeroturnaround.com>
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
+ *    you may not use this Path except in compliance with the License.
  *    You may obtain a copy of the License at
  *
  *        http://www.apache.org/licenses/LICENSE-2.0
@@ -16,19 +16,20 @@
 package org.zeroturnaround.zip;
 
 import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.FileFilter;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -36,33 +37,29 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import org.zeroturnaround.zip.commons.FileUtils;
-import org.zeroturnaround.zip.commons.IOUtils;
+import org.zeroturnaround.zip.commons.PathUtils;
 import org.zeroturnaround.zip.transform.ZipEntryTransformer;
 import org.zeroturnaround.zip.transform.ZipEntryTransformerEntry;
 
 /**
  * Fluent API for Zip handling.
- * 
- * The replacement version for Paths is in {@link org.zeroturnaround.zip.ZipPaths}.
  *
- * @author Oleg Shelajev
+ * @author Andres Luuk
  */
-public class Zips {
+public class ZipPaths {
 
   /**
    * Source archive.
    */
-  private final File src;
+  private final Path src;
 
   /**
    * Optional destination archive, if null, src will be overwritten
    */
-  private File dest;
+  private Path dest;
 
   /**
    * Charset to use for entry names. Using the default from
@@ -102,200 +99,198 @@ public class Zips {
    */
   private boolean unpackedResult;
 
-  private Zips(File src) {
+  private ZipPaths(Path src) {
     this.src = src;
   }
 
   /**
    * Static factory method to obtain an instance of Zips.
    *
-   * @param src zip file to process
+   * @param src zip Path to process
    * @return instance of Zips
    */
-  public static Zips get(File src) {
-    return new Zips(src);
+  public static ZipPaths get(Path src) {
+    return new ZipPaths(src);
   }
 
   /**
-   * Static factory method to obtain an instance of Zips without source file.
-   * See {@link #get(File src)}.
+   * Static factory method to obtain an instance of ZipPaths without source file.
+   * See {@link #get(Path src)}.
    *
    * @return instance of Zips
    */
-  public static Zips create() {
-    return new Zips(null);
+  public static ZipPaths create() {
+    return new ZipPaths(null);
   }
 
   /**
-   * Specifies an entry to add or change to the output when this Zips executes.
+   * Specifies an entry to add or change to the output when this ZipPaths executes.
    * Adding takes precedence over removal of entries.
    *
    * @param entry entry to add
-   * @return this Zips for fluent api
+   * @return this ZipPaths for fluent api
    */
-  public Zips addEntry(ZipEntrySource entry) {
+  public ZipPaths addEntry(ZipEntrySource entry) {
     this.changedEntries.add(entry);
     return this;
   }
 
   /**
-   * Specifies entries to add or change to the output when this Zips executes.
+   * Specifies entries to add or change to the output when this ZipPaths executes.
    * Adding takes precedence over removal of entries.
    *
    * @param entries entries to add
-   * @return this Zips for fluent api
+   * @return this ZipPaths for fluent api
    */
-  public Zips addEntries(ZipEntrySource[] entries) {
+  public ZipPaths addEntries(ZipEntrySource[] entries) {
     this.changedEntries.addAll(Arrays.asList(entries));
     return this;
   }
 
   /**
-   * Adds a file entry. If given file is a dir, adds it and all subfiles recursively.
+   * Adds a Path entry. If given Path is a dir, adds it and all subfiles recursively.
    * Adding takes precedence over removal of entries.
    *
-   * @param file file to add.
-   * @return this Zips for fluent api
+   * @param path file to add.
+   * @return this ZipPaths for fluent api
    */
-  public Zips addFile(File file) {
-    return addFile(file, false, null);
+  public ZipPaths addFile(Path path) {
+    return addFile(path, false, null);
   }
 
   /**
-   * Adds a file entry. If given file is a dir, adds it and all subfiles recursively.
+   * Adds a Path entry. If given Path is a dir, adds it and all subfiles recursively.
    * Adding takes precedence over removal of entries.
    *
-   * @param file file to add.
-   * @param preserveRoot if file is a directory, true indicates we want to preserve this dir in the zip.
-   *          otherwise children of the file are added directly under root.
-   * @return this Zips for fluent api
+   * @param path file to add.
+   * @param preserveRoot if Path is a directory, true indicates we want to preserve this dir in the zip.
+   *          otherwise children of the Path are added directly under root.
+   * @return this ZipPaths for fluent api
    */
-  public Zips addFile(File file, boolean preserveRoot) {
-    return addFile(file, preserveRoot, null);
+  public ZipPaths addFile(Path path, boolean preserveRoot) {
+    return addFile(path, preserveRoot, null);
   }
 
   /**
-   * Adds a file entry. If given file is a dir, adds it and all subfiles recursively.
+   * Adds a Path entry. If given Path is a dir, adds it and all subfiles recursively.
    * Adding takes precedence over removal of entries.
    *
-   * @param file file to add.
+   * @param path file to add.
    * @param filter a filter to accept files for adding, null means all files are accepted
-   * @return this Zips for fluent api
+   * @return this ZipPaths for fluent api
    */
-  public Zips addFile(File file, FileFilter filter) {
-    return this.addFile(file, false, filter);
+  public ZipPaths addFile(Path path, FileFilter filter) {
+    return this.addFile(path, false, filter);
   }
 
   /**
-   * Adds a file entry. If given file is a dir, adds it and all subfiles recursively.
+   * Adds a Path entry. If given Path is a dir, adds it and all subfiles recursively.
    * Adding takes precedence over removal of entries.
    *
-   * @param file file to add.
-   * @param preserveRoot if file is a directory, true indicates we want to preserve this dir in the zip.
-   *          otherwise children of the file are added directly under root.
+   * @param path file to add.
+   * @param preserveRoot if Path is a directory, true indicates we want to preserve this dir in the zip.
+   *          otherwise children of the Path are added directly under root.
    * @param filter a filter to accept files for adding, null means all files are accepted
-   * @return this Zips for fluent api
+   * @return this ZipPaths for fluent api
    */
-  public Zips addFile(File file, boolean preserveRoot, FileFilter filter) {
-    if (!file.isDirectory()) {
-      this.changedEntries.add(new FileSource(file.getName(), file));
+  public ZipPaths addFile(Path path, boolean preserveRoot, FileFilter filter) {
+    if (!Files.isDirectory(path)) {
+      this.changedEntries.add(new PathSource(path.getFileName().toString(), path));
       return this;
     }
 
-    Collection<File> files = FileUtils.listFiles(file);
-    for (File entryFile : files) {
-      if (filter != null && !filter.accept(entryFile)) {
-        continue;
-      }
-      String entryPath = getRelativePath(file, entryFile);
-      if (File.separatorChar == IOUtils.DIR_SEPARATOR_WINDOWS) {
-        // replace directory separators on windows as at least 7zip packs zip with entries having "/" like on linux
-        entryPath = entryPath.replace(IOUtils.DIR_SEPARATOR_WINDOWS, IOUtils.DIR_SEPARATOR_UNIX);
-      }
-      if (preserveRoot) {
-        entryPath = file.getName() + entryPath;
-      }
-      if (entryPath.startsWith("/")) {
-        entryPath = entryPath.substring(1);
-      }
-      this.changedEntries.add(new FileSource(entryPath, entryFile));
+    Path root = preserveRoot ? path.getParent() : path;
+    try {
+      Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+          if (filter == null || filter.accept(dir.toFile())) {
+            String entryPath = root.relativize(dir).toString();
+            changedEntries.add(new PathSource(entryPath, dir));
+          }
+          return super.preVisitDirectory(dir, attrs);
+        }
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+          if (filter == null || filter.accept(file.toFile())) {
+            String entryPath = root.relativize(file).toString();
+            changedEntries.add(new PathSource(entryPath, file));
+          }
+          return super.visitFile(file, attrs);
+        }
+      });
+    }
+    catch (IOException e) {
+      ZipExceptionUtil.rethrow(e);
     }
     return this;
   }
 
-  private String getRelativePath(File parent, File file) {
-    String parentPath = parent.getPath();
-    String filePath = file.getPath();
-    if (!filePath.startsWith(parentPath)) {
-      throw new IllegalArgumentException("File " + file + " is not a child of " + parent);
-    }
-    return filePath.substring(parentPath.length());
-  }
-
   /**
-   * Specifies an entry to remove to the output when this Zips executes.
+   * Specifies an entry to remove to the output when this ZipPaths executes.
    *
    * @param entry path of the entry to remove
-   * @return this Zips for fluent api
+   * @return this ZipPaths for fluent api
    */
-  public Zips removeEntry(String entry) {
+  public ZipPaths removeEntry(String entry) {
     this.removedEntries.add(entry);
     return this;
   }
 
   /**
-   * Specifies entries to remove to the output when this Zips executes.
+   * Specifies entries to remove to the output when this ZipPaths executes.
    *
    * @param entries paths of the entry to remove
-   * @return this Zips for fluent api
+   * @return this ZipPaths for fluent api
    */
-  public Zips removeEntries(String[] entries) {
+  public ZipPaths removeEntries(String[] entries) {
     this.removedEntries.addAll(Arrays.asList(entries));
     return this;
   }
 
   /**
-   * Enables timestamp preserving for this Zips execution
+   * Enables timestamp preserving for this ZipPaths execution
    *
-   * @return this Zips for fluent api
+   * @return this ZipPaths for fluent api
    */
-  public Zips preserveTimestamps() {
+  public ZipPaths preserveTimestamps() {
     this.preserveTimestamps = true;
     return this;
   }
 
   /**
-   * Specifies timestamp preserving for this Zips execution
+   * Specifies timestamp preserving for this ZipPaths execution
    *
    * @param preserve flag to preserve timestamps
-   * @return this Zips for fluent api
+   * @return this ZipPaths for fluent api
    */
-  public Zips setPreserveTimestamps(boolean preserve) {
+  public ZipPaths setPreserveTimestamps(boolean preserve) {
     this.preserveTimestamps = preserve;
     return this;
   }
 
   /**
-   * Specifies charset for this Zips execution
+   * Specifies charset for this ZipPaths execution
    *
    * @param charset charset to use
-   * @return this Zips for fluent api
+   * @return this ZipPaths for fluent api
    */
-  public Zips charset(Charset charset) {
+  public ZipPaths charset(Charset charset) {
     this.charset = charset;
     return this;
   }
 
   /**
-   * Specifies destination file for this Zips execution,
-   * if destination is null (default value), then source file will be overwritten.
-   * Temporary file will be used as destination and then written over the source to
+   * Specifies destination Path for this ZipPaths execution,
+   * if destination is null (default value), then source Path will be overwritten.
+   * Temporary Path will be used as destination and then written over the source to
    * create an illusion if inplace action.
    *
    * @param destination charset to use
-   * @return this Zips for fluent api
+   * @return this ZipPaths for fluent api
    */
-  public Zips destination(File destination) {
+  public ZipPaths destination(Path destination) {
     this.dest = destination;
     return this;
   }
@@ -303,14 +298,14 @@ public class Zips {
   /**
    *
    * @param nameMapper to use when processing entries
-   * @return this Zips for fluent api
+   * @return this ZipPaths for fluent api
    */
-  public Zips nameMapper(NameMapper nameMapper) {
+  public ZipPaths nameMapper(NameMapper nameMapper) {
     this.nameMapper = nameMapper;
     return this;
   }
 
-  public Zips unpack() {
+  public ZipPaths unpack() {
     this.unpackedResult = true;
     return this;
   }
@@ -326,7 +321,7 @@ public class Zips {
    * @return should the result of the processing be unpacked.
    */
   private boolean isUnpack() {
-    return unpackedResult || (dest != null && dest.isDirectory());
+    return unpackedResult || (dest != null && Files.isDirectory(dest));
   }
 
   /**
@@ -334,9 +329,9 @@ public class Zips {
    *
    * @param path entry to transform
    * @param transformer transformer for the entry
-   * @return this Zips for fluent api
+   * @return this ZipPaths for fluent api
    */
-  public Zips addTransformer(String path, ZipEntryTransformer transformer) {
+  public ZipPaths addTransformer(String path, ZipEntryTransformer transformer) {
     this.transformers.add(new ZipEntryTransformerEntry(path, transformer));
     return this;
   }
@@ -350,26 +345,23 @@ public class Zips {
       throw new IllegalArgumentException("Source and destination shouldn't be null together");
     }
 
-    File destinationFile = null;
+    Path destination = null;
     try {
-      destinationFile = getDestinationFile();
-      ZipOutputStream out = null;
+      destination = getDestinationFile();
       ZipEntryOrInfoAdapter zipEntryAdapter = null;
 
-      if (destinationFile.isFile()) {
-        out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destinationFile)), charset);
-        zipEntryAdapter = new ZipEntryOrInfoAdapter(new CopyingCallback(transformers, out, preserveTimestamps), null);
+      if (Files.isRegularFile(destination)) {
+        try (ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(destination)), charset)) {
+          zipEntryAdapter = new ZipEntryOrInfoAdapter(new CopyingCallback(transformers, out, preserveTimestamps), null);
+          processAllEntries(zipEntryAdapter);
+        }
       }
       else { // directory
-        zipEntryAdapter = new ZipEntryOrInfoAdapter(new UnpackingCallback(transformers, destinationFile), null);
-      }
-      try {
+        zipEntryAdapter = new ZipEntryOrInfoAdapter(new UnpackingCallback(transformers, destination), null);
+        Files.createDirectories(destination);
         processAllEntries(zipEntryAdapter);
       }
-      finally {
-        IOUtils.closeQuietly(out);
-      }
-      handleInPlaceActions(destinationFile);
+      handleInPlaceActions(destination);
     }
     catch (IOException e) {
       ZipExceptionUtil.rethrow(e);
@@ -377,7 +369,12 @@ public class Zips {
     finally {
       if (isInPlace()) {
         // destinationZip is a temporary file
-        FileUtils.deleteQuietly(destinationFile);
+        try {
+          PathUtils.deleteDir(destination);
+        }
+        catch (IOException e) {
+          ZipExceptionUtil.rethrow(e);
+        }
       }
     }
   }
@@ -387,20 +384,20 @@ public class Zips {
     iterateExistingExceptRemoved(zipEntryAdapter);
   }
 
-  private File getDestinationFile() throws IOException {
+  private Path getDestinationFile() throws IOException {
     if (isUnpack()) {
       if (isInPlace()) {
-        File tempFile = File.createTempFile("zips", null);
-        FileUtils.deleteQuietly(tempFile);
-        tempFile.mkdirs(); // temp dir created
+        Path tempFile = Files.createTempDirectory("zips");
+        PathUtils.deleteDir(tempFile);
+        Files.createDirectories(tempFile); // temp dir created
         return tempFile;
       }
       else {
-        if (!dest.isDirectory()) {
+        if (!Files.isDirectory(dest)) {
           // destination is a directory, actually we shouldn't be here, because this should mean we want an unpacked result.
-          FileUtils.deleteQuietly(dest);
-          File result = new File(dest.getAbsolutePath());
-          result.mkdirs(); // create a directory instead of dest file
+          PathUtils.deleteDir(dest);
+          Path result = dest.toAbsolutePath();
+          Files.createDirectories(result); // create a directory instead of dest file
           return result;
         }
         return dest;
@@ -409,13 +406,13 @@ public class Zips {
     else {
       // we need a file
       if (isInPlace()) { // no destination specified, temp file
-        return File.createTempFile("zips", ".zip");
+        return Files.createTempFile("zips", ".zip");
       }
       else {
-        if (dest.isDirectory()) {
+        if (Files.isDirectory(dest)) {
           // destination is a directory, actually we shouldn't be here, because this should mean we want an unpacked result.
-          FileUtils.deleteQuietly(dest);
-          return new File(dest.getAbsolutePath());
+          PathUtils.deleteDir(dest);
+          return dest.toAbsolutePath();
         }
         return dest;
       }
@@ -423,7 +420,7 @@ public class Zips {
   }
 
   /**
-   * Reads the source ZIP file and executes the given callback for each entry.
+   * Reads the source ZIP Path and executes the given callback for each entry.
    * <p>
    * For each entry the corresponding input stream is also passed to the callback. If you want to stop the loop then throw a ZipBreakException.
    *
@@ -441,7 +438,7 @@ public class Zips {
   }
 
   /**
-   * Scans the source ZIP file and executes the given callback for each entry.
+   * Scans the source ZIP Path and executes the given callback for each entry.
    * <p>
    * Only the meta-data without the actual data is read. If you want to stop the loop then throw a ZipBreakException.
    *
@@ -460,7 +457,7 @@ public class Zips {
   }
 
   /**
-   * Alias to ZipUtil.getEntry()
+   * Alias to ZipPathUtil.getEntry()
    *
    * @param name
    *          name of the entry to fetch bytes from
@@ -471,11 +468,11 @@ public class Zips {
     if (src == null) {
       throw new IllegalStateException("Source is not given");
     }
-    return ZipUtil.unpackEntry(src, name);
+    return ZipPathUtil.unpackEntry(src, name);
   }
 
   /**
-   * Alias to ZipUtil.containsEntry()
+   * Alias to ZipPathUtil.containsEntry()
    *
    * @param name
    *          entry to check existence of
@@ -485,7 +482,7 @@ public class Zips {
     if (src == null) {
       throw new IllegalStateException("Source is not given");
     }
-    return ZipUtil.containsEntry(src, name);
+    return ZipPathUtil.containsEntry(src, name);
   }
 
   // ///////////// private api ///////////////
@@ -500,16 +497,11 @@ public class Zips {
       // if we don't have source specified, then we have nothing to iterate.
       return;
     }
-    final Set<String> removedDirs = ZipUtil.filterDirEntries(src, removedEntries);
+    final Set<String> removedDirs = ZipPathUtil.filterDirEntries(src, removedEntries);
 
-    ZipFile zf = null;
-    try {
-      zf = getZipFile();
-
-      // manage existing entries
-      Enumeration<? extends ZipEntry> en = zf.entries();
-      while (en.hasMoreElements()) {
-        ZipEntry entry = en.nextElement();
+    try (ZipInputStream zf = new ZipInputStream(Files.newInputStream(src), charset)) {
+      ZipEntry entry;
+      while ((entry = zf.getNextEntry()) != null) {
         String entryName = entry.getName();
         if (removedEntries.contains(entryName) || isEntryInDir(removedDirs, entryName)) {
           // removed entries are
@@ -526,24 +518,16 @@ public class Zips {
             entry = ZipEntryUtil.copy(entry, mappedName);
           }
         }
-
-        InputStream is = zf.getInputStream(entry);
         try {
-          zipEntryCallback.process(is, entry);
+          zipEntryCallback.process(zf, entry);
         }
         catch (ZipBreakException ex) {
           break;
-        }
-        finally {
-          IOUtils.closeQuietly(is);
         }
       }
     }
     catch (IOException e) {
       ZipExceptionUtil.rethrow(e);
-    }
-    finally {
-      ZipUtil.closeQuietly(zf);
     }
   }
 
@@ -553,10 +537,8 @@ public class Zips {
    * @param zipEntryCallback callback to execute on entries or their info
    */
   private void iterateChangedAndAdded(ZipEntryOrInfoAdapter zipEntryCallback) {
-
     for (ZipEntrySource entrySource : changedEntries) {
-      InputStream entrySourceStream = null;
-      try {
+      try (InputStream entrySourceStream = entrySource.getInputStream()) {
         ZipEntry entry = entrySource.getEntry();
         if (nameMapper != null) {
           String mappedName = nameMapper.map(entry.getName());
@@ -568,7 +550,6 @@ public class Zips {
             entry = ZipEntryUtil.copy(entry, mappedName);
           }
         }
-        entrySourceStream = entrySource.getInputStream();
         zipEntryCallback.process(entrySourceStream, entry);
       }
       catch (ZipBreakException ex) {
@@ -577,27 +558,19 @@ public class Zips {
       catch (IOException e) {
         ZipExceptionUtil.rethrow(e);
       }
-      finally {
-        IOUtils.closeQuietly(entrySourceStream);
-      }
     }
   }
 
   /**
-   * if we are doing something in place, move result file into src.
+   * if we are doing something in place, move result Path into src.
    *
    * @param result destination zip file
    */
-  private void handleInPlaceActions(File result) throws IOException {
+  private void handleInPlaceActions(Path result) throws IOException {
     if (isInPlace()) {
       // we operate in-place
-      FileUtils.forceDelete(src);
-      if (result.isFile()) {
-        FileUtils.moveFile(result, src);
-      }
-      else {
-        FileUtils.moveDirectory(result, src);
-      }
+      PathUtils.deleteDir(src);
+      Files.move(result, src);
     }
   }
 
@@ -618,19 +591,6 @@ public class Zips {
     return false;
   }
 
-  /**
-   * Creates a ZipFile from src and charset of this object. If a constructor with charset is
-   * not available, throws an exception.
-   *
-   * @return ZipFile
-   * @throws IOException if ZipFile cannot be constructed
-   * @throws IllegalArgumentException if accessing constructor ZipFile(File, Charset)
-   *
-   */
-  private ZipFile getZipFile() throws IOException {
-    return new ZipFile(src, charset);
-  }
-
   private static class CopyingCallback implements ZipEntryCallback {
 
     private final Map<String, ZipEntryTransformer> entryByPath;
@@ -641,7 +601,7 @@ public class Zips {
     private CopyingCallback(List<ZipEntryTransformerEntry> transformerEntries, ZipOutputStream out, boolean preserveTimestapms) {
       this.out = out;
       this.preserveTimestapms = preserveTimestapms;
-      entryByPath = ZipUtil.transformersByPath(transformerEntries);
+      entryByPath = ZipPathUtil.transformersByPath(transformerEntries);
       visitedNames = new HashSet<String>();
     }
 
@@ -667,11 +627,11 @@ public class Zips {
 
     private final Map<String, ZipEntryTransformer> entryByPath;
     private final Set<String> visitedNames;
-    private final File destination;
+    private final Path destination;
 
-    private UnpackingCallback(List<ZipEntryTransformerEntry> entries, File destination) {
+    private UnpackingCallback(List<ZipEntryTransformerEntry> entries, Path destination) {
       this.destination = destination;
-      this.entryByPath = ZipUtil.transformersByPath(entries);
+      this.entryByPath = ZipPathUtil.transformersByPath(entries);
       visitedNames = new HashSet<String>();
     }
 
@@ -683,35 +643,31 @@ public class Zips {
       }
       visitedNames.add(entryName);
 
-      File file = new File(destination, entryName);
+      Path file = destination.resolve(entryName);
       if (zipEntry.isDirectory()) {
-        FileUtils.forceMkdir(file);
+        Files.createDirectories(file);
         return;
       }
       else {
-        FileUtils.forceMkdir(file.getParentFile());
-        file.createNewFile();
+        Files.createDirectories(file.getParent());
       }
 
       ZipEntryTransformer transformer = (ZipEntryTransformer) entryByPath.remove(entryName);
       if (transformer == null) { // no transformer
-        FileUtils.copy(in, file);
+        Files.copy(in, file);
       }
       else { // still transform entry
         transformIntoFile(transformer, in, zipEntry, file);
       }
     }
 
-    private void transformIntoFile(final ZipEntryTransformer transformer, final InputStream entryIn, final ZipEntry zipEntry, final File destination) throws IOException {
-      final PipedInputStream pipedIn = new PipedInputStream();
-      final PipedOutputStream pipedOut = new PipedOutputStream(pipedIn);
-
-      final ZipOutputStream zipOut = new ZipOutputStream(pipedOut);
-      final ZipInputStream zipIn = new ZipInputStream(pipedIn);
-
+    private void transformIntoFile(final ZipEntryTransformer transformer, final InputStream entryIn, final ZipEntry zipEntry, final Path destination) throws IOException {
       ExecutorService newFixedThreadPool = Executors.newFixedThreadPool(1);
-
-      try {
+      try (
+          PipedInputStream pipedIn = new PipedInputStream();
+          PipedOutputStream pipedOut = new PipedOutputStream(pipedIn);
+          ZipInputStream zipIn = new ZipInputStream(pipedIn);
+          ZipOutputStream zipOut = new ZipOutputStream(pipedOut);) {
         newFixedThreadPool.execute(new Runnable() {
           public void run() {
             try {
@@ -723,23 +679,11 @@ public class Zips {
           }
         });
         zipIn.getNextEntry();
-        FileUtils.copy(zipIn, destination);
+        Files.copy(zipIn, destination);
       }
       finally {
-        try {
-          zipIn.closeEntry();
-        }
-        catch (IOException e) {
-          // closing quietly
-        }
-
         newFixedThreadPool.shutdown();
-        IOUtils.closeQuietly(pipedIn);
-        IOUtils.closeQuietly(zipIn);
-        IOUtils.closeQuietly(pipedOut);
-        IOUtils.closeQuietly(zipOut);
       }
-
     }
   }
 }
