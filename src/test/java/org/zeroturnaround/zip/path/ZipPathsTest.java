@@ -22,6 +22,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
@@ -153,8 +154,7 @@ public class ZipPathsTest extends TestCase {
     Path original = Paths.get("src/test/resources/demo-dirs.zip");
     Path workFile = Files.createTempFile("temp", ".zip");
     try {
-      Files.deleteIfExists(workFile);
-      Files.copy(original, workFile);
+      Files.copy(original, workFile, StandardCopyOption.REPLACE_EXISTING);
       ZipPaths.get(workFile).addEntry(new PathSource(fileName, newEntry)).removeEntries(new String[] { "bar.txt", "a/b" }).process();
       assertFalse("Result zip still contains 'bar.txt'", ZipPathUtil.containsEntry(workFile, "bar.txt"));
       assertFalse("Result zip still contains dir 'a/b'", ZipPathUtil.containsEntry(workFile, "a/b"));
