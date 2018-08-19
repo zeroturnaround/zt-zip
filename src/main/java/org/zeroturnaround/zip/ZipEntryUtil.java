@@ -20,7 +20,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -28,7 +30,6 @@ import org.zeroturnaround.zip.commons.IOUtils;
 import org.zeroturnaround.zip.extra.AsiExtraField;
 import org.zeroturnaround.zip.extra.ExtraFieldUtils;
 import org.zeroturnaround.zip.extra.ZipExtraField;
-import org.zeroturnaround.zip.timestamps.TimestampStrategy;
 
 /**
  * Util class for static methods shared between ZipUtil and Zips.
@@ -107,10 +108,24 @@ class ZipEntryUtil {
     ZipEntry copy = copy(originalEntry);
 
     if (preserveTimestamps) {
-      TimestampStrategy.setTime(copy, originalEntry);
+      FileTime time = originalEntry.getCreationTime();
+      if (time != null) {
+        copy.setCreationTime(time);
+      }
+      time = originalEntry.getLastModifiedTime();
+      if (time != null) {
+        copy.setLastModifiedTime(time);
+      }
+      time = originalEntry.getLastAccessTime();
+      if (time != null) {
+        copy.setLastAccessTime(time);
+      }
     }
     else {
-      copy.setTime(System.currentTimeMillis());
+      FileTime time = FileTime.from(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+      copy.setCreationTime(time);
+      copy.setLastModifiedTime(time);
+      copy.setLastAccessTime(time);
     }
 
     addEntry(copy, in != null ? new BufferedInputStream(in) : null, out);
