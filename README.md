@@ -260,7 +260,7 @@ boolean equals = ZipUtil.entryEquals(new File("/tmp/demo1.zip"), new File("/tmp/
 
 ## Progressbar
 
-There have been multiple requests for a progress bar. See [ZT Zip Progress Bar][https://github.com/toomasr/zt-zip-progress-bar] for a
+There have been multiple requests for a progress bar. See (ZT Zip Progress Bar)[https://github.com/toomasr/zt-zip-progress-bar] for a
 sample implementation.
 
 ## Debugging
