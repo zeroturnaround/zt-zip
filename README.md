@@ -258,6 +258,11 @@ boolean equals = ZipUtil.entryEquals(new File("/tmp/demo1.zip"), new File("/tmp/
 boolean equals = ZipUtil.entryEquals(new File("/tmp/demo1.zip"), new File("/tmp/demo2.zip"), "foo1.txt", "foo2.txt");
 ```
 
+## Progressbar
+
+There have been multiple requests for a progress bar. See [ZT Zip Progress Bar][https://github.com/toomasr/zt-zip-progress-bar] for a
+sample implementation.
+
 ## Debugging
 
 The library is using the [slf4j-api](http://www.slf4j.org/) logging framework. All the log statements are either **DEBUG** or **TRACE** level. Depending on the logging framework you are using a simple ```-Dorg.slf4j.simpleLogger.defaultLogLevel=debug``` or ```System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug");``` will do the trick of showing log statements from the **zt-zip** library. You can further fine tune the levels and inclusion of log messages per package with your logging framework.
