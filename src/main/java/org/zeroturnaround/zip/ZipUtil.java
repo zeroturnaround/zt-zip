@@ -1855,6 +1855,14 @@ public final class ZipUtil {
   }
 
   /**
+   * Creates an empty ZIP archive at the location of the provided file.
+   * @param file the file to become an empty ZIP archive
+   */
+  public static void createEmpty(File file) {
+	  packEntries(new File[] {}, file);
+  }
+
+  /**
    * RepackZipEntryCallback used in repacking methods.
    *
    * @author Pavel Grigorenko
