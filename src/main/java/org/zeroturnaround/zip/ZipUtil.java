@@ -1861,11 +1861,16 @@ public final class ZipUtil {
    */
   public static void createEmpty(File file) {
     // https://en.wikipedia.org/wiki/Zip_(file_format)#Limits
-    try (FileOutputStream fos = new FileOutputStream(file)) {
+    FileOutputStream fos = null;
+    try {
+      fos = new FileOutputStream(file);
       fos.write(new byte[] {0x50,0x4B,0x05,0x06,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00});
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
+    }
+    finally {
+      IOUtils.closeQuietly(fos);
     }
   }
 
