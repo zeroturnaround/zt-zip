@@ -309,7 +309,7 @@ public class ZipUtilTest extends TestCase {
     ByteArrayOutputStream out = null;
     out = new ByteArrayOutputStream();
     ZipUtil.pack(convertToEntries(entryDescriptions, encoding), out);
-    
+
     byte[] zipBytes = out.toByteArray();
     assertEquals(244, zipBytes.length);
     assertEntries(entryDescriptions, zipBytes, encoding);
@@ -335,7 +335,7 @@ public class ZipUtilTest extends TestCase {
     ArrayList<String[]> allEntryDescriptions = new ArrayList<String[]>(entryDescriptions.size() + entryDescriptions2.size());
     allEntryDescriptions.addAll(entryDescriptions);
     allEntryDescriptions.addAll(entryDescriptions2);
-    
+
     assertEntries(allEntryDescriptions, zipBytes2, encoding);
   }
 
@@ -487,7 +487,7 @@ public class ZipUtilTest extends TestCase {
     assertTrue(ZipUtil.containsEntry(dest, fileName));
     FileUtils.forceDelete(src);
   }
-  
+
   public void testKeepEntriesState() throws IOException {
     File src = file("demo-keep-entries-state.zip");
     final String existingEntryName = "TestFile.txt";
@@ -496,7 +496,7 @@ public class ZipUtilTest extends TestCase {
     File newEntry = file(fileNameToAdd);
     File dest = File.createTempFile("temp.zip", null);
     ZipUtil.addEntry(src, fileNameToAdd, newEntry, dest);
-    
+
     ZipEntry srcEntry = new ZipFile(src).getEntry(existingEntryName);
     ZipEntry destEntry = new ZipFile(dest).getEntry(existingEntryName);
     assertTrue(srcEntry.getCompressedSize() == destEntry.getCompressedSize());
@@ -549,7 +549,7 @@ public class ZipUtilTest extends TestCase {
       FileUtils.deleteQuietly(dest);
     }
   }
-  
+
   public void testRemoveDirsOutputStream() throws IOException {
     File src = file("demo-dirs.zip");
 
@@ -624,7 +624,7 @@ public class ZipUtilTest extends TestCase {
     assertEquals(1, files.size());
     assertTrue("Wrong entry hasn't been iterated", files.contains("bar.txt"));
   }
-  
+
   public void testIterateGivenEntriesZipEntryCallback() {
     File src = file("demo.zip");
     final Set files = new HashSet();
@@ -910,5 +910,20 @@ public class ZipUtilTest extends TestCase {
 
     file = new File(file, "testFileInTestSubdirectory.txt");
     assertTrue("The 'testFileInTestSubdirectory.txt' is not a file", file.isFile());
+  }
+
+  public void testCreateEmptyFile() throws Exception {
+    File src = File.createTempFile("ztr", ".zip");
+    ZipUtil.createEmpty(src);
+
+    File dest = File.createTempFile("unpackEntryDir", null);
+    if(!(dest.delete())) {
+      throw new IOException("Could not delete temp file: " + dest.getAbsolutePath());
+    }
+
+    ZipUtil.unpack(src, dest);
+    FileUtils.forceDelete(src);
+    // As the ZIP file is empty then the unpack doesn't create the directory.
+    // So this is why I don't have a forceDelete for the dest variable - FileUtils.forceDelete(dest);
   }
 }

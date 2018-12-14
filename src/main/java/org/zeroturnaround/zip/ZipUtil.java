@@ -1856,10 +1856,17 @@ public final class ZipUtil {
 
   /**
    * Creates an empty ZIP archive at the location of the provided file.
+   *
    * @param file the file to become an empty ZIP archive
    */
   public static void createEmpty(File file) {
-	  packEntries(new File[] {}, file);
+    // https://en.wikipedia.org/wiki/Zip_(file_format)#Limits
+    try (FileOutputStream fos = new FileOutputStream(file)) {
+      fos.write(new byte[] {0x50,0x4B,0x05,0x06,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00});
+    }
+    catch (IOException e) {
+      throw ZipExceptionUtil.rethrow(e);
+    }
   }
 
   /**
@@ -2305,7 +2312,7 @@ public final class ZipUtil {
       IOUtils.closeQuietly(out);
     }
   }
-  
+
   /**
    * Copies an existing ZIP file and removes entries with given paths.
    *
