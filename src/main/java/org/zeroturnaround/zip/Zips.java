@@ -24,6 +24,8 @@ import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -589,12 +591,7 @@ public class Zips {
     if (isInPlace()) {
       // we operate in-place
       FileUtils.forceDelete(src);
-      if (result.isFile()) {
-        FileUtils.moveFile(result, src);
-      }
-      else {
-        FileUtils.moveDirectory(result, src);
-      }
+      Files.move(result.toPath(), src.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
   }
 

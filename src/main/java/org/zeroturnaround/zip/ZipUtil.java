@@ -25,6 +25,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -1324,7 +1327,7 @@ public final class ZipUtil {
       File tempFile = FileUtils.getTempFileFor(zip);
 
       // Rename the archive
-      FileUtils.moveFile(zip, tempFile);
+      Files.move(zip.toPath(), tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
       // Unpack it
       unpack(tempFile, zip);
@@ -1557,7 +1560,7 @@ public final class ZipUtil {
 
         ZipEntry zipEntry = ZipEntryUtil.fromFile(mapper.map(fileToPack.getName()), fileToPack);
         out.putNextEntry(zipEntry);
-        FileUtils.copy(fileToPack, out);
+        Files.copy(fileToPack.toPath(), out);
         out.closeEntry();
       }
     }
@@ -1763,7 +1766,7 @@ public final class ZipUtil {
 
         // Copy the file content
         if (!isDir) {
-          FileUtils.copy(file, out);
+          Files.copy(file.toPath(), out);
         }
 
         out.closeEntry();
@@ -1847,7 +1850,7 @@ public final class ZipUtil {
       }
 
       // Rename the archive
-      FileUtils.moveFile(tmpZip, zip);
+      Files.move(tmpZip.toPath(), zip.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
@@ -1944,7 +1947,7 @@ public final class ZipUtil {
       FileUtils.deleteDirectory(dir);
 
       // Rename the archive
-      FileUtils.moveFile(zip, dir);
+      Files.move(zip.toPath(), dir.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
@@ -3361,7 +3364,7 @@ public final class ZipUtil {
       boolean result = action.act(tmp);
       if (result) { // else nothing changes
         FileUtils.forceDelete(src);
-        FileUtils.moveFile(tmp, src);
+        Files.move(tmp.toPath(), src.toPath(), StandardCopyOption.REPLACE_EXISTING);
       }
       return result;
     }
