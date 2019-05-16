@@ -16,6 +16,8 @@ package org.zeroturnaround.zip;
  */
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 import org.junit.Assume;
 import org.zeroturnaround.zip.commons.FileUtils;
@@ -36,8 +38,8 @@ public class FilePermissionsTest {
     tmpDir.mkdir();
     File fileA = new File(tmpDir, "fileA.txt");
     File fileB = new File(tmpDir, "fileB.txt");
-    FileUtils.copyFile(testFile, fileA);
-    FileUtils.copyFile(testFile, fileB);
+    Files.copy(testFile.toPath(), fileA.toPath());
+    Files.copy(testFile.toPath(), fileB.toPath());
 
     Assume.assumeTrue(setExecutable(fileA, false));
     //Avoids failing test on Windows: File.setExecutable(): "If executable is false and the underlying file system does not implement an execute permission, then the operation will fail."
@@ -67,8 +69,8 @@ public class FilePermissionsTest {
     tmpDir.mkdir();
     File fileA = new File(tmpDir, "fileA.txt");
     File fileB = new File(tmpDir, "fileB.txt");
-    FileUtils.copyFile(testFile, fileA);
-    FileUtils.copyFile(testFile, fileB);
+    Files.copy(testFile.toPath(), fileA.toPath());
+    Files.copy(testFile.toPath(), fileB.toPath());
 
     Assume.assumeTrue(setReadable(fileA, false));
     //Avoids failing test on Windows: File.setReadable(): "If readable is false and the underlying file system does not implement a read permission, then the operation will fail."
@@ -100,8 +102,8 @@ public class FilePermissionsTest {
     tmpDir.mkdir();
     File fileA = new File(tmpDir, "fileA.txt");
     File fileB = new File(tmpDir, "fileB.txt");
-    FileUtils.copyFile(testFile, fileA, true);
-    FileUtils.copyFile(testFile, fileB, true);
+    Files.copy(testFile.toPath(), fileA.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+    Files.copy(testFile.toPath(), fileB.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
 
     //Assume.assumeTrue(setWritable(fileA, false));
     //this is commented because there is no OS-specific logic for returning false in File.setWritable(), only "The operation will fail if the user does not have permission to change the access permissions of this abstract pathname."

@@ -24,6 +24,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -473,7 +475,7 @@ public class ZipUtilTest extends TestCase {
     File initialSrc = file("demo.zip");
 
     File src = File.createTempFile("ztr", ".zip");
-    FileUtils.copyFile(initialSrc, src);
+    Files.copy(initialSrc.toPath(), src.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
     final String fileName = "TestFile.txt";
     if(ZipUtil.containsEntry(src, fileName)) {
@@ -835,7 +837,7 @@ public class ZipUtilTest extends TestCase {
       int compressionMethod = ZipEntry.STORED;
       File src = file("demo.zip");
       File srcCopy = File.createTempFile("ztr", ".zip");
-      FileUtils.copyFile(src, srcCopy);
+      Files.copy(src.toPath(), srcCopy.toPath(), StandardCopyOption.REPLACE_EXISTING);
       doTestAddEntryWithCompressionMethodInPlace(srcCopy, compressionMethod);
       FileUtils.forceDelete(srcCopy);
   }
@@ -844,7 +846,7 @@ public class ZipUtilTest extends TestCase {
       int compressionMethod = ZipEntry.DEFLATED;
       File src = file("demo.zip");
       File srcCopy = File.createTempFile("ztr", ".zip");
-      FileUtils.copyFile(src, srcCopy);
+      Files.copy(src.toPath(), srcCopy.toPath(), StandardCopyOption.REPLACE_EXISTING);
       doTestAddEntryWithCompressionMethodInPlace(srcCopy, compressionMethod);
       FileUtils.forceDelete(srcCopy);
   }
@@ -871,7 +873,7 @@ public class ZipUtilTest extends TestCase {
   public void testReplaceEntryWithCompressionMethod() throws IOException {
     File initialSrc = file("demo.zip");
     File src = File.createTempFile("ztr", ".zip");
-    FileUtils.copyFile(initialSrc, src);
+    Files.copy(initialSrc.toPath(), src.toPath(), StandardCopyOption.REPLACE_EXISTING);
     final String fileName = "foo.txt";
     assertTrue(ZipUtil.containsEntry(src, fileName));
     assertEquals(ZipEntry.STORED, ZipUtil.getCompressionMethodOfEntry(src, fileName));

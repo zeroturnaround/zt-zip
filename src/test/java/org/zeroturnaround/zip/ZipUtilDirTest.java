@@ -3,6 +3,8 @@ package org.zeroturnaround.zip;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -28,8 +30,8 @@ public class ZipUtilDirTest {
     File sourceDir = tempSrcDir.getRoot();
     File file1 = ZipUtilTest.file("TestFile.txt");
     File file2 = ZipUtilTest.file("TestFile-II.txt");
-    FileUtils.copyFileToDirectory(file1, sourceDir);
-    FileUtils.copyFileToDirectory(file2, sourceDir);
+    Files.copy(file1.toPath(), sourceDir.toPath().resolve(file1.getName()));
+    Files.copy(file2.toPath(), sourceDir.toPath().resolve(file2.getName()));
     ByteArrayOutputStream actualOs = new ByteArrayOutputStream(1024);
 
     // execute test

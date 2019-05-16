@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.Collection;
 
 import org.zeroturnaround.zip.commons.FileUtils;
@@ -36,7 +37,7 @@ public class ZTFileUtilTest extends TestCase {
     File outFile = File.createTempFile("prefix", "suffix");
     File inFile = new File(MainExamplesTest.DEMO_ZIP);
     OutputStream out = new BufferedOutputStream(new FileOutputStream(outFile));
-    FileUtils.copy(inFile, out);
+    Files.copy(inFile.toPath(), out);
     out.close();
     assertEquals(inFile.length(), outFile.length());
   }

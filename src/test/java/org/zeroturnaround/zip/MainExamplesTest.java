@@ -18,13 +18,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.zip.ZipEntry;
 
-import junit.framework.TestCase;
-
-import org.zeroturnaround.zip.commons.FileUtils;
 import org.zeroturnaround.zip.commons.IOUtils;
 import org.zeroturnaround.zip.transform.StringZipEntryTransformer;
+
+import junit.framework.TestCase;
 
 public final class MainExamplesTest extends TestCase {
 
@@ -70,7 +70,7 @@ public final class MainExamplesTest extends TestCase {
     FileOutputStream fio = new FileOutputStream(outFile);
 
     // so the zip file will be outDir/demo <- this is a zip archive
-    FileUtils.copy(demoFile, fio);
+    Files.copy(demoFile.toPath(), fio);
 
     // close the stream so that locks on the file can be released (on windows, not doing this prevents the file from being moved)
     fio.close();

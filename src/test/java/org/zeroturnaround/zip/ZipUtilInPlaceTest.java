@@ -18,6 +18,8 @@ package org.zeroturnaround.zip;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -38,7 +40,7 @@ public class ZipUtilInPlaceTest extends TestCase {
     File src = file("demo.zip");
     File dest = File.createTempFile("temp.zip", null);
     try {
-      FileUtils.copyFile(src, dest);
+      Files.copy(src.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
       final String fileName = "TestFile.txt";
       assertFalse(ZipUtil.containsEntry(dest, fileName));
@@ -56,7 +58,7 @@ public class ZipUtilInPlaceTest extends TestCase {
     File src = file("demo.zip");
     File dest = File.createTempFile("temp", null);
     try {
-      FileUtils.copyFile(src, dest);
+      Files.copy(src.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
       assertTrue(ZipUtil.containsEntry(dest, "bar.txt"));
       ZipUtil.removeEntry(dest, "bar.txt");
 
@@ -75,7 +77,7 @@ public class ZipUtilInPlaceTest extends TestCase {
 
     File dest = File.createTempFile("temp", null);
     try {
-      FileUtils.copyFile(src, dest);
+      Files.copy(src.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
       ZipUtil.removeEntries(dest, new String[] { "bar.txt", "a/b" });
 

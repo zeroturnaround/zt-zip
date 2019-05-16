@@ -21,6 +21,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
@@ -122,7 +124,7 @@ public class ZipsTest extends TestCase {
     File src = new File(MainExamplesTest.DEMO_ZIP);
     File dest = File.createTempFile("temp.zip", ".zip");
     try {
-      FileUtils.copyFile(src, dest);
+      Files.copy(src.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
       final String fileName = "TestFile.txt";
       assertFalse(ZipUtil.containsEntry(dest, fileName));
@@ -143,7 +145,7 @@ public class ZipsTest extends TestCase {
     File original = new File("src/test/resources/demo-dirs.zip");
     File workFile = File.createTempFile("temp", ".zip");
     try {
-      FileUtils.copyFile(original, workFile);
+      Files.copy(original.toPath(), workFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
       Zips.get(workFile).addEntry(new FileSource(fileName, newEntry)).removeEntries(new String[] { "bar.txt", "a/b" }).process();
       assertFalse("Result zip still contains 'bar.txt'", ZipUtil.containsEntry(workFile, "bar.txt"));
       assertFalse("Result zip still contains dir 'a/b'", ZipUtil.containsEntry(workFile, "a/b"));
@@ -546,7 +548,7 @@ public class ZipsTest extends TestCase {
   public void testUnpackInPlace() throws IOException {
     File original = new File(MainExamplesTest.DEMO_ZIP);
     final File src = File.createTempFile("temp", null);
-    FileUtils.copyFile(original, src);
+    Files.copy(original.toPath(), src.toPath(), StandardCopyOption.REPLACE_EXISTING);
     Zips.get(src).unpack().process();
     assertTrue(src.isDirectory());
     ZipUtil.iterate(original, new ZipInfoCallback() {
