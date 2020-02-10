@@ -2,6 +2,10 @@
   ZT Zip Changelog
 ********************************************
 
+1.14 (10th Feb 2020)
+* Added removeEntries that copies to OutputStream
+* Added createEmpty
+
 1.13 (2nd May 2018)
 * Fixed a possible security vulnerability reported by Snyk Security Research Team
 * Fixed same-zip bug for transformEntry method
