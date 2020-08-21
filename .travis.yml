@@ -1,6 +1,6 @@
 language: java
 dist: trusty
-sudo: false
+os: linux
 install:
   - jdk_switcher use openjdk7
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true
