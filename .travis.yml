@@ -1,4 +1,5 @@
 language: java
+dist: trusty
 sudo: false
 install:
   - jdk_switcher use openjdk7
