@@ -1,15 +1,12 @@
 language: java
-sudo: false
-addons:
-  apt:
-    packages:
-      - oracle-java8-installer
+os: linux
+dist: trusty
 install:
-  - jdk_switcher use oraclejdk8
+  - jdk_switcher use openjdk8
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true
 jdk:
-  - oraclejdk8
   - openjdk7
+  - openjdk8
   - oraclejdk9
 script:
   - jdk_switcher use $TRAVIS_JDK_VERSION
