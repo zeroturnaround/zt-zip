@@ -1,6 +1,6 @@
 language: java
-dist: trusty
 os: linux
+dist: trusty
 install:
   - jdk_switcher use openjdk8
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true
@@ -8,7 +8,7 @@ jdk:
   - openjdk7
   - openjdk8
   - oraclejdk9
-  - oraclejdk11
+  - openjdk11
 script:
   - jdk_switcher use $TRAVIS_JDK_VERSION
   - ./mvnw test -Dmaven.javadoc.skip=true
