@@ -8,6 +8,7 @@ jdk:
   - openjdk7
   - openjdk8
   - oraclejdk9
+  - openjdk11
 script:
   - jdk_switcher use $TRAVIS_JDK_VERSION
   - ./mvnw test -Dmaven.javadoc.skip=true
