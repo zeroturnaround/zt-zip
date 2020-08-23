@@ -1,6 +1,6 @@
 language: java
 os: linux
-dist: xenial
+dist: bionic
 install:
   - jdk_switcher use openjdk8
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true
