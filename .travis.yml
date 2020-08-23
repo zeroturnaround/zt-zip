@@ -1,5 +1,5 @@
 language: java
-os: linux
+os: trusty
 dist: bionic
 install:
   - jdk_switcher use openjdk8
