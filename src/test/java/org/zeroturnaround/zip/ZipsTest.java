@@ -602,4 +602,19 @@ public class ZipsTest extends TestCase {
       FileUtils.deleteQuietly(dest);
     }
   }
+
+  public void testRenameInPlace() throws IOException {
+    File original = new File(MainExamplesTest.DEMO_ZIP);
+    final File src = File.createTempFile("renameInPlace", null);
+    FileUtils.copyFile(original, src);
+    Zips.get(src).nameMapper(new NameMapper() {
+      @Override
+      public String map(String name) {
+        return name.replace("foo", "123");
+      }
+    }).process();
+    ZipUtil.explode(src);
+    assertTrue((new File(src, "123.txt")).exists());
+  }
+
 }
