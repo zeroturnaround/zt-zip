@@ -570,7 +570,7 @@ public class ZipsTest extends TestCase {
     });
   }
 
-  public void testUnpackWithTransofrmer() throws IOException {
+  public void testUnpackWithTransformer() throws IOException {
     final String fileName = "TestFile.txt";
     File newEntry = new File("src/test/resources/" + fileName);
 
@@ -592,7 +592,7 @@ public class ZipsTest extends TestCase {
 
       Zips.get(src).unpack().addEntry(new FileSource(fileName, newEntry)).addTransformer(fileName, transformer).destination(dest).process();
       assertTrue(dest.isDirectory());
-      assertTrue("Result doesn't containt 'attic'", new File(dest, "attic/treasure.txt").exists());
+      assertTrue("Result doesn't contain 'attic'", new File(dest, "attic/treasure.txt").exists());
       assertTrue("Result doesn't contain added entry", new File(dest, fileName).exists());
 
       boolean contentIsUpper = new String(FileUtils.readFileToString(new File(dest, fileName))).startsWith("I'M A TEST FILE");
