@@ -11,3 +11,7 @@ jdk:
 script:
   - jdk_switcher use $TRAVIS_JDK_VERSION
   - ./mvnw test -Dmaven.javadoc.skip=true
+
+cache:
+  directories:
+  - $HOME/.m2
