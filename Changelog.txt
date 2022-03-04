@@ -2,6 +2,9 @@
   ZT Zip Changelog
 ********************************************
 
+1.15 (4th Mar 2022)
+* Changed to ignore bad extra field entry error for permission extraction
+
 1.14 (10th Feb 2020)
 * Added removeEntries that copies to OutputStream
 * Added createEmpty

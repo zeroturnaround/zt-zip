@@ -1179,9 +1179,19 @@ public final class ZipUtil {
           FileUtils.copy(in, file);
         }
 
-        ZTFilePermissions permissions = ZipEntryUtil.getZTFilePermissions(zipEntry);
-        if (permissions != null) {
-          ZTFilePermissionsUtil.getDefaultStategy().setPermissions(file, permissions);
+        try {
+          ZTFilePermissions permissions = ZipEntryUtil.getZTFilePermissions(zipEntry);
+          if (permissions != null) {
+            ZTFilePermissionsUtil.getDefaultStategy().setPermissions(file, permissions);
+          }
+        }
+        catch (ZipException e) {
+          /*
+           * We are not bubbling this exception because there is a case where yes
+           * the file has problems with permissions and there is a block length that
+           * does not match but the other tooling like zip, jar and other just unpacks
+           * the files and does not use the permission information.
+           * */
         }
       }
     }
