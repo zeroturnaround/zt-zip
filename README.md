@@ -1,9 +1,6 @@
 ZIP - convenience methods
 =========================
 
-### Continuous Integration 
-[![Build Status](https://travis-ci.org/zeroturnaround/zt-zip.png)](https://travis-ci.org/zeroturnaround/zt-zip)
-
 ### Quick Overview
 
 The project was started and coded by Rein Raudjärv when he needed to process a large set of large ZIP archives for
