@@ -16,6 +16,7 @@ package org.zeroturnaround.zip;
  */
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 import org.junit.Assume;
 import org.zeroturnaround.zip.commons.FileUtils;
@@ -31,9 +32,7 @@ public class FilePermissionsTest {
   public void testPreserveExecuteFlag() throws Exception {
     String dirName = "FilePermissionsTest-e";
 
-    File tmpDir = File.createTempFile(dirName, null);
-    tmpDir.delete();
-    tmpDir.mkdir();
+    File tmpDir = Files.createTempDirectory(dirName).toFile();
     File fileA = new File(tmpDir, "fileA.txt");
     File fileB = new File(tmpDir, "fileB.txt");
     FileUtils.copyFile(testFile, fileA);
@@ -62,9 +61,7 @@ public class FilePermissionsTest {
   public void testPreserveReadFlag() throws Exception {
     String dirName = "FilePermissionsTest-r";
 
-    File tmpDir = File.createTempFile(dirName, null);
-    tmpDir.delete();
-    tmpDir.mkdir();
+    File tmpDir = Files.createTempDirectory(dirName).toFile();
     File fileA = new File(tmpDir, "fileA.txt");
     File fileB = new File(tmpDir, "fileB.txt");
     FileUtils.copyFile(testFile, fileA);
@@ -95,9 +92,7 @@ public class FilePermissionsTest {
   public void testPreserveWriteFlag() throws Exception {
     String dirName = "FilePermissionsTest-w";
 
-    File tmpDir = File.createTempFile(dirName, null);
-    tmpDir.delete();
-    tmpDir.mkdir();
+    File tmpDir = Files.createTempDirectory(dirName).toFile();
     File fileA = new File(tmpDir, "fileA.txt");
     File fileB = new File(tmpDir, "fileB.txt");
     FileUtils.copyFile(testFile, fileA, true);

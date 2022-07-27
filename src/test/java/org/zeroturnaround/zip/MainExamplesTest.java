@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.zip.ZipEntry;
 
 import junit.framework.TestCase;
@@ -52,9 +53,7 @@ public final class MainExamplesTest extends TestCase {
   }
 
   public static void testUnpack() throws IOException {
-    File tmpDir = File.createTempFile("prefix", "suffix");
-    tmpDir.delete();
-    tmpDir.mkdir();
+    File tmpDir = Files.createTempDirectory("prefix" + "suffix").toFile();
     ZipUtil.unpack(new File(DEMO_ZIP), tmpDir);
     File fooFile = new File(tmpDir, FOO_TXT);
     assertTrue(fooFile.exists());
@@ -62,9 +61,7 @@ public final class MainExamplesTest extends TestCase {
 
   public static void testUnpackInPlace() throws Exception{
     File demoFile = new File(DEMO_ZIP);
-    File outDir = File.createTempFile("prefix", "suffix");
-    outDir.delete();
-    outDir.mkdir();
+    File outDir = Files.createTempDirectory("prefix" + "suffix").toFile();
 
     File outFile = new File(outDir, "demo");
     FileOutputStream fio = new FileOutputStream(outFile);
