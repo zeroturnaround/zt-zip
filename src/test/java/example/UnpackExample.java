@@ -26,7 +26,11 @@ public class UnpackExample {
         OutputStream out = null; 
         try {
           in = zf.getInputStream(e);
-          out = new FileOutputStream(new File("demo", e.getName()));
+          final File zipEntryFile = new File("demo", e.getName());
+          if (!zipEntryFile.toPath().normalize().startsWith("demo")) {
+            throw new IOException("Bad zip entry");
+          }
+          out = new FileOutputStream(zipEntryFile);
           IOUtils.copy(in, out);
         }
         finally {
