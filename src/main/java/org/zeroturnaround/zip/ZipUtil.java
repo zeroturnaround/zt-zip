@@ -1140,7 +1140,7 @@ public final class ZipUtil {
      * that the outputdir + name doesn't leave the outputdir. See
      * DirectoryTraversalMaliciousTest for details.
      */
-    if (name.indexOf("..") != -1 && !destFile.getCanonicalFile().toPath().startsWith(outputDir.getCanonicalFile().toPath())) {
+    if (name.indexOf("..") != -1 && !destFile.getCanonicalPath().startsWith(outputDir.getCanonicalPath())) {
       throw new MaliciousZipException(outputDir, name);
     }
     return destFile;
