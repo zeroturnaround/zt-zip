@@ -2,6 +2,10 @@
   ZT Zip Changelog
 ********************************************
 
+1.17 (28th Jan 2024)
+* Exclude rebel.xml file from release artefact
+* Added ProGuard rule to preserve org.zeroturnaround.zip.extra.ZipExtraField.<init>
+
 1.15 (4th Mar 2022)
 * Changed to ignore bad extra field entry error for permission extraction
 
@@ -42,5 +46,5 @@
 * Improved Charset support
 
 1.6-SNAPSHOT (17th September 2012)
-* Started to write a changelog 
+* Started to write a changelog
 * Added public CI, https://travis-ci.org/
