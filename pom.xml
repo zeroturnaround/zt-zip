@@ -4,13 +4,13 @@
   <artifactId>zt-zip</artifactId>
   <packaging>jar</packaging>
   <name>ZT Zip</name>
-  <version>1.17</version>
+  <version>1.18-SNAPSHOT</version>
 
   <scm>
     <connection>scm:git:git@github.com:zeroturnaround/zt-zip.git</connection>
     <url>scm:git:git@github.com:zeroturnaround/zt-zip.git</url>
     <developerConnection>scm:git:git@github.com:zeroturnaround/zt-zip.git</developerConnection>
-    <tag>zt-zip-1.17</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <distributionManagement>
