@@ -10,4 +10,5 @@ test.log
 .sonar
 pom.xml.versionsBackup
 release.sh
+rebel.xml
 src/main/resources/rebel.xml

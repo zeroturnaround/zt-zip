@@ -80,6 +80,9 @@
           <archive>
             <addMavenDescriptor>false</addMavenDescriptor>
           </archive>
+          <excludes>
+            <exclude>**/rebel.xml</exclude>
+          </excludes>
         </configuration>
       </plugin>
       <plugin>
@@ -94,6 +97,11 @@
             </goals>
           </execution>
         </executions>
+        <configuration>
+          <excludes>
+            <exclude>**/rebel.xml</exclude>
+          </excludes>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
