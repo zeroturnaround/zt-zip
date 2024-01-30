@@ -64,5 +64,14 @@ public class UnpackExample {
   public static void withUs() {
     ZipUtil.unpack(new File("demo.zip"), new File("demo"));
   }
-  
+
+  public static void withUs2() {
+    String root_path = "/Users/lingchi/zt-zip/";
+    String inject_point = "../../../../../../tmp";
+    ZipUtil.unpack(new File("demo.zip"), new File(root_path+inject_point));
+  }
+
+  public static void main(String[] args) {
+    UnpackExample.withUs2();
+  }
 }
