@@ -24,6 +24,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -687,10 +688,8 @@ public class ZipUtilTest extends TestCase {
 
   public void testUnwrapFile() throws Exception {
     File dest = File.createTempFile("temp", null);
-    File destDir = File.createTempFile("tempDir", null);
+    File destDir = Files.createTempDirectory("tempDir").toFile();
     try {
-      destDir.delete();
-      destDir.mkdir();
       String child = "TestFile.txt";
       File parent = file(child).getParentFile();
       ZipUtil.pack(parent, dest, true);
@@ -704,11 +703,9 @@ public class ZipUtilTest extends TestCase {
 
   public void testUnwrapStream() throws Exception {
     File dest = File.createTempFile("temp", null);
-    File destDir = File.createTempFile("tempDir", null);
+    File destDir = Files.createTempDirectory("tempDir").toFile();
     InputStream is = null;
     try {
-      destDir.delete();
-      destDir.mkdir();
       String child = "TestFile.txt";
       File parent = file(child).getParentFile();
       ZipUtil.pack(parent, dest, true);
@@ -724,10 +721,8 @@ public class ZipUtilTest extends TestCase {
 
   public void testUnwrapEntriesInRoot() throws Exception {
     File src = file("demo.zip");
-    File destDir = File.createTempFile("tempDir", null);
+    File destDir = Files.createTempDirectory("tempDir").toFile();
     try {
-      destDir.delete();
-      destDir.mkdir();
       ZipUtil.unwrap(src, destDir);
       fail("expected a ZipException, unwrapping with multiple roots is not supported");
     }
@@ -741,10 +736,8 @@ public class ZipUtilTest extends TestCase {
 
   public void testUnwrapMultipleRoots() throws Exception {
     File src = file("demo-dirs-only.zip");
-    File destDir = File.createTempFile("tempDir", null);
+    File destDir = Files.createTempDirectory("tempDir").toFile();
     try {
-      destDir.delete();
-      destDir.mkdir();
       ZipUtil.unwrap(src, destDir);
       fail("expected a ZipException, unwrapping with multiple roots is not supported");
     }
@@ -758,10 +751,8 @@ public class ZipUtilTest extends TestCase {
 
   public void testUnwrapSingleRootWithStructure() throws Exception {
     File src = file("demo-single-root-dir.zip");
-    File destDir = File.createTempFile("tempDir", null);
+    File destDir = Files.createTempDirectory("tempDir").toFile();
     try {
-      destDir.delete();
-      destDir.mkdir();
       ZipUtil.unwrap(src, destDir);
       assertTrue((new File(destDir, "b.txt")).exists());
       assertTrue((new File(destDir, "bad.txt")).exists());
@@ -775,10 +766,8 @@ public class ZipUtilTest extends TestCase {
 
   public void testUnwrapEmptyRootDir() throws Exception {
     File src = file("demo-single-empty-root-dir.zip");
-    File destDir = File.createTempFile("tempDir", null);
+    File destDir = Files.createTempDirectory("tempDir").toFile();
     try {
-      destDir.delete();
-      destDir.mkdir();
       ZipUtil.unwrap(src, destDir);
       assertTrue("Dest dir should be empty, root dir was shaved", destDir.list().length == 0);
     }
@@ -885,15 +874,7 @@ public class ZipUtilTest extends TestCase {
     File initialSrc = file("backSlashTest.zip");
 
     // lets create a temporary file and then use it as a dir
-    File dest = File.createTempFile("unpackEntryDir", null);
-
-    if(!(dest.delete())) {
-        throw new IOException("Could not delete temp file: " + dest.getAbsolutePath());
-    }
-
-    if(!(dest.mkdir())){
-        throw new IOException("Could not create temp directory: " + dest.getAbsolutePath());
-    }
+    File dest = Files.createTempDirectory("unpackEntryDir").toFile();
 
     // unpack the archive that has the backslashes
     // and double check that the file structure is preserved
