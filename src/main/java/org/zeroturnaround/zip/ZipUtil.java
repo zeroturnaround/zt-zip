@@ -1742,7 +1742,7 @@ public final class ZipUtil {
    * @param mustHaveChildren
    *          if true, but directory to pack doesn't have any files, throw an exception.
    */
-  private static void pack(File dir, ZipOutputStream out, NameMapper mapper, String pathPrefix, boolean mustHaveChildren) throws IOException {
+  public static void pack(File dir, ZipOutputStream out, NameMapper mapper, String pathPrefix, boolean mustHaveChildren) throws IOException {
     String[] filenames = dir.list();
     if (filenames == null) {
       if (!dir.exists()) {
