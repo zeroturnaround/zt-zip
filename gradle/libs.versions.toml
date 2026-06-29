@@ -1,13 +1,11 @@
 [versions]
 slf4j = "2.0.18"
 junit = "4.13.2"
-log4j = "1.2.17"
 maven-publish = "0.37.0"
 
 [libraries]
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
-slf4j-log4j12 = { module = "org.slf4j:slf4j-log4j12", version.ref = "slf4j" }
-log4j = { module = "log4j:log4j", version.ref = "log4j" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 junit = { module = "junit:junit", version.ref = "junit" }
 
 [plugins]

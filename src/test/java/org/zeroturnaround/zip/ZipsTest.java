@@ -278,7 +278,7 @@ public class ZipsTest extends TestCase {
     assertTrue(dest.exists());
     assertTrue(ZipUtil.containsEntry(dest, "TestFile.txt"));
     assertTrue(ZipUtil.containsEntry(dest, "TestFile-II.txt"));
-    assertFalse(ZipUtil.containsEntry(dest, "log4j.properties"));
+    assertFalse(ZipUtil.containsEntry(dest, "simplelogger.properties"));
   }
 
   public void testPackEntries() throws Exception {
