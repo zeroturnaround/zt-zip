@@ -27,7 +27,7 @@ jobs:
         run: ./gradlew build
 
       - name: Upload jar
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: zt-zip
           path: build/libs/*.jar
@@ -35,7 +35,7 @@ jobs:
 
       - name: Upload test reports
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: test-reports
           path: build/reports/tests/
