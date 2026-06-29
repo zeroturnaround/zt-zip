@@ -22,4 +22,4 @@ jobs:
           java-version: 24
 
       - name: Submit dependency graph
-        uses: gradle/actions/dependency-submission@v4
+        uses: gradle/actions/dependency-submission@v6
