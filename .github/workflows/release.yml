@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.18)'
+        required: true
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 24
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set release version
+        run: |
+          sed -i 's/^version = "[^"]*"/version = "${{ inputs.version }}"/' build.gradle.kts
+          echo "Releasing version:"
+          grep '^version = ' build.gradle.kts
+
+      - name: Update version in README
+        run: |
+          # Gradle coordinate snippet: org.zeroturnaround:zt-zip:VERSION
+          perl -0pi -e 's/(org\.zeroturnaround:zt-zip:)[0-9][^"\)\s]*/${1}${{ inputs.version }}/g' README.md
+          # Maven coordinate snippet: <artifactId>zt-zip</artifactId> ... <version>VERSION</version>
+          perl -0pi -e 's{(<artifactId>zt-zip</artifactId>\s*<version>)[^<]+}{${1}${{ inputs.version }}}g' README.md
+
+      - name: Run full build (validates everything compiles + tests pass)
+        run: ./gradlew clean build
+
+      - name: Publish to Maven Central
+        run: ./gradlew publishAndReleaseToMavenCentral
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+
+      - name: Commit version bump
+        run: |
+          git add build.gradle.kts README.md
+          git commit -m "Release ${{ inputs.version }}"
+
+      - name: Tag and push
+        run: |
+          git tag "zt-zip-${{ inputs.version }}"
+          git push origin HEAD
+          git push origin "zt-zip-${{ inputs.version }}"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "zt-zip-${{ inputs.version }}" \
+            --title "zt-zip-${{ inputs.version }}" \
+            --generate-notes \
+            build/libs/*.jar
+
+      - name: Set next development version
+        run: |
+          VERSION="${{ inputs.version }}"
+          # Increment the last numeric component, matching the historical
+          # versioning (1.18 -> 1.19; 1.18.1 -> 1.18.2).
+          PREFIX="${VERSION%.*}"
+          LAST="${VERSION##*.}"
+          if [ "$PREFIX" = "$VERSION" ]; then
+            NEXT="$((LAST + 1))-SNAPSHOT"
+          else
+            NEXT="${PREFIX}.$((LAST + 1))-SNAPSHOT"
+          fi
+          echo "Next development version: $NEXT"
+          sed -i "s/^version = \"$VERSION\"/version = \"$NEXT\"/" build.gradle.kts
+          grep '^version = ' build.gradle.kts
+          git add build.gradle.kts
+          git commit -m "Set next development version $NEXT"
+          git push origin HEAD

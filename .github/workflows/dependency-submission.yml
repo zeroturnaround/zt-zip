@@ -1,0 +1,25 @@
+name: Dependency Submission
+
+# Submits the full Gradle dependency graph to GitHub so that Dependabot can
+# raise security alerts (and updates) for vulnerable transitive dependencies.
+on:
+  push:
+    branches: [master, main]
+
+permissions:
+  contents: write
+
+jobs:
+  dependency-submission:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 24
+
+      - name: Submit dependency graph
+        uses: gradle/actions/dependency-submission@v4

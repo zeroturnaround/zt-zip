@@ -1,0 +1,24 @@
+version: 2
+updates:
+  # Gradle dependencies, including the version catalog (gradle/libs.versions.toml).
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      # Bundle minor/patch bumps into one PR; majors stay separate for review.
+      minor-and-patch:
+        update-types:
+          - "patch"
+          - "minor"
+
+  # GitHub Actions used by the workflows in .github/workflows.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      minor-and-patch:
+        update-types:
+          - "patch"
+          - "minor"

@@ -11,24 +11,30 @@ The project is built using java.util.zip.* packages for stream based access. Mos
 usage is also supported.
 
 ### Installation
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.zeroturnaround/zt-zip/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.zeroturnaround/zt-zip)
+[![Build](https://github.com/zeroturnaround/zt-zip/actions/workflows/build.yml/badge.svg)](https://github.com/zeroturnaround/zt-zip/actions/workflows/build.yml)
+[![Maven Central](https://img.shields.io/maven-central/v/org.zeroturnaround/zt-zip.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/org.zeroturnaround/zt-zip)
 
-The project artifacts are available in [Maven Central Repository](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22zt-zip%22).
-To include it in your maven project then you have to specify the dependency.
+The project artifacts are available in [Maven Central Repository](https://central.sonatype.com/artifact/org.zeroturnaround/zt-zip).
+
+Maven:
 
 ```xml
-...
 <dependency>
     <groupId>org.zeroturnaround</groupId>
     <artifactId>zt-zip</artifactId>
     <version>1.17</version>
     <type>jar</type>
 </dependency>
-...
 ```
 
-Notice that [1.8](https://oss.sonatype.org/content/repositories/releases/org/zeroturnaround/zt-zip/1.8/) is the last Java 1.4 compatible release. 
-Since then Java 1.5 is required.
+Gradle:
+
+```kotlin
+implementation("org.zeroturnaround:zt-zip:1.17")
+```
+
+Notice that [1.8](https://repo1.maven.org/maven2/org/zeroturnaround/zt-zip/1.8/) is the last Java 1.4 compatible release.
+Releases from 1.9 onwards require Java 5 at the source level, and current releases require Java 8 or later at runtime.
 
 If you are using with ProGuard, please add the following configuration
 ```
@@ -265,6 +271,18 @@ boolean equals = ZipUtil.entryEquals(new File("/tmp/demo1.zip"), new File("/tmp/
 ```java
 boolean equals = ZipUtil.entryEquals(new File("/tmp/demo1.zip"), new File("/tmp/demo2.zip"), "foo1.txt", "foo2.txt");
 ```
+
+## Building
+
+The project is built with [Gradle](https://gradle.org/) via the bundled wrapper, so no local
+Gradle installation is required:
+
+```sh
+./gradlew build
+```
+
+The library targets Java 8 bytecode. The build resolves a Java 8 toolchain automatically (it is
+downloaded on demand if not already installed), so the build itself runs on any modern JDK.
 
 ## Progress bar
 
