@@ -16,6 +16,10 @@ package org.zeroturnaround.zip;
  *    limitations under the License.
  */
 import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import junit.framework.TestCase;
 
@@ -92,6 +96,38 @@ public class DirectoryTraversalMaliciousTest extends TestCase {
     }
     catch (MaliciousZipException e) {
       assertTrue(true);
+    }
+  }
+
+  /*
+   * An entry can leave the target without escaping its parent: a name like
+   * "../targetX" resolves to a sibling directory whose path shares a prefix with
+   * the target. A plain string prefix check treats that as inside the target; the
+   * traversal guard must compare path components instead.
+   */
+  public void testUnpackDoesntLeaveTargetForSiblingWithSharedPrefix() throws Exception {
+    File parent = Files.createTempDirectory("zt-zip-traversal").toFile();
+    File target = new File(parent, "target");
+    target.mkdir();
+
+    File zip = File.createTempFile("sibling-prefix-traversal", ".zip");
+    ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zip));
+    try {
+      out.putNextEntry(new ZipEntry("good.txt"));
+      out.closeEntry();
+      out.putNextEntry(new ZipEntry("../targetX/evil.txt"));
+      out.closeEntry();
+    }
+    finally {
+      out.close();
+    }
+
+    try {
+      ZipUtil.unpack(zip, target);
+      fail();
+    }
+    catch (MaliciousZipException e) {
+      assertFalse(new File(parent, "targetX/evil.txt").exists());
     }
   }
 }
