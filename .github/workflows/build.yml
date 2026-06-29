@@ -1,0 +1,42 @@
+name: Build
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 24
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # `build` runs `assemble` + `check` (which includes `test`). The Java 8
+      # toolchain needed to compile is auto-provisioned by the foojay resolver.
+      - name: Build and test
+        run: ./gradlew build
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v6
+        with:
+          name: zt-zip
+          path: build/libs/*.jar
+          retention-days: 7
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: test-reports
+          path: build/reports/tests/
+          retention-days: 7

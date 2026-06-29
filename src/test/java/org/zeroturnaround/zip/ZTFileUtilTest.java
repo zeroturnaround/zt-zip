@@ -45,7 +45,7 @@ public class ZTFileUtilTest extends TestCase {
     Collection<File> files = ZTFileUtil.listFiles(new File("."), new FileFilter() {
 
       public boolean accept(File pathname) {
-        if (pathname.toString().endsWith("." + File.separator + "pom.xml")) {
+        if (pathname.toString().endsWith("." + File.separator + "build.gradle.kts")) {
           return true;
         }
         else {
@@ -58,7 +58,7 @@ public class ZTFileUtilTest extends TestCase {
   }
 
   public void testListFilesFromFile() {
-    Collection files = ZTFileUtil.listFiles(new File("pom.xml"), null);
+    Collection files = ZTFileUtil.listFiles(new File("build.gradle.kts"), null);
     assertEquals(files.size(), 0);
   }
 

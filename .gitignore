@@ -1,5 +1,6 @@
 bin/
-target/
+build/
+.gradle/
 test.log
 *.swp
 *.iml
@@ -8,7 +9,6 @@ test.log
 .settings/
 .idea
 .sonar
-pom.xml.versionsBackup
 release.sh
 rebel.xml
 src/main/resources/rebel.xml
