@@ -45,8 +45,9 @@ dependencies {
   implementation(libs.slf4j.api)
 
   testImplementation(libs.junit)
-  testRuntimeOnly(libs.slf4j.log4j12)
-  testRuntimeOnly(libs.log4j)
+  // slf4j-simple is the slf4j binding for tests: no transitive dependencies and
+  // released in lockstep with slf4j-api, so there is no separate version to track.
+  testRuntimeOnly(libs.slf4j.simple)
 }
 
 tasks.withType<JavaCompile>().configureEach {
