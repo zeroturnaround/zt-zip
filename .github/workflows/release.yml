@@ -32,7 +32,7 @@ jobs:
           java-version: 24
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Set release version
         run: |

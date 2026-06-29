@@ -19,7 +19,7 @@ jobs:
           java-version: 24
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       # `build` runs `assemble` + `check` (which includes `test`). The Java 8
       # toolchain needed to compile is auto-provisioned by the foojay resolver.
