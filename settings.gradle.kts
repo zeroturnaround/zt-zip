@@ -16,7 +16,7 @@
 plugins {
   // Auto-provisions the Java 8 toolchain when it isn't already installed,
   // so the build works on machines (and CI runners) that only ship a newer JDK.
-  id("org.gradle.toolchains.foojay-resolver-convention") version "0.9.0"
+  id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
 rootProject.name = "zt-zip"
