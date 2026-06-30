@@ -15,8 +15,15 @@ package org.zeroturnaround.zip.extra;
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.file.Files;
 import java.util.zip.CRC32;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
+import java.util.zip.ZipOutputStream;
+
+import org.zeroturnaround.zip.ZipUtil;
 
 import junit.framework.TestCase;
 
@@ -56,20 +63,60 @@ public class AsiExtraFieldTest extends TestCase {
       fail();
     }
     catch (ZipException e) {
-      assertTrue(true);
+      assertEquals("Invalid symbolic link length " + Integer.MAX_VALUE + " in ASI extra field", e.getMessage());
     }
   }
 
   public void testParseRejectsNegativeLinkLength() throws Exception {
-    byte[] data = localFileData(0, 0xFFFFFFFFL, new byte[0]); // reads as a negative int
+    byte[] data = localFileData(0, 0xFFFFFFFFL, new byte[0]); // larger than the bytes present (read as an unsigned 4-byte value)
 
     try {
       new AsiExtraField().parseFromLocalFileData(data, 0, data.length);
       fail();
     }
     catch (ZipException e) {
-      assertTrue(true);
+      assertEquals("Invalid symbolic link length " + 0xFFFFFFFFL + " in ASI extra field", e.getMessage());
     }
+  }
+
+  public void testParseRejectsShortFieldWithoutCrashing() throws Exception {
+    // A declared length below the fixed-field minimum (CRC + mode + link length + uid + gid = 14)
+    // must be rejected with a ZipException, not an unchecked ArrayIndexOutOfBoundsException or
+    // NegativeArraySizeException from reading/allocating past the supplied bytes.
+    int[] shortLengths = { 0, 2, 4, 10, 13 };
+    for (int length : shortLengths) {
+      byte[] data = new byte[Math.max(length, 4)];
+      try {
+        new AsiExtraField().parseFromLocalFileData(data, 0, length);
+        fail("expected ZipException for length " + length);
+      }
+      catch (ZipException e) {
+        assertEquals("ASI extra field is too short: " + length + " bytes", e.getMessage());
+      }
+    }
+  }
+
+  public void testUnpackDoesNotCrashOnShortAsiExtraField() throws Exception {
+    // An entry carrying a truncated ASI (0x756E) extra field must not abort unpack with an
+    // unchecked exception; the bad permission field is ignored and unpacking completes.
+    File zip = File.createTempFile("asi-short-extra", ".zip");
+    ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zip));
+    try {
+      ZipEntry entry = new ZipEntry("good.txt");
+      // [header id 0x756E, little-endian][data length 4, little-endian][4 bytes of data]
+      entry.setExtra(new byte[] { 0x6E, 0x75, 0x04, 0x00, 0, 0, 0, 0 });
+      out.putNextEntry(entry);
+      out.write("hi".getBytes("UTF-8"));
+      out.closeEntry();
+    }
+    finally {
+      out.close();
+    }
+
+    File outDir = Files.createTempDirectory("asi-short-out").toFile();
+    ZipUtil.unpack(zip, outDir);
+
+    assertTrue(new File(outDir, "good.txt").exists());
   }
 
   public void testParseAcceptsValidLink() throws Exception {

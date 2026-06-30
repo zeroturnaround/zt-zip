@@ -113,6 +113,8 @@ public class AsiExtraField implements ZipExtraField, Cloneable {
 
   private static final ZipShort HEADER_ID = new ZipShort(0x756E);
   private static final int WORD = 4;
+  /** Minimum local file data length: CRC (WORD) + mode (2) + link length (WORD) + uid (2) + gid (2). */
+  private static final int MIN_LOCAL_FILE_DATA_LENGTH = WORD + 2 + WORD + 2 + 2;
   /**
    * Standard Unix stat(2) file mode.
    * 
@@ -368,6 +370,12 @@ public class AsiExtraField implements ZipExtraField, Cloneable {
    */
   public void parseFromLocalFileData(byte[] data, int offset, int length)
       throws ZipException {
+
+    // Reject a short field before reading any fixed-offset value, so a truncated field cannot
+    // throw an unchecked ArrayIndexOutOfBoundsException/NegativeArraySizeException out of unpack.
+    if (length < MIN_LOCAL_FILE_DATA_LENGTH) {
+      throw new ZipException("ASI extra field is too short: " + length + " bytes");
+    }
 
     long givenChecksum = ZipLong.getValue(data, offset);
     byte[] tmp = new byte[length - WORD];
