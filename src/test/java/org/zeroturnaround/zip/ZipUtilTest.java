@@ -509,9 +509,9 @@ public class ZipUtilTest extends TestCase {
     File dest = File.createTempFile("temp", null);
     try {
       ZipUtil.removeEntry(src, "bar.txt", dest);
-      assertTrue("Result zip misses entry 'foo.txt'", ZipUtil.containsEntry(dest, "foo.txt"));
-      assertTrue("Result zip misses entry 'foo1.txt'", ZipUtil.containsEntry(dest, "foo1.txt"));
-      assertTrue("Result zip misses entry 'foo2.txt'", ZipUtil.containsEntry(dest, "foo2.txt"));
+      assertTrue("Result zip is missing entry 'foo.txt'", ZipUtil.containsEntry(dest, "foo.txt"));
+      assertTrue("Result zip is missing entry 'foo1.txt'", ZipUtil.containsEntry(dest, "foo1.txt"));
+      assertTrue("Result zip is missing entry 'foo2.txt'", ZipUtil.containsEntry(dest, "foo2.txt"));
       assertFalse("Result zip still contains 'bar.txt'", ZipUtil.containsEntry(dest, "bar.txt"));
     }
     finally {
@@ -542,7 +542,7 @@ public class ZipUtilTest extends TestCase {
       assertFalse("Result zip still contains 'bar.txt'", ZipUtil.containsEntry(dest, "bar.txt"));
       assertFalse("Result zip still contains dir 'a/b'", ZipUtil.containsEntry(dest, "a/b"));
       assertTrue("Result doesn't contain 'attic'", ZipUtil.containsEntry(dest, "attic/treasure.txt"));
-      assertTrue("Entry whose prefix is dir name is removed too: 'b.txt'", ZipUtil.containsEntry(dest, "a/b.txt"));
+      assertTrue("Entry 'a/b.txt' should be preserved when removing dir 'a/b'", ZipUtil.containsEntry(dest, "a/b.txt"));
       assertFalse("Entry in a removed dir is still there: 'a/b/c.txt'", ZipUtil.containsEntry(dest, "a/b/c.txt"));
 
     }
@@ -563,7 +563,7 @@ public class ZipUtilTest extends TestCase {
       assertFalse("Result zip still contains 'bar.txt'", ZipUtil.containsEntry(dest, "bar.txt"));
       assertFalse("Result zip still contains dir 'a/b'", ZipUtil.containsEntry(dest, "a/b"));
       assertTrue("Result doesn't contain 'attic'", ZipUtil.containsEntry(dest, "attic/treasure.txt"));
-      assertTrue("Entry whose prefix is dir name is removed too: 'b.txt'", ZipUtil.containsEntry(dest, "a/b.txt"));
+      assertTrue("Entry 'a/b.txt' should be preserved when removing dir 'a/b'", ZipUtil.containsEntry(dest, "a/b.txt"));
       assertFalse("Entry in a removed dir is still there: 'a/b/c.txt'", ZipUtil.containsEntry(dest, "a/b/c.txt"));
 
     }
@@ -1036,8 +1036,8 @@ public class ZipUtilTest extends TestCase {
       // Packing must not crash on the dangling links (issue #122).
       ZipUtil.pack(dir, zip);
 
-      assertTrue("Result zip misses entry '" + goodEntry + "'", ZipUtil.containsEntry(zip, goodEntry));
-      assertTrue("Result zip misses entry '" + subGoodEntry + "'", ZipUtil.containsEntry(zip, subGoodEntry));
+      assertTrue("Result zip is missing entry '" + goodEntry + "'", ZipUtil.containsEntry(zip, goodEntry));
+      assertTrue("Result zip is missing entry '" + subGoodEntry + "'", ZipUtil.containsEntry(zip, subGoodEntry));
       assertFalse("Result zip still contains broken symlink '" + linkEntry + "'", ZipUtil.containsEntry(zip, linkEntry));
       assertFalse("Result zip still contains deleted target '" + targetEntry + "'", ZipUtil.containsEntry(zip, targetEntry));
       assertFalse("Result zip still contains broken symlink '" + subLinkEntry + "'", ZipUtil.containsEntry(zip, subLinkEntry));
