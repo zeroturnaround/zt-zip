@@ -1603,10 +1603,14 @@ public final class ZipUtil {
       for (int i = 0; i < filesToPack.length; i++) {
         File fileToPack = filesToPack[i];
 
-        ZipEntry zipEntry = ZipEntryUtil.fromFile(mapper.map(fileToPack.getName()), fileToPack);
-        out.putNextEntry(zipEntry);
-        FileUtils.copy(fileToPack, out);
-        out.closeEntry();
+        // A NameMapper may return null to skip an entry, the same convention as the directory pack.
+        String name = mapper.map(fileToPack.getName());
+        if (name != null) {
+          ZipEntry zipEntry = ZipEntryUtil.fromFile(name, fileToPack);
+          out.putNextEntry(zipEntry);
+          FileUtils.copy(fileToPack, out);
+          out.closeEntry();
+        }
       }
     }
     catch (IOException e) {
