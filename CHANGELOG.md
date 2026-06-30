@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - Hardened the relative path-traversal checks when unpacking, using `java.nio.file.Path` for consistent sub-directory containment checks.
+- The `Zips` fluent API unpack path (`Zips.get(...).unpack().destination(...).process()`) now applies the same path-traversal guard as `ZipUtil.unpack`, rejecting entries that resolve outside the destination directory; this covers both the plain and transformer branches ([#180](https://github.com/zeroturnaround/zt-zip/pull/180)).
 - In-place unpack now creates its temporary directory securely with `Files.createTempDirectory` (atomic, owner-only permissions) instead of a predictable, world-readable directory.
 
 ## [1.17] - 2024-01-28
