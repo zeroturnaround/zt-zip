@@ -46,9 +46,12 @@ public class ByteSource implements ZipEntrySource {
     this.bytes = bytes == null ? null : (byte[]) bytes.clone();
     this.time = time;
     this.compressionMethod = compressionMethod;
-    if(compressionMethod != -1 && bytes != null) {
+    if(compressionMethod != -1) {
+      // A STORED entry must declare its CRC; null bytes is an empty (directory) entry, whose CRC is 0.
       CRC32 crc32 = new CRC32();
-      crc32.update(bytes);
+      if (bytes != null) {
+        crc32.update(bytes);
+      }
       this.crc = crc32.getValue();
     } else {
       this.crc = -1;
@@ -63,6 +66,10 @@ public class ByteSource implements ZipEntrySource {
     ZipEntry entry = new ZipEntry(path);
     if (bytes != null) {
       entry.setSize(bytes.length);
+    }
+    else if (compressionMethod != -1) {
+      // A STORED entry must declare its size; null bytes is an empty (directory) entry.
+      entry.setSize(0);
     }
     if(compressionMethod != -1) {
       entry.setMethod(compressionMethod);

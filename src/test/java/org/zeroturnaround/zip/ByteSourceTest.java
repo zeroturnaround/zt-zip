@@ -15,6 +15,8 @@ package org.zeroturnaround.zip;
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+import java.util.zip.ZipEntry;
+
 import junit.framework.TestCase;
 
 public class ByteSourceTest extends TestCase {
@@ -27,5 +29,18 @@ public class ByteSourceTest extends TestCase {
     assertEquals("dir/", source.getPath());
     assertNull(source.getInputStream());
     assertEquals("dir/", source.getEntry().getName());
+  }
+
+  public void testNullBytesWithStoredMethodIsAnEmptyEntry() throws Exception {
+    // A STORED entry must declare its size and CRC; with null bytes (a directory entry) those
+    // must be 0/0 so ZipOutputStream.putNextEntry accepts it instead of rejecting a STORED entry
+    // with a missing size/crc.
+    ByteSource source = new ByteSource("dir/", null, ZipEntry.STORED);
+    ZipEntry entry = source.getEntry();
+
+    assertEquals(ZipEntry.STORED, entry.getMethod());
+    assertEquals(0, entry.getSize());
+    assertEquals(0, entry.getCrc());
+    assertNull(source.getInputStream());
   }
 }
