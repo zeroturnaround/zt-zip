@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -387,10 +388,7 @@ public class Zips {
   private File getDestinationFile() throws IOException {
     if(isUnpack()) {
       if(isInPlace()) {
-        File tempFile = File.createTempFile("zips", null);
-        FileUtils.deleteQuietly(tempFile);
-        tempFile.mkdirs(); // temp dir created
-        return tempFile;
+        return Files.createTempDirectory("zips").toFile();
       }
       else {
         if (!dest.isDirectory()) {
