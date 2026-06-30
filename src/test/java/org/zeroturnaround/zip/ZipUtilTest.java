@@ -926,4 +926,94 @@ public class ZipUtilTest extends TestCase {
     // As the ZIP file is empty then the unpack doesn't create the directory.
     // So this is why I don't have a forceDelete for the dest variable - FileUtils.forceDelete(dest);
   }
+
+  public void testPackDirIntoExistingZipOutputStream() throws Exception {
+    File zip = File.createTempFile("pack-into-stream", ".zip");
+
+    ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zip));
+    try {
+      // an entry written by the caller's own workflow before packing the directory
+      out.putNextEntry(new ZipEntry("manual.txt"));
+      out.write("manual".getBytes("UTF-8"));
+      out.closeEntry();
+
+      // the caller owns the stream; pack appends the directory's contents into it
+      ZipUtil.pack(new File("src/test/resources/testDirectory"), out);
+
+      // pack must not have finished the stream: the caller can keep appending
+      out.putNextEntry(new ZipEntry("after.txt"));
+      out.write("after".getBytes("UTF-8"));
+      out.closeEntry();
+    }
+    finally {
+      out.close();
+    }
+
+    assertTrue(ZipUtil.containsEntry(zip, "manual.txt"));
+    assertTrue(ZipUtil.containsEntry(zip, "after.txt"));
+    assertTrue(ZipUtil.containsEntry(zip, "testfileInTestDirectory.txt"));
+    assertTrue(ZipUtil.containsEntry(zip, "testSubdirectory/"));
+    assertTrue(ZipUtil.containsEntry(zip, "testSubdirectory/testFileInTestSubdirectory.txt"));
+
+    assertEquals("manual", new String(ZipUtil.unpackEntry(zip, "manual.txt"), "UTF-8"));
+    assertEquals("after", new String(ZipUtil.unpackEntry(zip, "after.txt"), "UTF-8"));
+    assertEquals("badabing", new String(ZipUtil.unpackEntry(zip, "testfileInTestDirectory.txt"), "UTF-8"));
+    assertEquals("badaboom", new String(ZipUtil.unpackEntry(zip, "testSubdirectory/testFileInTestSubdirectory.txt"), "UTF-8"));
+
+    FileUtils.forceDelete(zip);
+  }
+
+  public void testPackDirIntoExistingZipOutputStreamWithNameMapper() throws Exception {
+    File zip = File.createTempFile("pack-into-stream-mapper", ".zip");
+
+    NameMapper prefixMapper = new NameMapper() {
+      public String map(String name) {
+        return "renamed/" + name;
+      }
+    };
+
+    ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zip));
+    try {
+      ZipUtil.pack(new File("src/test/resources/testDirectory"), out, prefixMapper);
+    }
+    finally {
+      out.close();
+    }
+
+    assertTrue(ZipUtil.containsEntry(zip, "renamed/testfileInTestDirectory.txt"));
+    assertTrue(ZipUtil.containsEntry(zip, "renamed/testSubdirectory/testFileInTestSubdirectory.txt"));
+    assertFalse(ZipUtil.containsEntry(zip, "testfileInTestDirectory.txt"));
+
+    FileUtils.forceDelete(zip);
+  }
+
+  public void testPackEmptyDirIntoExistingZipOutputStream() throws Exception {
+    File emptyDir = File.createTempFile("empty-dir", null);
+    assertTrue(emptyDir.delete());
+    assertTrue(emptyDir.mkdir());
+    File zip = File.createTempFile("pack-empty-into-stream", ".zip");
+
+    ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zip));
+    try {
+      out.putNextEntry(new ZipEntry("manual.txt"));
+      out.closeEntry();
+      // an empty directory must be a no-op, not a ZipException
+      ZipUtil.pack(emptyDir, out);
+    }
+    finally {
+      out.close();
+    }
+
+    assertTrue(ZipUtil.containsEntry(zip, "manual.txt"));
+    ZipFile zf = new ZipFile(zip);
+    try {
+      assertEquals(1, zf.size());
+    }
+    finally {
+      zf.close();
+    }
+
+    FileUtils.forceDelete(emptyDir);
+    FileUtils.forceDelete(zip);
+  }
 }
