@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Zips` unpack with a transformer no longer hangs when the transformer produces no entry, and a transformer that throws now surfaces its real exception to the caller instead of a misleading "Write end dead" pipe error.
 - `Zips.addEntry`/`addEntries` no longer fail with "Stream closed" when adding a directory `FileSource`; a directory is now stored as a proper directory entry ([#138](https://github.com/zeroturnaround/zt-zip/issues/138)).
 - `ZipUtil.pack` no longer fails with `FileNotFoundException` when a directory contains a broken (dangling) symbolic link; such entries are skipped ([#122](https://github.com/zeroturnaround/zt-zip/issues/122)).
+- `ByteSource` (and the `byte[]` `ZipUtil.addEntry`/`replaceEntry` overloads) now accept `null` bytes as the documented directory entry instead of throwing `NullPointerException`.
 
 ### Security
 

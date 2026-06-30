@@ -42,10 +42,11 @@ public class ByteSource implements ZipEntrySource {
 
   public ByteSource(String path, byte[] bytes, long time, int compressionMethod) {
     this.path = path;
-    this.bytes = (byte[])bytes.clone();
+    // A null byte array is allowed and denotes a directory entry (see getEntry/getInputStream).
+    this.bytes = bytes == null ? null : (byte[]) bytes.clone();
     this.time = time;
     this.compressionMethod = compressionMethod;
-    if(compressionMethod != -1) {
+    if(compressionMethod != -1 && bytes != null) {
       CRC32 crc32 = new CRC32();
       crc32.update(bytes);
       this.crc = crc32.getValue();
