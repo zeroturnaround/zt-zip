@@ -1729,6 +1729,58 @@ public final class ZipUtil {
   }
 
   /**
+   * Compresses the given directory and all of its sub-directories into the passed in
+   * ZIP output stream. The entries are appended to the stream as-is; it is the
+   * responsibility of the caller to finish and close the stream properly, so further
+   * entries may be written before that. An empty directory simply adds no entries.
+   * <p>
+   * Unlike the {@link OutputStream}-based {@code pack} methods, this overload propagates
+   * {@link IOException} instead of wrapping it in an unchecked {@link ZipException}, since
+   * the caller owns the stream. Pass an already-open stream to this overload rather than to
+   * the {@link OutputStream} overloads, which would nest a new archive inside the stream.
+   *
+   * @param sourceDir
+   *          root directory.
+   * @param os
+   *          open ZIP output stream the entries are written to.
+   *
+   * @throws IOException
+   *          if writing an entry to the stream fails.
+   *
+   * @since 1.18
+   */
+  public static void pack(File sourceDir, ZipOutputStream os) throws IOException {
+    pack(sourceDir, os, IdentityNameMapper.INSTANCE);
+  }
+
+  /**
+   * Compresses the given directory and all of its sub-directories into the passed in
+   * ZIP output stream. The entries are appended to the stream as-is; it is the
+   * responsibility of the caller to finish and close the stream properly, so further
+   * entries may be written before that. An empty directory simply adds no entries.
+   * <p>
+   * Unlike the {@link OutputStream}-based {@code pack} methods, this overload propagates
+   * {@link IOException} instead of wrapping it in an unchecked {@link ZipException}, since
+   * the caller owns the stream. Pass an already-open stream to this overload rather than to
+   * the {@link OutputStream} overloads, which would nest a new archive inside the stream.
+   *
+   * @param sourceDir
+   *          root directory.
+   * @param os
+   *          open ZIP output stream the entries are written to.
+   * @param mapper
+   *          call-back for renaming the entries.
+   *
+   * @throws IOException
+   *          if writing an entry to the stream fails.
+   *
+   * @since 1.18
+   */
+  public static void pack(File sourceDir, ZipOutputStream os, NameMapper mapper) throws IOException {
+    pack(sourceDir, os, mapper, "", false);
+  }
+
+  /**
    * Compresses the given directory and all its sub-directories into a ZIP file.
    *
    * @param dir
