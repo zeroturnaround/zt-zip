@@ -995,4 +995,57 @@ public class ZipUtilTest extends TestCase {
     FileUtils.forceDelete(emptyDir);
     FileUtils.forceDelete(zip);
   }
+
+  public void testPackDirectoryWithBrokenSymlink() throws Exception {
+    File dir = Files.createTempDirectory("broken-symlink").toFile();
+    File zip = File.createTempFile("broken-symlink", ".zip");
+    try {
+      // Each name is both the file's path relative to the packed directory and the entry
+      // name it is expected to (not) have in the archive, so setup and assertions line up.
+      String goodEntry = "good.txt";
+      String linkEntry = "link.txt";
+      String targetEntry = "target.txt";
+      String subGoodEntry = "sub/subgood.txt";
+      String subLinkEntry = "sub/sublink.txt";
+      String subTargetEntry = "sub/subtarget.txt";
+
+      // A good file plus a symlink whose target we will delete, leaving the link dangling.
+      new File(dir, goodEntry).createNewFile();
+      File target = new File(dir, targetEntry);
+      target.createNewFile();
+      try {
+        Files.createSymbolicLink(new File(dir, linkEntry).toPath(), target.toPath());
+      }
+      catch (UnsupportedOperationException | IOException e) {
+        // This environment cannot create symbolic links (e.g. Windows without the required
+        // privilege), so the broken-link scenario cannot be exercised here. Skip the test.
+        return;
+      }
+
+      // The same arrangement nested in a subdirectory exercises the recursive pack path too.
+      new File(dir, "sub").mkdir();
+      new File(dir, subGoodEntry).createNewFile();
+      File subTarget = new File(dir, subTargetEntry);
+      subTarget.createNewFile();
+      Files.createSymbolicLink(new File(dir, subLinkEntry).toPath(), subTarget.toPath());
+
+      // Break both links: dir.list() still reports them but the files no longer exist.
+      FileUtils.forceDelete(target);
+      FileUtils.forceDelete(subTarget);
+
+      // Packing must not crash on the dangling links (issue #122).
+      ZipUtil.pack(dir, zip);
+
+      assertTrue("Result zip misses entry '" + goodEntry + "'", ZipUtil.containsEntry(zip, goodEntry));
+      assertTrue("Result zip misses entry '" + subGoodEntry + "'", ZipUtil.containsEntry(zip, subGoodEntry));
+      assertFalse("Result zip still contains broken symlink '" + linkEntry + "'", ZipUtil.containsEntry(zip, linkEntry));
+      assertFalse("Result zip still contains deleted target '" + targetEntry + "'", ZipUtil.containsEntry(zip, targetEntry));
+      assertFalse("Result zip still contains broken symlink '" + subLinkEntry + "'", ZipUtil.containsEntry(zip, subLinkEntry));
+      assertFalse("Result zip still contains deleted target '" + subTargetEntry + "'", ZipUtil.containsEntry(zip, subTargetEntry));
+    }
+    finally {
+      FileUtils.deleteQuietly(dir);
+      FileUtils.deleteQuietly(zip);
+    }
+  }
 }

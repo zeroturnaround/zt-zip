@@ -1810,6 +1810,13 @@ public final class ZipUtil {
     for (int i = 0; i < filenames.length; i++) {
       String filename = filenames[i];
       File file = new File(dir, filename);
+      if (!file.exists()) {
+        // A broken (dangling) symbolic link is listed by dir.list() but cannot be read.
+        // Skip it so packing doesn't crash with a FileNotFoundException. Preserving the
+        // link itself is a separate feature and out of scope here.
+        log.debug("Skipping '{}' as it does not exist (e.g. a broken symbolic link).", file);
+        continue;
+      }
       boolean isDir = file.isDirectory();
       String path = pathPrefix + file.getName(); // NOSONAR
       if (isDir) {
