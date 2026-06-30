@@ -104,6 +104,27 @@ public class DirectoryTraversalMaliciousTest extends TestCase {
   }
 
   /*
+   * The BackslashUnpacker splits an entry on "\" and walks the components. The traversal guard must
+   * run before any directory is created, otherwise a "..\" entry creates directories outside the
+   * target even though the file write is ultimately blocked.
+   */
+  public void testBackslashUnpackerDoesntCreateDirectoriesOutsideTarget() throws Exception {
+    File parent = Files.createTempDirectory("zt-zip-bs-traversal").toFile();
+    File target = new File(parent, "target");
+    target.mkdir();
+    File escaped = new File(parent, "escapedir");
+    File zip = createTraversalZip("..\\escapedir\\evil.txt");
+
+    try {
+      ZipUtil.iterate(zip, new ZipUtil.BackslashUnpacker(target));
+      fail();
+    }
+    catch (MaliciousZipException e) {
+      assertFalse(escaped.exists());
+    }
+  }
+
+  /*
    * An entry can leave the target without escaping its parent: a name like
    * "../targetX" resolves to a sibling directory whose path shares a prefix with
    * the target. A plain string prefix check treats that as inside the target; the

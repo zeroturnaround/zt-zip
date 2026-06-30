@@ -62,10 +62,14 @@ public class FileUtils extends FileUtilsV2_2 {
 
   /**
    * Find a non-existing file in the same directory using the same name as prefix.
-   * 
+   *
    * @param file file used for the name and location (it is not read or written).
    * @return a non-existing file in the same directory using the same name as prefix.
+   * @deprecated the returned name is predictable and the check-then-use gap allows a symlink/TOCTOU
+   *             race in a shared directory; create temporary files with {@link File#createTempFile}
+   *             or {@link java.nio.file.Files#createTempDirectory} instead.
    */
+  @Deprecated
   public static File getTempFileFor(File file) {
     File parent = file.getParentFile();
     String name = file.getName();
