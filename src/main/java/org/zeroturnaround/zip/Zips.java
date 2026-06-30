@@ -678,7 +678,7 @@ public class Zips {
       }
       visitedNames.add(entryName);
 
-      File file = new File(destination, entryName);
+      File file = ZipUtil.checkDestinationFileForTraversal(destination, entryName, new File(destination, entryName));
       if (zipEntry.isDirectory()) {
         FileUtils.forceMkdir(file);
         return;

@@ -1135,7 +1135,7 @@ public final class ZipUtil {
     return checkDestinationFileForTraversal(outputDir, name, new File(outputDir, name));
   }
 
-  private static File checkDestinationFileForTraversal(File outputDir, String name, File destFile) throws IOException {
+  static File checkDestinationFileForTraversal(File outputDir, String name, File destFile) throws IOException {
     /* If we see the relative traversal string of ".." we need to make sure
      * that the outputdir + name doesn't leave the outputdir. See
      * DirectoryTraversalMaliciousTest for details.
