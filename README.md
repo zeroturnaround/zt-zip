@@ -63,6 +63,12 @@ and these non-functional requirements:
 5. do not declare exceptions
 6. be compatible with Java 1.5
 
+## Security considerations
+
+When unpacking, zt-zip rejects entries whose path would resolve outside the target directory (the "Zip Slip" / directory-traversal class of attack), throwing `MaliciousZipException`.
+
+zt-zip does **not** impose any limit on the decompressed size, compression ratio, or number of entries of an archive. Unpacking an untrusted archive can therefore exhaust memory or disk through a [zip bomb](https://en.wikipedia.org/wiki/Zip_bomb): `unpack` streams entries to disk but never caps the total bytes written or the entry count, and `unpackEntry` loads a whole entry into memory at once. If you extract archives from untrusted sources, validate the source and enforce your own limits — for example cap the number of entries, the size of each entry, and the total uncompressed size, and prefer streaming over `unpackEntry` for large or untrusted entries.
+
 ## Examples
 
 The examples don't include all the possible ways how to use the library but will give an overview. When you see a method that is useful but doesn't necessarily solve your use case then just head over to [ZipUtil.class](https://github.com/zeroturnaround/zt-zip/blob/master/src/main/java/org/zeroturnaround/zip/ZipUtil.java) file and see the sibling methods that are named the same but arguments might be different.
