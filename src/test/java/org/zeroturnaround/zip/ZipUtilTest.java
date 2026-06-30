@@ -749,6 +749,32 @@ public class ZipUtilTest extends TestCase {
     }
   }
 
+  public void testUnwrapEntryWithSpecialPrefixThrowsZipException() throws Exception {
+    // An entry name whose FilenameUtils prefix length falls outside the name (e.g. a "~"-prefixed
+    // name with no separator) must surface as a ZipException, not an unchecked StringIndexOutOfBounds.
+    File src = File.createTempFile("unwrap-prefix", ".zip");
+    ZipOutputStream out = new ZipOutputStream(new FileOutputStream(src));
+    try {
+      out.putNextEntry(new ZipEntry("~evil"));
+      out.closeEntry();
+    }
+    finally {
+      out.close();
+    }
+
+    File destDir = Files.createTempDirectory("tempDir").toFile();
+    try {
+      ZipUtil.unwrap(src, destDir);
+      fail("expected a ZipException for an unsupported root entry name");
+    }
+    catch (ZipException e) {
+      assertEquals("Entry ~evil from the root of the zip is not supported", e.getMessage());
+    }
+    finally {
+      FileUtils.forceDelete(destDir);
+    }
+  }
+
   public void testUnwrapSingleRootWithStructure() throws Exception {
     File src = file("demo-single-root-dir.zip");
     File destDir = Files.createTempDirectory("tempDir").toFile();
