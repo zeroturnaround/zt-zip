@@ -17,9 +17,13 @@ package org.zeroturnaround.zip;
  */
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import org.zeroturnaround.zip.transform.ZipEntryTransformer;
 
 import junit.framework.TestCase;
 
@@ -129,5 +133,64 @@ public class DirectoryTraversalMaliciousTest extends TestCase {
     catch (MaliciousZipException e) {
       assertFalse(new File(parent, "targetX/evil.txt").exists());
     }
+  }
+
+  /*
+   * The Zips fluent API has its own unpack implementation (Zips.UnpackingCallback)
+   * and must apply the same traversal guard as ZipUtil.unpack(...).
+   */
+  public void testZipsUnpackDoesntLeaveTarget() throws Exception {
+    File parent = Files.createTempDirectory("zt-zip-zips-traversal").toFile();
+    File target = new File(parent, "target");
+    target.mkdir();
+    File escaped = new File(parent, "escape/evil.txt");
+    File zip = createTraversalZip("../escape/evil.txt");
+
+    try {
+      Zips.get(zip).unpack().destination(target).process();
+      fail();
+    }
+    catch (MaliciousZipException e) {
+      assertFalse(escaped.exists());
+    }
+  }
+
+  public void testZipsUnpackWithTransformerDoesntLeaveTarget() throws Exception {
+    File parent = Files.createTempDirectory("zt-zip-zips-transform-traversal").toFile();
+    File target = new File(parent, "target");
+    target.mkdir();
+    File escaped = new File(parent, "escape/evil.txt");
+    final String entryName = "../escape/evil.txt";
+    File zip = createTraversalZip(entryName);
+
+    try {
+      Zips.get(zip)
+          .unpack()
+          .destination(target)
+          .addTransformer(entryName, new ZipEntryTransformer() {
+            public void transform(InputStream in, ZipEntry entry, ZipOutputStream out) throws IOException {
+              out.putNextEntry(new ZipEntry(entry.getName()));
+              out.closeEntry();
+            }
+          })
+          .process();
+      fail();
+    }
+    catch (MaliciousZipException e) {
+      assertFalse(escaped.exists());
+    }
+  }
+
+  private static File createTraversalZip(String entryName) throws IOException {
+    File zip = File.createTempFile("zips-traversal", ".zip");
+    ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zip));
+    try {
+      out.putNextEntry(new ZipEntry(entryName));
+      out.closeEntry();
+    }
+    finally {
+      out.close();
+    }
+    return zip;
   }
 }
