@@ -181,6 +181,26 @@ public class DirectoryTraversalMaliciousTest extends TestCase {
     }
   }
 
+  /*
+   * A directory entry (trailing slash) escapes through forceMkdir rather than a
+   * file write, so the guard must run before the isDirectory() branch too.
+   */
+  public void testZipsUnpackDirectoryEntryDoesntLeaveTarget() throws Exception {
+    File parent = Files.createTempDirectory("zt-zip-zips-dir-traversal").toFile();
+    File target = new File(parent, "target");
+    target.mkdir();
+    File escaped = new File(parent, "escape");
+    File zip = createTraversalZip("../escape/");
+
+    try {
+      Zips.get(zip).unpack().destination(target).process();
+      fail();
+    }
+    catch (MaliciousZipException e) {
+      assertFalse(escaped.exists());
+    }
+  }
+
   private static File createTraversalZip(String entryName) throws IOException {
     File zip = File.createTempFile("zips-traversal", ".zip");
     ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zip));
