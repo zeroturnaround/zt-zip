@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `pack` overloads that write to an existing `java.util.zip.ZipOutputStream`.
+
+### Changed
+
+- Raised the minimum runtime to Java 8 (bytecode target moved from 1.6 to 1.8).
+- Upgraded the `slf4j-api` dependency from 1.6.6 to 2.0.18. zt-zip uses only the SLF4J API; applications that pick this newer API up transitively and still use an SLF4J 1.x binding must move to an SLF4J 2.x-compatible binding.
+- `slf4j-api` is now a runtime-scoped dependency (previously `compile` scope), so it is no longer on the consumer compile classpath. Declare a direct `slf4j-api` dependency if your own code references SLF4J.
+
+### Fixed
+
+- `Zips.addEntry`/`addEntries` no longer fail with "Stream closed" when adding a directory `FileSource`; a directory is now stored as a proper directory entry ([#138](https://github.com/zeroturnaround/zt-zip/issues/138)).
+- `ZipUtil.pack` no longer fails with `FileNotFoundException` when a directory contains a broken (dangling) symbolic link; such entries are skipped ([#122](https://github.com/zeroturnaround/zt-zip/issues/122)).
+
+### Security
+
+- Hardened the relative path-traversal checks when unpacking, using `java.nio.file.Path` for consistent sub-directory containment checks.
+- In-place unpack now creates its temporary directory securely with `Files.createTempDirectory` (atomic, owner-only permissions) instead of a predictable, world-readable directory.
+
 ## [1.17] - 2024-01-28
 
 ### Added
