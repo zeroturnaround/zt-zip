@@ -35,6 +35,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -705,6 +707,7 @@ public class Zips {
       final ZipInputStream zipIn = new ZipInputStream(pipedIn);
 
       ExecutorService newFixedThreadPool = Executors.newFixedThreadPool(1);
+      final AtomicReference<Throwable> transformerError = new AtomicReference<Throwable>();
 
       try {
         newFixedThreadPool.execute(new Runnable() {
@@ -712,8 +715,13 @@ public class Zips {
             try {
               transformer.transform(entryIn, zipEntry, zipOut);
             }
-            catch (IOException e) {
-              ZipExceptionUtil.rethrow(e);
+            catch (Throwable e) {
+              transformerError.set(e);
+            }
+            finally {
+              // Always close the write end, so the reader sees a clean end of stream instead of
+              // blocking forever on getNextEntry() when the transformer produced no entry.
+              IOUtils.closeQuietly(zipOut);
             }
           }
         });
@@ -729,12 +737,33 @@ public class Zips {
         }
 
         newFixedThreadPool.shutdown();
+        try {
+          newFixedThreadPool.awaitTermination(1, TimeUnit.MINUTES);
+        }
+        catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
         IOUtils.closeQuietly(pipedIn);
         IOUtils.closeQuietly(zipIn);
         IOUtils.closeQuietly(pipedOut);
         IOUtils.closeQuietly(zipOut);
       }
 
+      // Surface a failure from the transformer thread as the real cause, rather than the
+      // "Write end dead" pipe error the reader would otherwise see.
+      Throwable error = transformerError.get();
+      if (error != null) {
+        if (error instanceof IOException) {
+          throw (IOException) error;
+        }
+        if (error instanceof RuntimeException) {
+          throw (RuntimeException) error;
+        }
+        if (error instanceof Error) {
+          throw (Error) error;
+        }
+        throw new ZipException("Transforming entry '" + zipEntry.getName() + "' failed", error);
+      }
     }
   }
 }

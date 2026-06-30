@@ -665,6 +665,77 @@ public class ZipsTest extends TestCase {
     }
   }
 
+  public void testUnpackTransformerWithoutOutputDoesNotHang() throws Exception {
+    final String fileName = "TestFile.txt";
+    final File newEntry = new File("src/test/resources/" + fileName);
+    final File src = new File("src/test/resources/demo-dirs.zip");
+    final File dest = File.createTempFile("temp", ".zip");
+
+    // A transformer that produces no entry must not leave the unpack blocked forever.
+    final ZipEntryTransformer dropping = new ZipEntryTransformer() {
+      public void transform(InputStream in, ZipEntry zipEntry, ZipOutputStream out) throws IOException {
+        // produce no entry
+      }
+    };
+
+    Thread worker = new Thread(new Runnable() {
+      public void run() {
+        Zips.get(src).unpack().addEntry(new FileSource(fileName, newEntry)).addTransformer(fileName, dropping).destination(dest).process();
+      }
+    });
+    worker.setDaemon(true);
+    worker.start();
+    worker.join(30000);
+    try {
+      assertFalse("Zips unpack with a transformer that writes no entry hung", worker.isAlive());
+    }
+    finally {
+      FileUtils.deleteQuietly(dest);
+    }
+  }
+
+  public void testUnpackTransformerIOExceptionSurfacesRealCause() throws Exception {
+    final String fileName = "TestFile.txt";
+    File newEntry = new File("src/test/resources/" + fileName);
+    File src = new File("src/test/resources/demo-dirs.zip");
+    File dest = File.createTempFile("temp", ".zip");
+
+    ZipEntryTransformer boom = new ZipEntryTransformer() {
+      public void transform(InputStream in, ZipEntry zipEntry, ZipOutputStream out) throws IOException {
+        throw new IOException("boom in transformer");
+      }
+    };
+
+    try {
+      Zips.get(src).unpack().addEntry(new FileSource(fileName, newEntry)).addTransformer(fileName, boom).destination(dest).process();
+      fail("expected the transformer IOException to surface");
+    }
+    catch (ZipException e) {
+      assertTrue("real transformer cause should be surfaced, was: " + messageChain(e), messageChainContains(e, "boom in transformer"));
+      assertFalse("should not surface the misleading pipe error, was: " + messageChain(e), messageChainContains(e, "Write end dead"));
+    }
+    finally {
+      FileUtils.deleteQuietly(dest);
+    }
+  }
+
+  private static boolean messageChainContains(Throwable t, String text) {
+    for (Throwable c = t; c != null; c = c.getCause()) {
+      if (c.getMessage() != null && c.getMessage().contains(text)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static String messageChain(Throwable t) {
+    StringBuilder sb = new StringBuilder();
+    for (Throwable c = t; c != null; c = c.getCause()) {
+      sb.append(c.getClass().getName()).append(": ").append(c.getMessage()).append(" | ");
+    }
+    return sb.toString();
+  }
+
   /**
    * The test will fail until https://github.com/zeroturnaround/zt-zip/issues/135
    * is fixed. I'm disabling this test to make a release though.
