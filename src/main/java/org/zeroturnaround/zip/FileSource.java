@@ -42,8 +42,13 @@ public class FileSource implements ZipEntrySource {
   }
 
   public ZipEntry getEntry() {
-    ZipEntry entry = ZipEntryUtil.fromFile(path, file);
-    return entry;
+    // A directory must be represented by an entry whose name ends with "/", otherwise
+    // it would be stored as an empty regular file rather than a directory.
+    String name = path;
+    if (file.isDirectory() && !name.endsWith("/")) {
+      name = name + "/";
+    }
+    return ZipEntryUtil.fromFile(name, file);
   }
 
   public InputStream getInputStream() throws IOException {

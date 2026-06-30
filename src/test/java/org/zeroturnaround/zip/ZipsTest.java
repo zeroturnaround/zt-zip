@@ -62,6 +62,69 @@ public class ZipsTest extends TestCase {
     assertTrue(ZipUtil.containsEntry(dest, fileName));
   }
 
+  public void testAddDirectoryEntry() throws IOException {
+    assertDirectorySourceAddsDirectoryEntry("somedir", true);
+  }
+
+  public void testAddDirectoryEntryWithTrailingSlash() throws IOException {
+    assertDirectorySourceAddsDirectoryEntry("somedir/", true);
+  }
+
+  public void testAddEmptyDirectoryEntry() throws IOException {
+    assertDirectorySourceAddsDirectoryEntry("somedir", false);
+  }
+
+  /**
+   * Adds a directory {@link FileSource} under the given path and asserts it lands as the
+   * directory entry "somedir/" (regardless of whether the caller's path had a trailing slash).
+   *
+   * @param sourcePath the path passed to the FileSource
+   * @param withChild whether the directory should contain a child file
+   */
+  private void assertDirectorySourceAddsDirectoryEntry(String sourcePath, boolean withChild) throws IOException {
+    File dir = Files.createTempDirectory("ztzip").toFile();
+    File dest = File.createTempFile("temp", ".zip");
+    try {
+      if (withChild) {
+        new File(dir, "child.txt").createNewFile();
+      }
+
+      Zips.create().destination(dest).addEntry(new FileSource(sourcePath, dir)).process();
+
+      assertTrue("Result zip misses directory entry 'somedir/'", ZipUtil.containsEntry(dest, "somedir/"));
+    }
+    finally {
+      FileUtils.deleteQuietly(dir);
+      FileUtils.deleteQuietly(dest);
+    }
+  }
+
+  public void testAddDirectoryAndFileEntries() throws IOException {
+    File dir = Files.createTempDirectory("ztzip").toFile();
+    File dest = File.createTempFile("temp", ".zip");
+    try {
+      new File(dir, "child.txt").createNewFile();
+
+      // An existing regular file added alongside the directory: a directory source has a
+      // null stream while a file source has real content, so this proves the directory fix
+      // does not break a normal file entry and that both kinds of entry coexist in one zip.
+      String fileName = "TestFile.txt";
+      File file = new File("src/test/resources/" + fileName);
+
+      Zips.create().destination(dest)
+          .addEntry(new FileSource("somedir", dir))
+          .addEntry(new FileSource(fileName, file))
+          .process();
+
+      assertTrue("Result zip misses directory entry 'somedir/'", ZipUtil.containsEntry(dest, "somedir/"));
+      assertTrue("Result zip misses file entry '" + fileName + "'", ZipUtil.containsEntry(dest, fileName));
+    }
+    finally {
+      FileUtils.deleteQuietly(dir);
+      FileUtils.deleteQuietly(dest);
+    }
+  }
+
   public void testRemoveEntry() throws IOException {
     File src = new File(MainExamplesTest.DEMO_ZIP);
 
