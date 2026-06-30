@@ -21,6 +21,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
@@ -558,9 +559,7 @@ public class ZipsTest extends TestCase {
 
   public void testUnpackImplicit() throws IOException {
     File original = new File(MainExamplesTest.DEMO_ZIP);
-    final File dest = File.createTempFile("temp", null);
-    FileUtils.deleteQuietly(dest);
-    dest.mkdirs();
+    final File dest = Files.createTempDirectory("temp").toFile();
     Zips.get(original).destination(dest).process();
     assertTrue(dest.isDirectory());
     ZipUtil.iterate(original, new ZipInfoCallback() {
