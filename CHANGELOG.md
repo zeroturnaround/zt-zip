@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Zips.addEntry`/`addEntries` no longer fail with "Stream closed" when adding a directory `FileSource`; a directory is now stored as a proper directory entry ([#138](https://github.com/zeroturnaround/zt-zip/issues/138)).
 - `ZipUtil.pack` no longer fails with `FileNotFoundException` when a directory contains a broken (dangling) symbolic link; such entries are skipped ([#122](https://github.com/zeroturnaround/zt-zip/issues/122)).
 - `ByteSource` (and the `byte[]` `ZipUtil.addEntry`/`replaceEntry` overloads) now accept `null` bytes as the documented directory entry instead of throwing `NullPointerException`.
+- `ByteSource` with `null` bytes and the `STORED` method now produces a valid empty entry (size 0, CRC 0) instead of failing with "STORED entry missing size, compressed size, or crc-32".
 
 ### Security
 

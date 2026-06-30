@@ -245,6 +245,20 @@ public class ZipUtilTest extends TestCase {
     }
   }
 
+  public void testAddEntryWithNullBytesAndStoredMethodAddsDirectory() throws IOException {
+    // A STORED directory entry (null bytes) must be written without "STORED entry missing size".
+    File src = file("demo.zip");
+
+    File dest = File.createTempFile("temp", null);
+    try {
+      ZipUtil.addEntry(src, "newdir/", (byte[]) null, dest, ZipEntry.STORED);
+      assertTrue("Result zip is missing directory entry 'newdir/'", ZipUtil.containsEntry(dest, "newdir/"));
+    }
+    finally {
+      FileUtils.deleteQuietly(dest);
+    }
+  }
+
   public void testUnexplode() throws IOException {
     File file = File.createTempFile("tempFile", null);
     File tmpDir = file.getParentFile();
