@@ -103,6 +103,26 @@ public class ZipUtilTest extends TestCase {
     assertEquals(108, (new File(dest, "TestFile-II.txt")).length());
   }
 
+  public void testPackEntriesWithNullMappingSkipsEntry() throws IOException {
+    // A NameMapper returning null must skip the entry (as the directory pack does), not throw NPE.
+    File keep = file("TestFile.txt");
+    File skip = File.createTempFile("skipme", ".txt");
+    File dest = File.createTempFile("temp", ".zip");
+    try {
+      ZipUtil.packEntries(new File[] { keep, skip }, dest, new NameMapper() {
+        public String map(String name) {
+          return "TestFile.txt".equals(name) ? name : null;
+        }
+      });
+      assertTrue("kept entry should be present", ZipUtil.containsEntry(dest, "TestFile.txt"));
+      assertFalse("skipped entry should be absent", ZipUtil.containsEntry(dest, skip.getName()));
+    }
+    finally {
+      FileUtils.deleteQuietly(skip);
+      FileUtils.deleteQuietly(dest);
+    }
+  }
+
   public void testUnpackEntryFromFile() throws IOException {
     final String name = "foo";
     final byte[] contents = "bar".getBytes();
