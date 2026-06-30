@@ -284,6 +284,21 @@ Gradle installation is required:
 The library targets Java 8 bytecode. The build resolves a Java 8 toolchain automatically (it is
 downloaded on demand if not already installed), so the build itself runs on any modern JDK.
 
+## Releasing
+
+Versions follow [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`, e.g. `1.18.0`)
+and release tags use the `vMAJOR.MINOR.PATCH` form (e.g. `v1.18.0`). Tags created before this
+convention use the older `zt-zip-<version>` form.
+
+Releases are cut with the **Release** GitHub Actions workflow (Actions → Release → Run workflow).
+It takes the release version (e.g. `1.18.0`) and then builds, publishes to Maven Central, tags
+the commit, creates the GitHub release, and sets the next development version.
+
+The workflow also promotes the `## [Unreleased]` section of [CHANGELOG.md](CHANGELOG.md) into a
+dated `## [x.y.z]` section and updates the comparison links, so the only changelog task is to make
+sure the changes being released are listed under `## [Unreleased]` beforehand. (The release fails
+if that section is empty.)
+
 ## Progress bar
 
 There have been multiple requests for a progress bar. See [ZT Zip Progress Bar](https://github.com/toomasr/zt-zip-progress-bar) for a

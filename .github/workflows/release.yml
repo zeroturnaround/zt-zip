@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g., 1.18)'
+        description: 'Release version (e.g., 1.18.0)'
         required: true
         type: string
 
@@ -47,6 +47,9 @@ jobs:
           # Maven coordinate snippet: <artifactId>zt-zip</artifactId> ... <version>VERSION</version>
           perl -0pi -e 's{(<artifactId>zt-zip</artifactId>\s*<version>)[^<]+}{${1}${{ inputs.version }}}g' README.md
 
+      - name: Promote changelog Unreleased section
+        run: bash .github/scripts/prepare-changelog-release.sh "${{ inputs.version }}"
+
       - name: Run full build (validates everything compiles + tests pass)
         run: ./gradlew clean build
 
@@ -60,29 +63,29 @@ jobs:
 
       - name: Commit version bump
         run: |
-          git add build.gradle.kts README.md
+          git add build.gradle.kts README.md CHANGELOG.md
           git commit -m "Release ${{ inputs.version }}"
 
       - name: Tag and push
         run: |
-          git tag "zt-zip-${{ inputs.version }}"
+          git tag "v${{ inputs.version }}"
           git push origin HEAD
-          git push origin "zt-zip-${{ inputs.version }}"
+          git push origin "v${{ inputs.version }}"
 
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "zt-zip-${{ inputs.version }}" \
-            --title "zt-zip-${{ inputs.version }}" \
+          gh release create "v${{ inputs.version }}" \
+            --title "v${{ inputs.version }}" \
             --generate-notes \
             build/libs/*.jar
 
       - name: Set next development version
         run: |
           VERSION="${{ inputs.version }}"
-          # Increment the last numeric component, matching the historical
-          # versioning (1.18 -> 1.19; 1.18.1 -> 1.18.2).
+          # Increment the last numeric component to the next patch development
+          # version (1.18.0 -> 1.18.1); bump the minor or major by hand when needed.
           PREFIX="${VERSION%.*}"
           LAST="${VERSION##*.}"
           if [ "$PREFIX" = "$VERSION" ]; then
