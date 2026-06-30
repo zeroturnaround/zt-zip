@@ -112,7 +112,10 @@ class ZipEntryUtil {
       copy.setTime(System.currentTimeMillis());
     }
     
-    addEntry(copy, new BufferedInputStream(in), out);
+    // A null stream means the entry has no content (e.g. a directory entry). Keep it
+    // null so addEntry skips the copy; wrapping it in a BufferedInputStream would make
+    // it non-null and the copy would fail with "Stream closed".
+    addEntry(copy, in == null ? null : new BufferedInputStream(in), out);
   }
 
   /**
