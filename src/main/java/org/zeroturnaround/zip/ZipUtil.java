@@ -1139,6 +1139,11 @@ public final class ZipUtil {
     /* If we see the relative traversal string of ".." we need to make sure
      * that the outputdir + name doesn't leave the outputdir. See
      * DirectoryTraversalMaliciousTest for details.
+     *
+     * IMPORTANT: This optimization of checking for ".." before calling `getCanonicalFile()` seems to be safe only for
+     * the `java.io.File` API. If this is ever refactored to use `java.nio.file.Path#resolve(String)` this optimization
+     * must be omitted because `resolve` ignores the parent if the child is absolute (e.g. "/etc" or "C:/my-dir"),
+     * without it containing ".."
      */
     if (name.indexOf("..") != -1 && !destFile.getCanonicalFile().toPath().startsWith(outputDir.getCanonicalFile().toPath())) {
       throw new MaliciousZipException(outputDir, name);
