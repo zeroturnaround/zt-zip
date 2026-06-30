@@ -384,7 +384,13 @@ public class AsiExtraField implements ZipExtraField, Cloneable {
 
     int newMode = ZipShort.getValue(tmp, 0);
     // CheckStyle:MagicNumber OFF
-    byte[] linkArray = new byte[(int) ZipLong.getValue(tmp, 2)];
+    long linkLength = ZipLong.getValue(tmp, 2);
+    // The link length is read straight from the (attacker-controlled) extra field; bound it to the
+    // bytes actually present before allocating, so a forged length cannot trigger a huge allocation.
+    if (linkLength < 0 || linkLength > tmp.length - 10) {
+      throw new ZipException("Invalid symbolic link length " + linkLength + " in ASI extra field");
+    }
+    byte[] linkArray = new byte[(int) linkLength];
     uid = ZipShort.getValue(tmp, 6);
     gid = ZipShort.getValue(tmp, 8);
 
