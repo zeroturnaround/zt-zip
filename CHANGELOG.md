@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `AsiExtraField` now validates the declared symbolic-link length against the bytes actually present before allocating, so a forged length in a crafted archive can no longer trigger a large (up to ~2 GB) memory allocation per entry while unpacking ([#181](https://github.com/zeroturnaround/zt-zip/pull/181)).
 - `BackslashUnpacker` now validates the resolved path before creating any directories, so a backslash-separated `..\` entry can no longer create directories outside the output directory (the file write itself was already blocked).
 - `ZipUtil.explode`, `repack` and `unexplode` now create their working file or directory atomically (`File.createTempFile` / `Files.createTempDirectory`) instead of a predictable name next to the target, closing a symlink/TOCTOU race when the target sits in a shared directory; the predictable `FileUtils.getTempFileFor` helper is deprecated.
+- `ZipUtil.unwrap` now throws a `ZipException` for an entry name whose path prefix resolves outside the name (such as a `~`- or `:`-prefixed name) instead of letting an unchecked `StringIndexOutOfBoundsException` abort the operation.
 
 ## [1.17] - 2024-01-28
 

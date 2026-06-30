@@ -1311,7 +1311,14 @@ public final class ZipUtil {
     }
 
     private String getRootName(final String name) {
-      String newName = name.substring(FilenameUtils.getPrefixLength(name));
+      int prefixLength = FilenameUtils.getPrefixLength(name);
+      // getPrefixLength can return a value outside [0, name.length()] for names such as ":foo" (-1)
+      // or "~name" with no separator (length + 1); guard it so substring throws a ZipException rather
+      // than an unchecked StringIndexOutOfBoundsException out of unwrap.
+      if (prefixLength < 0 || prefixLength > name.length()) {
+        throw new ZipException("Entry " + name + " from the root of the zip is not supported");
+      }
+      String newName = name.substring(prefixLength);
       int idx = newName.indexOf(PATH_SEPARATOR);
       if (idx < 0) {
         throw new ZipException("Entry " + newName + " from the root of the zip is not supported");
