@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -1237,20 +1238,17 @@ public final class ZipUtil {
          * No errors detected in compressed data of backSlashTest.zip.
          */
         if (name.indexOf('\\') != -1) {
-          File parentDirectory = outputDir;
           String[] dirs = name.split("\\\\");
 
-          // lets create all the directories and the last entry is the file as EVERY entry is a file
-          for (int i = 0; i < dirs.length - 1; i++) {
-            File file = new File(parentDirectory, dirs[i]);
-            if (!file.exists()) {
-              FileUtils.forceMkdir(file);
-            }
-            parentDirectory = file;
+          // EVERY entry is a file; resolve the full path and validate it before creating any
+          // directories, so a "..\" entry cannot create directories outside the output directory.
+          File destFile = outputDir;
+          for (int i = 0; i < dirs.length; i++) {
+            destFile = new File(destFile, dirs[i]);
           }
-          File destFile = checkDestinationFileForTraversal(outputDir, name,
-            new File(parentDirectory, dirs[dirs.length - 1]));
+          checkDestinationFileForTraversal(outputDir, name, destFile);
 
+          FileUtils.forceMkdir(destFile.getParentFile());
           FileUtils.copy(in, destFile);
         }
         // it could be that there are just top level files that the unpacker is used for
@@ -1335,23 +1333,51 @@ public final class ZipUtil {
    */
   public static void explode(File zip) {
     try {
-      // Find a new unique name is the same directory
-      File tempFile = FileUtils.getTempFileFor(zip);
+      // Move the archive into a freshly created, owner-only temporary directory rather than a
+      // predictable name next to it, avoiding a symlink/TOCTOU race in a shared directory.
+      File tempDir = createTempDirFor(zip);
+      File tempFile = new File(tempDir, zip.getName());
 
-      // Rename the archive
+      // Move the archive into the temp directory
       FileUtils.moveFile(zip, tempFile);
 
-      // Unpack it
+      // Unpack it back to the original location
       unpack(tempFile, zip);
 
-      // Delete the archive
-      if (!tempFile.delete()) {
-        throw new IOException("Unable to delete file: " + tempFile);
-      }
+      // Delete the temporary directory and its contents
+      FileUtils.deleteDirectory(tempDir);
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
     }
+  }
+
+  /**
+   * Creates a fresh temporary directory for working on the given file, next to it when possible
+   * (so a later rename stays on the same filesystem). The directory is created atomically with
+   * owner-only permissions, so its name cannot be predicted or pre-created by another process.
+   */
+  private static File createTempDirFor(File file) throws IOException {
+    File parent = file.getParentFile();
+    String prefix = file.getName() + "_";
+    return (parent != null
+        ? Files.createTempDirectory(parent.toPath(), prefix)
+        : Files.createTempDirectory(prefix)).toFile();
+  }
+
+  /**
+   * Creates a fresh temporary file for working on the given file, next to it when possible (so a
+   * later rename stays on the same filesystem). The file is created atomically, so its name cannot
+   * be predicted or pre-created by another process.
+   */
+  private static File createTempFileFor(File file) throws IOException {
+    File parent = file.getParentFile();
+    // File.createTempFile requires a prefix of at least three characters.
+    String prefix = file.getName();
+    if (prefix.length() < 3) {
+      prefix = prefix + "tmp";
+    }
+    return File.createTempFile(prefix + "_", ".zip", parent);
   }
 
   /* Compressing single entries to ZIP files. */
@@ -1911,7 +1937,7 @@ public final class ZipUtil {
    */
   public static void repack(File zip, int compressionLevel) {
     try {
-      File tmpZip = FileUtils.getTempFileFor(zip);
+      File tmpZip = createTempFileFor(zip);
 
       repack(zip, tmpZip, compressionLevel);
 
@@ -2008,8 +2034,7 @@ public final class ZipUtil {
    */
   public static void unexplode(File dir, int compressionLevel) {
     try {
-      // Find a new unique name is the same directory
-      File zip = FileUtils.getTempFileFor(dir);
+      File zip = createTempFileFor(dir);
 
       // Pack it
       pack(dir, zip, compressionLevel);
