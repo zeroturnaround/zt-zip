@@ -23,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -37,6 +38,8 @@ import java.util.zip.ZipOutputStream;
 
 import org.zeroturnaround.zip.commons.FileUtils;
 import org.zeroturnaround.zip.commons.IOUtils;
+import org.zeroturnaround.zip.transform.StreamZipEntryTransformer;
+import org.zeroturnaround.zip.transform.ZipEntryTransformerEntry;
 
 import junit.framework.TestCase;
 
@@ -120,6 +123,85 @@ public class ZipUtilTest extends TestCase {
     finally {
       FileUtils.deleteQuietly(skip);
       FileUtils.deleteQuietly(dest);
+    }
+  }
+
+  public void testDestructiveOverloadsRejectSameSourceAndDestination() throws IOException {
+    // These methods open (truncate) the destination before reading the source, so passing the
+    // source as the destination would destroy it. They must reject it and leave the source intact.
+    final File zip = File.createTempFile("same-src-dest", ".zip");
+    ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zip));
+    try {
+      zos.putNextEntry(new ZipEntry("a.txt"));
+      zos.write("aaa".getBytes());
+      zos.closeEntry();
+      zos.putNextEntry(new ZipEntry("b.txt"));
+      zos.write("bbb".getBytes());
+      zos.closeEntry();
+    }
+    finally {
+      zos.close();
+    }
+    long originalLength = zip.length();
+
+    final ZipEntrySource[] sources = new ZipEntrySource[] { new ByteSource("c.txt", "ccc".getBytes()) };
+    final ZipEntryTransformerEntry[] transforms = new ZipEntryTransformerEntry[] {
+        new ZipEntryTransformerEntry("a.txt", new StreamZipEntryTransformer() {
+          protected void transform(ZipEntry zipEntry, InputStream in, OutputStream out) throws IOException {
+            IOUtils.copy(in, out);
+          }
+        })
+    };
+
+    try {
+      assertRejectsSameFile("addEntry", new Runnable() {
+        public void run() { ZipUtil.addEntry(zip, "c.txt", "ccc".getBytes(), zip); }
+      });
+      assertRejectsSameFile("addEntries", new Runnable() {
+        public void run() { ZipUtil.addEntries(zip, sources, zip); }
+      });
+      assertRejectsSameFile("removeEntry", new Runnable() {
+        public void run() { ZipUtil.removeEntry(zip, "a.txt", zip); }
+      });
+      assertRejectsSameFile("removeEntries", new Runnable() {
+        public void run() { ZipUtil.removeEntries(zip, new String[] { "a.txt" }, zip); }
+      });
+      assertRejectsSameFile("replaceEntry", new Runnable() {
+        public void run() { ZipUtil.replaceEntry(zip, "a.txt", "zzz".getBytes(), zip); }
+      });
+      assertRejectsSameFile("replaceEntries", new Runnable() {
+        public void run() { ZipUtil.replaceEntries(zip, sources, zip); }
+      });
+      assertRejectsSameFile("addOrReplaceEntries", new Runnable() {
+        public void run() { ZipUtil.addOrReplaceEntries(zip, sources, zip); }
+      });
+      assertRejectsSameFile("transformEntry", new Runnable() {
+        public void run() { ZipUtil.transformEntry(zip, transforms[0], zip); }
+      });
+      assertRejectsSameFile("transformEntries", new Runnable() {
+        public void run() { ZipUtil.transformEntries(zip, transforms, zip); }
+      });
+      assertRejectsSameFile("repack", new Runnable() {
+        public void run() { ZipUtil.repack(zip, zip, 9); }
+      });
+
+      // The source must be untouched by all of the above.
+      assertEquals("source length changed", originalLength, zip.length());
+      assertTrue("source lost entry 'a.txt'", ZipUtil.containsEntry(zip, "a.txt"));
+      assertTrue("source lost entry 'b.txt'", ZipUtil.containsEntry(zip, "b.txt"));
+    }
+    finally {
+      FileUtils.deleteQuietly(zip);
+    }
+  }
+
+  private static void assertRejectsSameFile(String op, Runnable action) {
+    try {
+      action.run();
+      fail(op + " should reject the same file as source and destination");
+    }
+    catch (IllegalArgumentException e) {
+      // expected
     }
   }
 
