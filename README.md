@@ -65,7 +65,7 @@ and these non-functional requirements:
 
 ## Security considerations
 
-When unpacking, zt-zip rejects entries whose path would resolve outside the target directory (the "Zip Slip" / directory-traversal class of attack), throwing `MaliciousZipException`.
+When unpacking, zt-zip rejects entries whose path would resolve outside the target directory (the "Zip Slip" / directory-traversal class of attack), throwing `MaliciousZipException`. An entry whose path resolves to the target directory itself (for example an entry named `/`) is a no-op: its stored file permissions are not applied to the target directory.
 
 zt-zip does **not** impose any limit on the decompressed size, compression ratio, or number of entries of an archive. Unpacking an untrusted archive can therefore exhaust memory or disk through a [zip bomb](https://en.wikipedia.org/wiki/Zip_bomb): `unpack` streams entries to disk but never caps the total bytes written or the entry count, and `unpackEntry` loads a whole entry into memory at once. If you extract archives from untrusted sources, validate the source and enforce your own limits — for example cap the number of entries, the size of each entry, and the total uncompressed size, and prefer streaming over `unpackEntry` for large or untrusted entries.
 

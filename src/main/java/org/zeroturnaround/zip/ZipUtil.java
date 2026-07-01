@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -1151,19 +1152,78 @@ public final class ZipUtil {
   }
 
   static File checkDestinationFileForTraversal(File outputDir, String name, File destFile) throws IOException {
-    /* If we see the relative traversal string of ".." we need to make sure
-     * that the outputdir + name doesn't leave the outputdir. See
-     * DirectoryTraversalMaliciousTest for details.
+    /* If a ZIP entry name escapes the output directory (e.g. a ".." segment climbing above it) the
+     * destination must be rejected. See DirectoryTraversalMaliciousTest for details.
      *
-     * IMPORTANT: This optimization of checking for ".." before calling `getCanonicalFile()` seems to be safe only for
-     * the `java.io.File` API. If this is ever refactored to use `java.nio.file.Path#resolve(String)` this optimization
-     * must be omitted because `resolve` ignores the parent if the child is absolute (e.g. "/etc" or "C:/my-dir"),
-     * without it containing ".."
+     * isSafeDescendantEntryName recognises the common case of a genuine descendant with a cheap,
+     * allocation-free scan, so that only names it cannot clear fall through to getCanonicalFile().
+     * The filesystem access therefore stays off the hot path for every legitimate entry. It replaces
+     * the earlier `name.indexOf("..")` check, which also canonicalized names that merely contained
+     * ".." as a substring (e.g. "foo..bar").
+     *
+     * An entry that resolves to the output directory itself (e.g. "/") is intentionally allowed here:
+     * it is a harmless no-op for file/directory creation and is produced legitimately when unwrapping
+     * a single root directory. It is the Unpacker's permission handling that must not act on such an
+     * entry (see GHSA-v2g6-7r9j-v6px and {@link #destinationIsOutputDir}).
+     *
+     * IMPORTANT: the canonicalization below relies on the `java.io.File` API, where
+     * new File(outputDir, name) never treats an absolute-looking child (e.g. "/etc" or "C:/my-dir")
+     * as escaping the parent unless the name also contains "..". If this is ever refactored to use
+     * `java.nio.file.Path#resolve(String)` that no longer holds (resolve drops the parent for an
+     * absolute child), so isSafeDescendantEntryName's fast path must be revisited.
      */
-    if (name.indexOf("..") != -1 && !destFile.getCanonicalFile().toPath().startsWith(outputDir.getCanonicalFile().toPath())) {
+    if (isSafeDescendantEntryName(name)) {
+      return destFile;
+    }
+    Path canonicalDest = destFile.getCanonicalFile().toPath();
+    Path canonicalOutputDir = outputDir.getCanonicalFile().toPath();
+    if (!canonicalDest.startsWith(canonicalOutputDir)) {
       throw new MaliciousZipException(outputDir, name);
     }
     return destFile;
+  }
+
+  /**
+   * Tells whether a destination resolves to the output directory itself rather than to an entry
+   * inside it. Applying a ZIP entry's file permissions to such a destination would change the output
+   * directory's own permissions, which is the vulnerability described in GHSA-v2g6-7r9j-v6px; callers
+   * that apply permissions must skip the entry when this returns {@code true}.
+   *
+   * <p>The cheap {@link #isSafeDescendantEntryName} scan clears genuine descendants without touching
+   * the filesystem; only names that might resolve to the output directory are canonicalized.
+   */
+  static boolean destinationIsOutputDir(File outputDir, String name, File destFile) throws IOException {
+    if (isSafeDescendantEntryName(name)) {
+      return false;
+    }
+    return destFile.getCanonicalFile().equals(outputDir.getCanonicalFile());
+  }
+
+  /**
+   * Tells whether a ZIP entry name is guaranteed to resolve to a strict descendant of the output
+   * directory, i.e. it has at least one real path segment (neither empty nor ".") and no ".."
+   * segment. Such names can neither escape the output directory nor resolve to it, so they need no
+   * canonicalization and can skip the filesystem access in {@link #checkDestinationFileForTraversal}
+   * and {@link #destinationIsOutputDir}. Both '/' and '\' are treated as separators; a name that slips
+   * through to a canonical check because of an unusual separator is still handled correctly there.
+   */
+  private static boolean isSafeDescendantEntryName(String name) {
+    boolean hasRealSegment = false;
+    int segmentStart = 0;
+    int length = name.length();
+    for (int i = 0; i <= length; i++) {
+      if (i == length || name.charAt(i) == '/' || name.charAt(i) == '\\') {
+        int segmentLength = i - segmentStart;
+        if (segmentLength == 2 && name.charAt(segmentStart) == '.' && name.charAt(segmentStart + 1) == '.') {
+          return false; // a ".." segment: canonicalize to know where the name resolves
+        }
+        if (segmentLength > 0 && !(segmentLength == 1 && name.charAt(segmentStart) == '.')) {
+          hasRealSegment = true;
+        }
+        segmentStart = i + 1;
+      }
+    }
+    return hasRealSegment;
   }
 
   /**
@@ -1201,7 +1261,9 @@ public final class ZipUtil {
 
         try {
           ZTFilePermissions permissions = ZipEntryUtil.getZTFilePermissions(zipEntry);
-          if (permissions != null) {
+          // Skip entries that resolve to the output directory itself (e.g. "/"); applying their
+          // permissions would change the output directory's own permissions (GHSA-v2g6-7r9j-v6px).
+          if (permissions != null && !destinationIsOutputDir(outputDir, name, file)) {
             ZTFilePermissionsUtil.getDefaultStategy().setPermissions(file, permissions);
           }
         }
