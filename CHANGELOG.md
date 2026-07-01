@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.18.0] - 2026-07-01
+
 ### Added
 
 - `pack` overloads that write to an existing `java.util.zip.ZipOutputStream`.
@@ -136,7 +138,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Started to write a changelog.
 - Public CI, https://travis-ci.org/.
 
-[Unreleased]: https://github.com/zeroturnaround/zt-zip/compare/zt-zip-1.17...HEAD
+[Unreleased]: https://github.com/zeroturnaround/zt-zip/compare/v1.18.0...HEAD
+[1.18.0]: https://github.com/zeroturnaround/zt-zip/compare/zt-zip-1.17...v1.18.0
 [1.17]: https://github.com/zeroturnaround/zt-zip/compare/zt-zip-1.15...zt-zip-1.17
 [1.15]: https://github.com/zeroturnaround/zt-zip/compare/zt-zip-1.14...zt-zip-1.15
 [1.14]: https://github.com/zeroturnaround/zt-zip/compare/zt-zip-1.13...zt-zip-1.14
