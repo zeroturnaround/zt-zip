@@ -19,7 +19,7 @@ plugins {
 }
 
 group = "org.zeroturnaround"
-version = "1.18.0"
+version = "1.18.1-SNAPSHOT"
 description =
   "The project is intended to have a small, easy and fast library to process ZIP archives. " +
     "Either create, modify or explode them. On disk or in memory."
