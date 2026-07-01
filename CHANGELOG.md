@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.18.1] - 2026-07-01
+
 ### Fixed
 
 - `ZipUtil.unpack` no longer applies a ZIP entry's stored file permissions to the output directory itself when an entry's name resolves to it (for example an entry named `/`), which could change the output directory's permissions ([GHSA-v2g6-7r9j-v6px](https://github.com/zeroturnaround/zt-zip/security/advisories/GHSA-v2g6-7r9j-v6px)).
@@ -142,7 +144,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Started to write a changelog.
 - Public CI, https://travis-ci.org/.
 
-[Unreleased]: https://github.com/zeroturnaround/zt-zip/compare/v1.18.0...HEAD
+[Unreleased]: https://github.com/zeroturnaround/zt-zip/compare/v1.18.1...HEAD
+[1.18.1]: https://github.com/zeroturnaround/zt-zip/compare/v1.18.0...v1.18.1
 [1.18.0]: https://github.com/zeroturnaround/zt-zip/compare/zt-zip-1.17...v1.18.0
 [1.17]: https://github.com/zeroturnaround/zt-zip/compare/zt-zip-1.15...zt-zip-1.17
 [1.15]: https://github.com/zeroturnaround/zt-zip/compare/zt-zip-1.14...zt-zip-1.15

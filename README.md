@@ -22,7 +22,7 @@ Maven:
 <dependency>
     <groupId>org.zeroturnaround</groupId>
     <artifactId>zt-zip</artifactId>
-    <version>1.18.0</version>
+    <version>1.18.1</version>
     <type>jar</type>
 </dependency>
 ```
@@ -30,7 +30,7 @@ Maven:
 Gradle:
 
 ```kotlin
-implementation("org.zeroturnaround:zt-zip:1.18.0")
+implementation("org.zeroturnaround:zt-zip:1.18.1")
 ```
 
 Notice that [1.8](https://repo1.maven.org/maven2/org/zeroturnaround/zt-zip/1.8/) is the last Java 1.4 compatible release.
