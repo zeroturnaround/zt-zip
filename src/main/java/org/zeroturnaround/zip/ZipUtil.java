@@ -1136,6 +1136,20 @@ public final class ZipUtil {
     return checkDestinationFileForTraversal(outputDir, name, new File(outputDir, name));
   }
 
+  /**
+   * Guards the destructive "copy the source into destZip while changing it" methods against being
+   * pointed at their own source. These methods open (and thereby truncate) the destination before
+   * reading the source, so a {@code destZip} equal to the source would destroy it before a single
+   * byte is read. Callers that want to change a ZIP in place must use the variant without a
+   * destination.
+   */
+  private static void checkSourceAndDestinationAreNotTheSame(File sourceZip, File destZip) {
+    if (sourceZip.equals(destZip)) {
+      throw new IllegalArgumentException("Input (" + sourceZip.getAbsolutePath() + ") is the same as the destination! "
+          + "Please use the in-place method variant without a destination.");
+    }
+  }
+
   static File checkDestinationFileForTraversal(File outputDir, String name, File destFile) throws IOException {
     /* If we see the relative traversal string of ".." we need to make sure
      * that the outputdir + name doesn't leave the outputdir. See
@@ -1899,6 +1913,7 @@ public final class ZipUtil {
    *          compression level.
    */
   public static void repack(File srcZip, File dstZip, int compressionLevel) {
+    checkSourceAndDestinationAreNotTheSame(srcZip, dstZip);
 
     log.debug("Repacking '{}' into '{}'.", srcZip, dstZip);
 
@@ -2272,6 +2287,7 @@ public final class ZipUtil {
    *          new ZIP file created.
    */
   public static void addEntries(File zip, ZipEntrySource[] entries, File destZip) {
+    checkSourceAndDestinationAreNotTheSame(zip, destZip);
     if (log.isDebugEnabled()) {
       log.debug("Copying '" + zip + "' to '" + destZip + "' and adding " + Arrays.asList(entries) + ".");
     }
@@ -2411,6 +2427,7 @@ public final class ZipUtil {
    * @since 1.7
    */
   public static void removeEntries(File zip, String[] paths, File destZip) {
+    checkSourceAndDestinationAreNotTheSame(zip, destZip);
     if (log.isDebugEnabled()) {
       log.debug("Copying '" + zip + "' to '" + destZip + "' and removing paths " + Arrays.asList(paths) + ".");
     }
@@ -2734,6 +2751,7 @@ public final class ZipUtil {
    * @return <code>true</code> if at least one entry was replaced.
    */
   public static boolean replaceEntries(File zip, ZipEntrySource[] entries, File destZip) {
+    checkSourceAndDestinationAreNotTheSame(zip, destZip);
     if (log.isDebugEnabled()) {
       log.debug("Copying '" + zip + "' to '" + destZip + "' and replacing entries " + Arrays.asList(entries) + ".");
     }
@@ -2799,6 +2817,7 @@ public final class ZipUtil {
    *          new ZIP file created.
    */
   public static void addOrReplaceEntries(File zip, ZipEntrySource[] entries, File destZip) {
+    checkSourceAndDestinationAreNotTheSame(zip, destZip);
     if (log.isDebugEnabled()) {
       log.debug("Copying '" + zip + "' to '" + destZip + "' and adding/replacing entries " + Arrays.asList(entries)
           + ".");
@@ -2953,6 +2972,7 @@ public final class ZipUtil {
    * @return <code>true</code> if at least one entry was replaced.
    */
   public static boolean transformEntries(File zip, ZipEntryTransformerEntry[] entries, File destZip) {
+    checkSourceAndDestinationAreNotTheSame(zip, destZip);
     if (log.isDebugEnabled())
       log.debug("Copying '" + zip + "' to '" + destZip + "' and transforming entries " + Arrays.asList(entries) + ".");
 
