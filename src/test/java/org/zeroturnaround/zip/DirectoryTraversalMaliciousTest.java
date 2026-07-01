@@ -19,7 +19,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -220,6 +225,129 @@ public class DirectoryTraversalMaliciousTest extends TestCase {
     catch (MaliciousZipException e) {
       assertFalse(escaped.exists());
     }
+  }
+
+  /*
+   * A ZIP entry whose name resolves to the output directory itself (e.g. "/") passes the traversal
+   * guard because it does not leave the target. Historically the Unpacker then applied the entry's
+   * file permissions to the output directory, which could widen them (e.g. make an owner-only
+   * directory world-accessible). See the advisory GHSA-v2g6-7r9j-v6px. Unpacking such an entry must
+   * complete without changing the output directory's permissions.
+   */
+  public void testUnpackDoesntChangeOutputDirPermissions() throws Exception {
+    assertUnpackDoesntChangeOutputDirPermissions("/");
+  }
+
+  /*
+   * "./" also resolves to the output directory itself, without containing "..", so it is not caught
+   * by looking for ".." alone.
+   */
+  public void testUnpackDoesntChangeOutputDirPermissionsForDotSlashEntry() throws Exception {
+    assertUnpackDoesntChangeOutputDirPermissions("./");
+  }
+
+  private void assertUnpackDoesntChangeOutputDirPermissions(String selfReferencingEntryName) throws Exception {
+    if (!FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+      return; // POSIX permissions not supported on this platform; nothing to verify
+    }
+    File outputDir = Files.createTempDirectory("zt-zip-selfref-perms").toFile();
+    Path outputDirPath = outputDir.toPath();
+    Set<PosixFilePermission> ownerOnly = EnumSet.of(
+        PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE);
+    Files.setPosixFilePermissions(outputDirPath, ownerOnly);
+    File zip = createZipWithPosixMode(selfReferencingEntryName, 0777);
+
+    ZipUtil.unpack(zip, outputDir);
+
+    assertEquals("Unpacking '" + selfReferencingEntryName + "' must not change the output directory permissions",
+        ownerOnly, Files.getPosixFilePermissions(outputDirPath));
+  }
+
+  /*
+   * Fixing the self-referencing case must not stop permissions from being applied to genuine entries
+   * inside the output directory.
+   */
+  public void testUnpackStillAppliesPermissionsToRegularEntry() throws Exception {
+    if (!FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+      return; // POSIX permissions not supported on this platform; nothing to verify
+    }
+    File outputDir = Files.createTempDirectory("zt-zip-perms-applied").toFile();
+    File zip = createZipWithPosixMode("file.txt", 0750);
+
+    ZipUtil.unpack(zip, outputDir);
+
+    Set<PosixFilePermission> expected = EnumSet.of(
+        PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
+        PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE);
+    assertEquals(expected, Files.getPosixFilePermissions(new File(outputDir, "file.txt").toPath()));
+  }
+
+  /*
+   * Directly exercises the output-directory detection used to guard permission application: names
+   * that resolve to the output directory itself must be recognised (whether or not they contain
+   * ".."), while strict descendants must not.
+   */
+  public void testDestinationIsOutputDirDetection() throws Exception {
+    File outputDir = Files.createTempDirectory("zt-zip-isoutdir").toFile();
+    String[] selfReferencing = { "/", "//", "", ".", "./", "/.", "/./", "a/..", "a/../" };
+    for (String name : selfReferencing) {
+      assertTrue("'" + name + "' resolves to the output directory",
+          ZipUtil.destinationIsOutputDir(outputDir, name, new File(outputDir, name)));
+    }
+    String[] descendants = { "good.txt", "sub/file", "dir/file.txt", "a/b/c", "a/../b", "x/./y", "foo..bar" };
+    for (String name : descendants) {
+      assertFalse("'" + name + "' is a strict descendant",
+          ZipUtil.destinationIsOutputDir(outputDir, name, new File(outputDir, name)));
+    }
+  }
+
+  /*
+   * The guard rejects names that escape the output directory, whether via a leading ".." or a ".."
+   * that only escapes after a real segment (e.g. "sub/../../evil").
+   */
+  public void testGuardRejectsEscapingNames() throws Exception {
+    File outputDir = Files.createTempDirectory("zt-zip-guard-escape").toFile();
+    String[] escaping = { "..", "../evil", "../../evil", "a/../../evil", "sub/../../evil" };
+    for (String name : escaping) {
+      try {
+        ZipUtil.checkDestinationFileForTraversal(outputDir, name, new File(outputDir, name));
+        fail("Expected MaliciousZipException for entry name '" + name + "'");
+      }
+      catch (MaliciousZipException expected) {
+        // expected: the name escapes the output directory
+      }
+    }
+  }
+
+  /*
+   * The guard lets through names that resolve to a strict descendant of the output directory
+   * (including ones with "." or a cancelled ".." segment) as well as names that resolve to the
+   * output directory itself, which are harmless no-ops for extraction.
+   */
+  public void testGuardAllowsDescendantAndSelfReferenceNames() throws Exception {
+    File outputDir = Files.createTempDirectory("zt-zip-guard-good").toFile();
+    String[] allowedNames = { "good.txt", "sub/file", "dir/file.txt", "a/b/c", "a/../b", "x/./y", "foo..bar",
+        "/", "./", ".", "a/.." };
+    for (String name : allowedNames) {
+      File destFile = new File(outputDir, name);
+      assertSame("Entry name '" + name + "' should be allowed",
+          destFile, ZipUtil.checkDestinationFileForTraversal(outputDir, name, destFile));
+    }
+  }
+
+  private static File createZipWithPosixMode(String entryName, int posixMode) throws IOException {
+    File zip = File.createTempFile("zips-selfref", ".zip");
+    ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zip));
+    try {
+      ZipEntry entry = new ZipEntry(entryName);
+      ZipEntryUtil.setZTFilePermissions(entry, ZTFilePermissionsUtil.fromPosixFileMode(posixMode));
+      out.putNextEntry(entry);
+      out.closeEntry();
+    }
+    finally {
+      out.close();
+    }
+    return zip;
   }
 
   private static File createTraversalZip(String entryName) throws IOException {
