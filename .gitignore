@@ -12,3 +12,8 @@ test.log
 release.sh
 rebel.xml
 src/main/resources/rebel.xml
+
+# macOS presents the committed NFD-encoded charset test fixture back in NFC form,
+# so its precomposed-Unicode name shows up as a phantom untracked file. The tracked
+# fixture is unaffected (Git never untracks a committed path via .gitignore).
+src/test/resources/umlauts-*.zip
