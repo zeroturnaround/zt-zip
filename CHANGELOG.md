@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Windows only** (no effect on other platforms): hardened the directory-traversal and output-directory checks used when unpacking against Windows path normalization. Windows strips a path component's trailing dots and spaces and treats `:` as a drive/stream separator, so an entry name like `" ."` could resolve to the output directory itself (re-applying the entry's permissions to it, [GHSA-v2g6-7r9j-v6px](https://github.com/zeroturnaround/zt-zip/security/advisories/GHSA-v2g6-7r9j-v6px)) and a name like `".. \evil.txt"` could escape the output directory. The allocation-free fast path that clears genuine descendant entry names (avoiding a `getCanonicalFile()` call) no longer clears such names; they are canonicalized and rejected as malicious when their canonical path cannot be resolved or does not stay inside the output directory. The output-directory check compares canonical `java.nio.file.Path`s so a self-referencing name is recognised even when `getCanonicalFile()` renders it with a trailing separator. Reported by [Marcono1234](https://github.com/Marcono1234).
+
 ## [1.18.1] - 2026-07-01
 
 ### Fixed
