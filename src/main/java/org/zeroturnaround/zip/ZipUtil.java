@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
@@ -64,6 +65,17 @@ import org.zeroturnaround.zip.transform.ZipEntryTransformerEntry;
 public final class ZipUtil {
 
   private static final String PATH_SEPARATOR = "/";
+
+  /*
+   * Whether the JVM runs on a Windows filesystem, where a path component's trailing dots and spaces
+   * are stripped and ':' is treated as a drive/stream separator (see WinNTFileSystem.normalize and
+   * canonicalize). Those rewrites mean names like " ." can resolve to the output directory and names
+   * like ".. " can resolve to its parent, so the fast path in isSafeDescendantEntryName must fall
+   * back to canonicalization for such names on Windows. We key off File.separatorChar rather than
+   * os.name because it is set by the very same WinNTFileSystem that performs the normalization we are
+   * guarding against, so it is the correctly-coupled signal for whether that normalization applies.
+   */
+  private static final boolean WINDOWS_FILE_SYSTEM = File.separatorChar == '\\';
 
   /** Default compression level */
   public static final int DEFAULT_COMPRESSION_LEVEL = Deflater.DEFAULT_COMPRESSION;
@@ -1157,26 +1169,41 @@ public final class ZipUtil {
      *
      * isSafeDescendantEntryName recognises the common case of a genuine descendant with a cheap,
      * allocation-free scan, so that only names it cannot clear fall through to getCanonicalFile().
-     * The filesystem access therefore stays off the hot path for every legitimate entry. It replaces
-     * the earlier `name.indexOf("..")` check, which also canonicalized names that merely contained
-     * ".." as a substring (e.g. "foo..bar").
+     * The filesystem access therefore stays off the hot path for every legitimate entry. It clears
+     * more names than the earlier `name.indexOf("..")` check did (e.g. "foo..bar", which merely
+     * contained ".." as a substring), while on a Windows filesystem it also falls back to
+     * canonicalization for names whose components Windows would rewrite via trailing-dot/space
+     * stripping or a ':' drive/stream separator (e.g. "C:/evil" or a ".. " that normalizes to "..").
      *
      * An entry that resolves to the output directory itself (e.g. "/") is intentionally allowed here:
      * it is a harmless no-op for file/directory creation and is produced legitimately when unwrapping
      * a single root directory. It is the Unpacker's permission handling that must not act on such an
      * entry (see GHSA-v2g6-7r9j-v6px and {@link #destinationIsOutputDir}).
      *
-     * IMPORTANT: the canonicalization below relies on the `java.io.File` API, where
-     * new File(outputDir, name) never treats an absolute-looking child (e.g. "/etc" or "C:/my-dir")
-     * as escaping the parent unless the name also contains "..". If this is ever refactored to use
+     * IMPORTANT: the check below relies on the `java.io.File` API, where new File(outputDir, name)
+     * never treats an absolute-looking child (e.g. "/etc" or "C:/my-dir") as escaping the parent
+     * unless the name also contains "..". If this is ever refactored to use
      * `java.nio.file.Path#resolve(String)` that no longer holds (resolve drops the parent for an
      * absolute child), so isSafeDescendantEntryName's fast path must be revisited.
+     *
+     * A destination that cannot be resolved to a valid path is rejected: on a Windows filesystem a
+     * name with a component that ends with a space (e.g. ".. \evil.txt") or contains ':' makes
+     * getCanonicalFile()/toPath() throw, and such an entry cannot be safely written inside the output
+     * directory. The comparison uses Path so a trailing separator (e.g. a name resolving to the
+     * output directory itself, which getCanonicalFile() can render as "outputDir\") is normalized away
+     * rather than mistaken for an escape.
      */
     if (isSafeDescendantEntryName(name)) {
       return destFile;
     }
-    Path canonicalDest = destFile.getCanonicalFile().toPath();
     Path canonicalOutputDir = outputDir.getCanonicalFile().toPath();
+    Path canonicalDest;
+    try {
+      canonicalDest = destFile.getCanonicalFile().toPath();
+    }
+    catch (IOException | InvalidPathException e) {
+      throw new MaliciousZipException(outputDir, name);
+    }
     if (!canonicalDest.startsWith(canonicalOutputDir)) {
       throw new MaliciousZipException(outputDir, name);
     }
@@ -1190,22 +1217,48 @@ public final class ZipUtil {
    * that apply permissions must skip the entry when this returns {@code true}.
    *
    * <p>The cheap {@link #isSafeDescendantEntryName} scan clears genuine descendants without touching
-   * the filesystem; only names that might resolve to the output directory are canonicalized.
+   * the filesystem; only names that might resolve to the output directory are canonicalized. On a
+   * Windows filesystem this includes names whose components Windows rewrites by stripping trailing
+   * dots and spaces (e.g. {@code " ."}, which resolves to the output directory there). The comparison
+   * uses {@link Path}, not {@link File#equals}, because getCanonicalFile() can render such a
+   * self-reference with a trailing separator (e.g. {@code "outputDir\"}) that is not File-equal to
+   * the output directory but is the same path once normalized. If the destination cannot be resolved
+   * to a valid path (a Windows-illegal component), {@code true} is returned so an entry the traversal
+   * guard will reject anyway never has its permissions applied to the output directory.
    */
   static boolean destinationIsOutputDir(File outputDir, String name, File destFile) throws IOException {
     if (isSafeDescendantEntryName(name)) {
       return false;
     }
-    return destFile.getCanonicalFile().equals(outputDir.getCanonicalFile());
+    try {
+      return destFile.getCanonicalFile().toPath().equals(outputDir.getCanonicalFile().toPath());
+    }
+    catch (InvalidPathException e) {
+      return true;
+    }
   }
 
   /**
    * Tells whether a ZIP entry name is guaranteed to resolve to a strict descendant of the output
-   * directory, i.e. it has at least one real path segment (neither empty nor ".") and no ".."
-   * segment. Such names can neither escape the output directory nor resolve to it, so they need no
-   * canonicalization and can skip the filesystem access in {@link #checkDestinationFileForTraversal}
-   * and {@link #destinationIsOutputDir}. Both '/' and '\' are treated as separators; a name that slips
-   * through to a canonical check because of an unusual separator is still handled correctly there.
+   * directory, i.e. it has at least one real path segment (neither empty nor ".") and no segment that
+   * could escape the output directory or resolve to it. Such names can neither escape the output
+   * directory nor resolve to it, so they need no canonicalization and can skip the filesystem access
+   * in {@link #checkDestinationFileForTraversal} and {@link #destinationIsOutputDir}.
+   * <p>
+   * Both '/' and '\' are treated as separators on every platform. This is deliberate:
+   * {@link BackslashUnpacker} splits entry names on '\' on all platforms and builds its destination
+   * that way, then routes the raw name through this shared guard. If '\' were treated as a literal
+   * character on Unix, a name like {@code ..\escapedir\evil.txt} would be fast-allowed here while
+   * BackslashUnpacker escapes the output directory with it (guarded by
+   * {@code testBackslashUnpackerDoesntLeaveTarget}, which runs on Linux).
+   * <p>
+   * On a Windows filesystem a segment also forces canonicalization when it ends with '.' or ' ', or
+   * contains ':' — see {@link #isForbiddenFastPathSegment}. Windows strips trailing dots and spaces
+   * and treats ':' as a drive/stream separator, so such a segment can resolve to the output directory
+   * (e.g. {@code " ."}) or above it (e.g. a {@code ".. "} that normalizes to {@code ".."}). This
+   * makes the fast path a strict superset of the old protection: it keeps clearing normal names
+   * ({@code dir/sub/file.ext}) on every OS, and only Windows-special names fall back to a canonical
+   * check.
    */
   private static boolean isSafeDescendantEntryName(String name) {
     boolean hasRealSegment = false;
@@ -1213,17 +1266,60 @@ public final class ZipUtil {
     int length = name.length();
     for (int i = 0; i <= length; i++) {
       if (i == length || name.charAt(i) == '/' || name.charAt(i) == '\\') {
-        int segmentLength = i - segmentStart;
-        if (segmentLength == 2 && name.charAt(segmentStart) == '.' && name.charAt(segmentStart + 1) == '.') {
-          return false; // a ".." segment: canonicalize to know where the name resolves
+        if (isForbiddenFastPathSegment(name, segmentStart, i)) {
+          return false; // canonicalize to know where the name resolves
         }
-        if (segmentLength > 0 && !(segmentLength == 1 && name.charAt(segmentStart) == '.')) {
+        if (isRealSegment(name, segmentStart, i)) {
           hasRealSegment = true;
         }
         segmentStart = i + 1;
       }
     }
     return hasRealSegment;
+  }
+
+  /** Whether the segment name[start, end) is exactly ".". */
+  private static boolean isDot(String name, int start, int end) {
+    return end - start == 1 && name.charAt(start) == '.';
+  }
+
+  /** Whether the segment name[start, end) is exactly "..". */
+  private static boolean isDotDot(String name, int start, int end) {
+    return end - start == 2 && name.charAt(start) == '.' && name.charAt(start + 1) == '.';
+  }
+
+  /**
+   * Whether the segment name[start, end) contributes a real path component to the "has at least one
+   * real segment" tally, i.e. it is neither empty nor exactly ".". Skipping empty and "." segments
+   * means a name like {@code a/./b} still fast-allows.
+   */
+  private static boolean isRealSegment(String name, int start, int end) {
+    return end > start && !isDot(name, start, end);
+  }
+
+  /**
+   * Whether the segment name[start, end) disqualifies the whole name from the fast path, forcing a
+   * canonical check. That is the case when the segment is exactly ".." on any platform, or, on a
+   * Windows filesystem, when it is not exactly "." and either ends with '.' or ' ' (both stripped by
+   * Windows) or contains ':' (a drive/stream separator on Windows). See {@link #WINDOWS_FILE_SYSTEM}.
+   */
+  private static boolean isForbiddenFastPathSegment(String name, int start, int end) {
+    if (isDotDot(name, start, end)) {
+      return true;
+    }
+    if (!WINDOWS_FILE_SYSTEM || end == start || isDot(name, start, end)) {
+      return false;
+    }
+    char last = name.charAt(end - 1);
+    if (last == '.' || last == ' ') {
+      return true;
+    }
+    for (int i = start; i < end; i++) {
+      if (name.charAt(i) == ':') {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

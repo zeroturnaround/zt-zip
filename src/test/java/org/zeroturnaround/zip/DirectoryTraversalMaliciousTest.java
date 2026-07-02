@@ -335,6 +335,95 @@ public class DirectoryTraversalMaliciousTest extends TestCase {
     }
   }
 
+  /*
+   * These entry names only escape the output directory under Windows path normalization: Windows
+   * strips trailing spaces and dots from a path component, so ".. \evil.txt", ".. /evil.txt" (and the
+   * dotted variants) normalize to a "../" that climbs above the target. The pre-1.18.1 substring
+   * `indexOf("..")` check caught them; the allocation-free segment scan only flags a segment that is
+   * exactly "..", so the Windows-special forms must force a canonical check to stay protected.
+   *
+   * The assertion is the security invariant that holds on every OS: nothing is created outside the
+   * target. On Unix these are literal descendant filenames (containing a space) — no escape, no
+   * exception, the file lands inside the target. On Windows with the fix they are rejected with a
+   * MaliciousZipException; without the fix the escaped file would exist and the test fails.
+   */
+  public void testUnpackDoesntEscapeViaWindowsTrailingSpaceOrDot() throws Exception {
+    String[] maliciousNames = { ".. /evil.txt", ".. \\evil.txt", ".../evil.txt", ".. /.. /evil.txt" };
+    for (String name : maliciousNames) {
+      assertUnpackDoesntEscapeTarget(name, "evil.txt");
+    }
+  }
+
+  private void assertUnpackDoesntEscapeTarget(String entryName, String escapedLeafName) throws Exception {
+    File parent = Files.createTempDirectory("zt-zip-win-traversal").toFile();
+    File target = new File(parent, "target");
+    target.mkdir();
+    File escaped = new File(parent, escapedLeafName);
+    File zip = createTraversalZip(entryName);
+
+    try {
+      ZipUtil.unpack(zip, target);
+    }
+    catch (MaliciousZipException e) {
+      // acceptable: the name is rejected where Windows normalization would let it escape
+    }
+    assertFalse("Entry '" + entryName + "' must not create '" + escaped + "' outside the target",
+        escaped.exists());
+  }
+
+  /*
+   * Directly exercises the OS-aware fast-path classification behind the output-directory detection.
+   * A name like " ." (space + dot) resolves to the output directory itself on Windows because Windows
+   * strips the trailing dot and space, but is a literal descendant filename on Unix. The expectation
+   * therefore branches on the running filesystem.
+   */
+  public void testDestinationIsOutputDirDetectionForWindowsSpecialNames() throws Exception {
+    boolean windows = File.separatorChar == '\\';
+    File outputDir = Files.createTempDirectory("zt-zip-isoutdir-win").toFile();
+    // A single component that Windows normalizes away (trailing dot/space stripped) resolves to the
+    // output directory itself there; on Unix it is a literal descendant filename.
+    String[] windowsSelfReferencing = { " .", ". " };
+    for (String name : windowsSelfReferencing) {
+      assertEquals("'" + name + "' resolves to the output directory only on Windows",
+          windows, ZipUtil.destinationIsOutputDir(outputDir, name, new File(outputDir, name)));
+    }
+  }
+
+  /*
+   * Directly exercises the traversal guard for names that only escape under Windows normalization.
+   * On Windows the guard must reject them; on Unix they are literal descendants and pass through.
+   */
+  public void testGuardRejectsWindowsNormalizedEscapingNames() throws Exception {
+    boolean windows = File.separatorChar == '\\';
+    File outputDir = Files.createTempDirectory("zt-zip-guard-win").toFile();
+    // ".. " has its trailing space stripped by Windows to "..", which climbs above the output dir.
+    String[] windowsEscaping = { ".. /evil", ".. \\evil" };
+    for (String name : windowsEscaping) {
+      File destFile = new File(outputDir, name);
+      try {
+        ZipUtil.checkDestinationFileForTraversal(outputDir, name, destFile);
+        assertFalse("'" + name + "' must be rejected on Windows", windows);
+      }
+      catch (MaliciousZipException expected) {
+        assertTrue("'" + name + "' should only be rejected on Windows", windows);
+      }
+    }
+  }
+
+  /*
+   * Normal descendant names must keep taking the fast path (no exception) on every OS, including
+   * Windows, so the hardening does not needlessly canonicalize legitimate entries.
+   */
+  public void testGuardAllowsNormalNamesOnAllPlatforms() throws Exception {
+    File outputDir = Files.createTempDirectory("zt-zip-guard-normal").toFile();
+    String[] allowedNames = { "good.txt", "dir/file.txt", "a/b/c", "a/./b", "foo..bar", "foo.bar" };
+    for (String name : allowedNames) {
+      File destFile = new File(outputDir, name);
+      assertSame("Entry name '" + name + "' should be allowed on every OS",
+          destFile, ZipUtil.checkDestinationFileForTraversal(outputDir, name, destFile));
+    }
+  }
+
   private static File createZipWithPosixMode(String entryName, int posixMode) throws IOException {
     File zip = File.createTempFile("zips-selfref", ".zip");
     ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zip));
