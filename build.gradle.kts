@@ -93,10 +93,6 @@ mavenPublishing {
     name.set("ZT Zip")
     description.set(project.description)
     url.set("https://github.com/zeroturnaround/zt-zip")
-    organization {
-      name.set("ZeroTurnaround")
-      url.set("https://zeroturnaround.com/")
-    }
     licenses {
       license {
         name.set("The Apache Software License, Version 2.0")
@@ -114,16 +110,10 @@ mavenPublishing {
       developer {
         id.set("rein")
         name.set("Rein")
-        email.set("rein@zeroturnaround.com")
-        organization.set("ZeroTurnaround")
-        organizationUrl.set("https://zeroturnaround.com")
       }
       developer {
         id.set("toomasr")
         name.set("Toomas")
-        email.set("toomas@zeroturnaround.com")
-        organization.set("ZeroTurnaround")
-        organizationUrl.set("https://zeroturnaround.com")
       }
     }
     scm {
