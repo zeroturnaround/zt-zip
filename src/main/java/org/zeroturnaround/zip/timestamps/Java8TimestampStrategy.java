@@ -2,6 +2,7 @@ package org.zeroturnaround.zip.timestamps;
 import java.nio.file.attribute.FileTime;
 /**
  *    Copyright (C) 2012 ZeroTurnaround LLC <support@zeroturnaround.com>
+ *    Copyright (C) 2026 Neeme Praks
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
