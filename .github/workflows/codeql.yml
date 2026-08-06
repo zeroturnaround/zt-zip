@@ -2,9 +2,9 @@ name: CodeQL
 
 on:
   push:
-    branches: [master, main]
+    branches: [main]
   pull_request:
-    branches: [master, main]
+    branches: [main]
   schedule:
     # Weekly scan to catch newly published queries against unchanged code.
     - cron: '23 4 * * 1'

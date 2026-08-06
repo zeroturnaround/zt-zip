@@ -4,7 +4,7 @@ name: Dependency Submission
 # raise security alerts (and updates) for vulnerable transitive dependencies.
 on:
   push:
-    branches: [master, main]
+    branches: [main]
 
 permissions:
   contents: write
