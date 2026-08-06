@@ -71,7 +71,7 @@ zt-zip does **not** impose any limit on the decompressed size, compression ratio
 
 ## Examples
 
-The examples don't include all the possible ways how to use the library but will give an overview. When you see a method that is useful but doesn't necessarily solve your use case then just head over to [ZipUtil.class](https://github.com/zeroturnaround/zt-zip/blob/master/src/main/java/org/zeroturnaround/zip/ZipUtil.java) file and see the sibling methods that are named the same but arguments might be different.
+The examples don't include all the possible ways how to use the library but will give an overview. When you see a method that is useful but doesn't necessarily solve your use case then just head over to [ZipUtil.class](https://github.com/zeroturnaround/zt-zip/blob/main/src/main/java/org/zeroturnaround/zip/ZipUtil.java) file and see the sibling methods that are named the same but arguments might be different.
 
 ### Unpacking
 
