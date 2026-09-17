@@ -7,7 +7,7 @@ import java.io.File;
  * 
  * @author Viktor Karabut
  */
-class ZTFilePermissionsUtil {
+final class ZTFilePermissionsUtil {
   
   private ZTFilePermissionsUtil() {
   }

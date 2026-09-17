@@ -3,7 +3,7 @@ package org.zeroturnaround.zip;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-class ZTZipReflectionUtil {
+final class ZTZipReflectionUtil {
 
   private ZTZipReflectionUtil() {
   }

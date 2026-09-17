@@ -91,6 +91,7 @@ public class ByteSource implements ZipEntrySource {
     }
   }
 
+  @Override
   public String toString() {
     return "ByteSource[" + path + "]";
   }

@@ -629,7 +629,7 @@ public class Zips {
     return ZipFileUtil.getZipFile(src, charset);
   }
 
-  private static class CopyingCallback implements ZipEntryCallback {
+  private static final class CopyingCallback implements ZipEntryCallback {
 
     private final Map<String, ZipEntryTransformer> entryByPath;
     private final ZipOutputStream out;
@@ -661,7 +661,7 @@ public class Zips {
     }
   }
 
-  private static class UnpackingCallback implements ZipEntryCallback {
+  private static final class UnpackingCallback implements ZipEntryCallback {
 
     private final Map<String, ZipEntryTransformer> entryByPath;
     private final Set<String> visitedNames;
@@ -712,6 +712,7 @@ public class Zips {
 
       try {
         newFixedThreadPool.execute(new Runnable() {
+          @Override
           public void run() {
             try {
               transformer.transform(entryIn, zipEntry, zipOut);

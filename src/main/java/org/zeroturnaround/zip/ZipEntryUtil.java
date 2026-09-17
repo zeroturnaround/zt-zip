@@ -36,7 +36,7 @@ import org.zeroturnaround.zip.timestamps.TimestampStrategyFactory;
  * @author shelajev
  *
  */
-class ZipEntryUtil {
+final class ZipEntryUtil {
 
   private ZipEntryUtil() {
   }

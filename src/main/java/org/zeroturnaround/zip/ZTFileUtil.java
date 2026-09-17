@@ -39,6 +39,7 @@ public final class ZTFileUtil {
     if (filter == null) {
       // Set default filter to accept any file
       filter = new FileFilter() {
+        @Override
         public boolean accept(File pathname) {
           return true;
         }
@@ -54,8 +55,8 @@ public final class ZTFileUtil {
     String[] filenames = dir.list();
 
     if (filenames != null) {
-      for (int i = 0; i < filenames.length; i++) {
-        File file = new File(dir, filenames[i]);
+      for (String filename : filenames) {
+        File file = new File(dir, filename);
         if (file.isDirectory()) {
           innerListFiles(file, accumulator, filter);
         }

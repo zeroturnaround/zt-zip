@@ -1,0 +1,334 @@
+> Task :compileJava UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :classes UP-TO-DATE
+> Task :compileTestJava UP-TO-DATE
+> Task :processTestResources UP-TO-DATE
+> Task :testClasses UP-TO-DATE
+
+> Task :test
+
+BrokenJarTest > testZipFileWithBrokenPermissions PASSED
+
+ByteSourceTest > testNullBytesWithStoredMethodIsAnEmptyEntry PASSED
+
+ByteSourceTest > testNullBytesDenotesDirectoryEntry PASSED
+
+CharsetTest > testZipFileGetEntriesWithCharset PASSED
+
+CharsetTest > testExtractEntryWithCharset PASSED
+
+CharsetTest > testExtractWithCharsetUsingStream PASSED
+
+CharsetTest > testIterateWithCharset PASSED
+
+CharsetTest > testExtractWithCharset PASSED
+
+CharsetTest > testIterateExtractWithCharset PASSED
+
+CharsetTest > testIterateWithEntryNamesAndCharset PASSED
+
+DirectoryTraversalMaliciousTest > testZipsUnpackDirectoryEntryDoesntLeaveTarget PASSED
+
+DirectoryTraversalMaliciousTest > testGuardRejectsWindowsNormalizedEscapingNames PASSED
+
+DirectoryTraversalMaliciousTest > testUnpackDoesntChangeOutputDirPermissions PASSED
+
+DirectoryTraversalMaliciousTest > testUnpackDoesntEscapeViaWindowsTrailingSpaceOrDot PASSED
+
+DirectoryTraversalMaliciousTest > testGuardAllowsDescendantAndSelfReferenceNames PASSED
+
+DirectoryTraversalMaliciousTest > testGuardRejectsEscapingNames PASSED
+
+DirectoryTraversalMaliciousTest > testUnwrapDoesntLeaveTarget PASSED
+
+DirectoryTraversalMaliciousTest > testUnpackDoesntLeaveTarget PASSED
+
+DirectoryTraversalMaliciousTest > testDestinationIsOutputDirDetection PASSED
+
+DirectoryTraversalMaliciousTest > testZipsUnpackDoesntLeaveTarget PASSED
+
+DirectoryTraversalMaliciousTest > testUnpackDoesntChangeOutputDirPermissionsForDotSlashEntry PASSED
+
+DirectoryTraversalMaliciousTest > testGuardAllowsNormalNamesOnAllPlatforms PASSED
+
+DirectoryTraversalMaliciousTest > testBackslashUnpackerDoesntLeaveTarget PASSED
+
+DirectoryTraversalMaliciousTest > testUnpackStillAppliesPermissionsToRegularEntry PASSED
+
+DirectoryTraversalMaliciousTest > testZipsUnpackWithTransformerDoesntLeaveTarget PASSED
+
+DirectoryTraversalMaliciousTest > testUnpackDoesntLeaveTargetForSiblingWithSharedPrefix PASSED
+
+DirectoryTraversalMaliciousTest > testDestinationIsOutputDirDetectionForWindowsSpecialNames PASSED
+
+DirectoryTraversalMaliciousTest > testBackslashUnpackerDoesntCreateDirectoriesOutsideTarget PASSED
+
+FilePermissionsTest > testPreserveExecuteFlag PASSED
+
+FilePermissionsTest > testPreserveWriteFlag PASSED
+
+FilePermissionsTest > testPreserveReadFlag PASSED
+
+FileSourceTest > testPairThrowsExceptionWhenNotEnoughNames PASSED
+
+FileSourceTest > testPair PASSED
+
+FileSourceTest > testPairDoesNotThrowExceptionWhenTooManyNames PASSED
+
+MainExamplesTest > testUnpackEntryImMemory PASSED
+
+MainExamplesTest > testEntryEqualsDifferentNames PASSED
+
+MainExamplesTest > testContains PASSED
+
+MainExamplesTest > testUnpackInPlace PASSED
+
+MainExamplesTest > testArchiveEquals PASSED
+
+MainExamplesTest > testArchiveEqualsNo PASSED
+
+MainExamplesTest > testUnpackEntry PASSED
+
+MainExamplesTest > testUnpack PASSED
+
+MainExamplesTest > testEntryEquals PASSED
+
+ZTFileUtilTest > testListFilesFromFile PASSED
+
+ZTFileUtilTest > testCopy PASSED
+
+ZTFileUtilTest > testListFiles PASSED
+
+ZTFileUtilTest > testListFilesFromNonExistent PASSED
+
+ZTFileUtilTest > testGetTempFileFor PASSED
+
+ZipEntryUtilTest > testSetUnixFileMode PASSED
+
+ZipEntryUtilTest > testGetUnixModeOnEntryWithoutExtra PASSED
+
+ZipPreserveTimeStampJava8Test > testDontPreserveTime PASSED
+
+ZipPreserveTimeStampJava8Test > testPreserveTimeWithSetter PASSED
+
+ZipPreserveTimeStampJava8Test > testPreserveTime PASSED
+
+ZipPreserveTimeStampTest > testPreservingTimestampsSetter PASSED
+
+ZipPreserveTimeStampTest > testPreservingTimestamps PASSED
+
+ZipTransformTest > testStreamTransformer PASSED
+
+ZipTransformTest > testByteArrayTransformerInStream PASSED
+
+ZipTransformTest > testByteArrayTransformer PASSED
+
+ZipTransformTest > testZipTransformNotInPlaceButSameLocation PASSED
+
+ZipTransformTest > testStreamTransformerIdentity PASSED
+
+ZipTransformTest > testFileZipEntryTransformerInStream PASSED
+
+ZipTransformTest > testStringZipEntryTransformerInStream PASSED
+
+ZipUtilDirTest > testPackDirectoryToStream PASSED
+
+ZipUtilInPlaceTest > testRemoveEntry PASSED
+
+ZipUtilInPlaceTest > testAddEntry PASSED
+
+ZipUtilInPlaceTest > testRemoveDirs PASSED
+
+ZipUtilInPlaceTest > testByteArrayTransformer PASSED
+
+ZipUtilTest > testPackEntryFileWithNameParameter PASSED
+
+ZipUtilTest > testPackEntriesWithNamesList PASSED
+
+ZipUtilTest > testPackDirIntoExistingZipOutputStreamWithNameMapper PASSED
+
+ZipUtilTest > testContainsAnyEntry PASSED
+
+ZipUtilTest > testAddEntryWithNullBytesAddsDirectory PASSED
+
+ZipUtilTest > testPackEntryFileWithNameMapper PASSED
+
+ZipUtilTest > testRemoveDirsOutputStream PASSED
+
+ZipUtilTest > testUnpackEntryFromFile PASSED
+
+ZipUtilTest > testUnwrapEntryWithSpecialPrefixThrowsZipException PASSED
+
+ZipUtilTest > testPackDirIntoExistingZipOutputStream PASSED
+
+ZipUtilTest > testZipException PASSED
+
+ZipUtilTest > testUnwrapFile PASSED
+
+ZipUtilTest > testAddEntryWithNullBytesAndStoredMethodAddsDirectory PASSED
+
+ZipUtilTest > testPackEntryFile PASSED
+
+ZipUtilTest > testRemoveEntry PASSED
+
+ZipUtilTest > testUnwrapEntriesInRoot PASSED
+
+ZipUtilTest > testAddEntryWithCompressionMethodAndDestFile PASSED
+
+ZipUtilTest > testUnpackBackslashes PASSED
+
+ZipUtilTest > testDuplicateEntryAtAddOrReplace PASSED
+
+ZipUtilTest > testIterateGivenEntriesFromStream PASSED
+
+ZipUtilTest > testAddEntry PASSED
+
+ZipUtilTest > testUnwrapMultipleRoots PASSED
+
+ZipUtilTest > testPackDirectoryWithBrokenSymlink PASSED
+
+ZipUtilTest > testPackEntriesWithNameMapper PASSED
+
+ZipUtilTest > testRemoveMissingEntry PASSED
+
+ZipUtilTest > testPackEntriesToStream PASSED
+
+ZipUtilTest > testReplaceEntryWithCompressionMethod PASSED
+
+ZipUtilTest > testUnwrapSingleRootWithStructure PASSED
+
+ZipUtilTest > testKeepEntriesState PASSED
+
+ZipUtilTest > testDuplicateEntryAtAdd PASSED
+
+ZipUtilTest > testIterateAndBreak PASSED
+
+ZipUtilTest > testIterateGivenEntriesZipEntryCallback PASSED
+
+ZipUtilTest > testRemoveDirs PASSED
+
+ZipUtilTest > testPackEntriesWithNullMappingSkipsEntry PASSED
+
+ZipUtilTest > testArchiveEquals PASSED
+
+ZipUtilTest > testAddEntriesToStream PASSED
+
+ZipUtilTest > testPackEntriesWithCompressionLevel PASSED
+
+ZipUtilTest > testUnpackEntryFromStreamToFile PASSED
+
+ZipUtilTest > testUnpackEntryDir PASSED
+
+ZipUtilTest > testUnwrapEmptyRootDir PASSED
+
+ZipUtilTest > testPreserveRoot PASSED
+
+ZipUtilTest > testUnexplode PASSED
+
+ZipUtilTest > testDuplicateEntryAtReplace PASSED
+
+ZipUtilTest > testCreateEmptyFile PASSED
+
+ZipUtilTest > testPackEntries PASSED
+
+ZipUtilTest > testHandle PASSED
+
+ZipUtilTest > testRepackArchive PASSED
+
+ZipUtilTest > testUnpackEntryFromStream PASSED
+
+ZipUtilTest > testIterateGivenEntriesZipInfoCallback PASSED
+
+ZipUtilTest > testUnwrapStream PASSED
+
+ZipUtilTest > testIterate PASSED
+
+ZipUtilTest > testDestructiveOverloadsRejectSameSourceAndDestination PASSED
+
+ZipUtilTest > testPackEntryStream PASSED
+
+ZipUtilTest > testAddEntryWithCompressionMethodStoredInPlace PASSED
+
+ZipUtilTest > testAddEntryWithCompressionMethodDeflatedInPlace PASSED
+
+ZipUtilTest > testPackEmptyDirIntoExistingZipOutputStream PASSED
+
+ZipsTest > testUnpackTransformerIOExceptionSurfacesRealCause PASSED
+
+ZipsTest > testAddEmptyDirectoryEntry PASSED
+
+ZipsTest > testUnpackWithTransformer PASSED
+
+ZipsTest > testUnpackImplicit PASSED
+
+ZipsTest > testUnpackTransformerWithoutOutputDoesNotHang PASSED
+
+ZipsTest > testCharsetEntry PASSED
+
+ZipsTest > testAddRemoveEntries PASSED
+
+ZipsTest > testInPlaceAddEntry PASSED
+
+ZipsTest > testRemoveEntry PASSED
+
+ZipsTest > testAddDirectoryEntryWithTrailingSlash PASSED
+
+ZipsTest > testAddEntry PASSED
+
+ZipsTest > testPreserveRootWithSubdirectories PASSED
+
+ZipsTest > testAddDirectoryAndFileEntries PASSED
+
+ZipsTest > testOverwritingTimestamps PASSED
+
+ZipsTest > testDuplicateEntryAtAdd PASSED
+
+ZipsTest > testUnpackInPlace PASSED
+
+ZipsTest > testIterateAndBreak PASSED
+
+ZipsTest > testRemoveDirs PASSED
+
+ZipsTest > testAddEntryFile PASSED
+
+ZipsTest > testAddRemovePriorities PASSED
+
+ZipsTest > testTransformAddedEntries PASSED
+
+ZipsTest > testRenameInPlace PASSED
+
+ZipsTest > testByteArrayTransformer PASSED
+
+ZipsTest > testPreserveRoot PASSED
+
+ZipsTest > testIgnoringRoot PASSED
+
+ZipsTest > testTransformationPreservesTimestamps PASSED
+
+ZipsTest > testAddDirectoryEntry PASSED
+
+ZipsTest > testPackWithSuffixOnlyNameMapper PASSED
+
+ZipsTest > testPackEntries PASSED
+
+ZipsTest > testInPlaceAddRemoveEntries PASSED
+
+ZipsTest > testPackWithPrefixNameMapper PASSED
+
+ZipsTest > testUnpack PASSED
+
+ZipsTest > testAddEntryFilter PASSED
+
+AsiExtraFieldTest > testParseRejectsShortFieldWithoutCrashing PASSED
+
+AsiExtraFieldTest > testUnpackDoesNotCrashOnShortAsiExtraField PASSED
+
+AsiExtraFieldTest > testParseRejectsNegativeLinkLength PASSED
+
+AsiExtraFieldTest > testParseAcceptsValidLink PASSED
+
+AsiExtraFieldTest > testParseRejectsOversizedLinkLengthWithoutAllocating PASSED
+
+BUILD SUCCESSFUL in 2s
+5 actionable tasks: 1 executed, 4 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.7.1/userguide/configuration_cache_enabling.html

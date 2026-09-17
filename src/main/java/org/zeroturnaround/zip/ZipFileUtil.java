@@ -17,7 +17,7 @@ import java.util.zip.ZipOutputStream;
  * because Java 6 doesn't have constructors with Charsets that were
  * introduced in Java 7.
  */
-class ZipFileUtil {
+final class ZipFileUtil {
   private static final String MISSING_METHOD_PLEASE_UPGRADE = "Your JRE doesn't support the ZipFile Charset constructor. Please upgrade JRE to 1.7 use this feature. Tried constructor ZipFile(File, Charset).";
   private static final String CONSTRUCTOR_MESSAGE_FOR_ZIPFILE = "Using constructor ZipFile(File, Charset) has failed: ";
   private static final String CONSTRUCTOR_MESSAGE_FOR_OUTPUT = "Using constructor ZipOutputStream(OutputStream, Charset) has failed: ";
@@ -31,8 +31,9 @@ class ZipFileUtil {
    * Returns a ZipInputStream opened with a given charset.
    */
   static ZipInputStream createZipInputStream(InputStream inStream, Charset charset) {
-    if (charset == null)
+    if (charset == null) {
       return new ZipInputStream(inStream);
+    }
 
     try {
       Constructor<ZipInputStream> constructor =
@@ -52,8 +53,9 @@ class ZipFileUtil {
    * Returns a ZipOutputStream opened with a given charset.
    */
   static ZipOutputStream createZipOutputStream(BufferedOutputStream outStream, Charset charset) {
-    if (charset == null)
+    if (charset == null) {
       return new ZipOutputStream(outStream);
+    }
 
     try {
       Constructor<ZipOutputStream> constructor =
