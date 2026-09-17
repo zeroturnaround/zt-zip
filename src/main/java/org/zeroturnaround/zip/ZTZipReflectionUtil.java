@@ -12,10 +12,7 @@ class ZTZipReflectionUtil {
     try {
       return Class.forName(name).asSubclass(clazz);
     }
-    catch (ClassNotFoundException e) {
-      throw new ZipException(e);
-    }
-    catch (ClassCastException e) {
+    catch (ClassNotFoundException | ClassCastException e) {
       throw new ZipException(e);
     }
   }
@@ -33,13 +30,7 @@ class ZTZipReflectionUtil {
     try {
       return method.invoke(obj, args);
     }
-    catch (IllegalAccessException e) {
-      throw new ZipException(e);
-    }
-    catch (InvocationTargetException e) {
-      throw new ZipException(e);
-    }
-    catch (IllegalArgumentException e) {
+    catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
       throw new ZipException(e);
     }
   }

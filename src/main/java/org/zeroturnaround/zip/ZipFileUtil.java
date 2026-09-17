@@ -35,26 +35,18 @@ class ZipFileUtil {
       return new ZipInputStream(inStream);
 
     try {
-      Constructor<ZipInputStream> constructor = ZipInputStream.class.getConstructor(new Class[] { InputStream.class, Charset.class });
+      Constructor<ZipInputStream> constructor =
+          ZipInputStream.class.getConstructor(new Class[] { InputStream.class, Charset.class });
       return (ZipInputStream) constructor.newInstance(new Object[] { inStream, charset });
     }
     catch (NoSuchMethodException e) {
       throw new IllegalStateException(MISSING_METHOD_PLEASE_UPGRADE, e);
     }
-    catch (InstantiationException e) {
-      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_INPUT + e.getMessage(), e);
-    }
-    catch (IllegalAccessException e) {
-      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_INPUT + e.getMessage(), e);
-    }
-    catch (IllegalArgumentException e) {
-      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_INPUT + e.getMessage(), e);
-    }
-    catch (InvocationTargetException e) {
+    catch (InstantiationException | IllegalAccessException |
+           IllegalArgumentException | InvocationTargetException e) {
       throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_INPUT + e.getMessage(), e);
     }
   }
-
 
   /**
    * Returns a ZipOutputStream opened with a given charset.
@@ -64,22 +56,15 @@ class ZipFileUtil {
       return new ZipOutputStream(outStream);
 
     try {
-      Constructor<ZipOutputStream> constructor = ZipOutputStream.class.getConstructor(new Class[] { OutputStream.class, Charset.class });
+      Constructor<ZipOutputStream> constructor =
+          ZipOutputStream.class.getConstructor(new Class[] { OutputStream.class, Charset.class });
       return (ZipOutputStream) constructor.newInstance(new Object[] { outStream, charset });
     }
     catch (NoSuchMethodException e) {
       throw new IllegalStateException(MISSING_METHOD_PLEASE_UPGRADE, e);
     }
-    catch (InstantiationException e) {
-      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_OUTPUT + e.getMessage(), e);
-    }
-    catch (IllegalAccessException e) {
-      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_OUTPUT + e.getMessage(), e);
-    }
-    catch (IllegalArgumentException e) {
-      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_OUTPUT + e.getMessage(), e);
-    }
-    catch (InvocationTargetException e) {
+    catch (InstantiationException | IllegalAccessException |
+           IllegalArgumentException | InvocationTargetException e) {
       throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_OUTPUT + e.getMessage(), e);
     }
   }
@@ -93,22 +78,15 @@ class ZipFileUtil {
     }
 
     try {
-      Constructor<ZipFile> constructor = ZipFile.class.getConstructor(new Class[] { File.class, Charset.class });
+      Constructor<ZipFile> constructor =
+          ZipFile.class.getConstructor(new Class[] { File.class, Charset.class });
       return (ZipFile) constructor.newInstance(new Object[] { src, charset });
     }
     catch (NoSuchMethodException e) {
       throw new IllegalStateException(MISSING_METHOD_PLEASE_UPGRADE, e);
     }
-    catch (InstantiationException e) {
-      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_ZIPFILE + e.getMessage(), e);
-    }
-    catch (IllegalAccessException e) {
-      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_ZIPFILE + e.getMessage(), e);
-    }
-    catch (IllegalArgumentException e) {
-      throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_ZIPFILE + e.getMessage(), e);
-    }
-    catch (InvocationTargetException e) {
+    catch (InstantiationException | IllegalAccessException |
+           IllegalArgumentException | InvocationTargetException e) {
       throw new IllegalStateException(CONSTRUCTOR_MESSAGE_FOR_ZIPFILE + e.getMessage(), e);
     }
   }
