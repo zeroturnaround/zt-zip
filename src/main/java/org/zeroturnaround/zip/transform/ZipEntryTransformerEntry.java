@@ -24,6 +24,7 @@ public class ZipEntryTransformerEntry {
     return transformer;
   }
 
+  @Override
   public String toString() {
     return path + "=" + transformer;
   }
