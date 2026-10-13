@@ -25,7 +25,6 @@ import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -378,7 +377,7 @@ public class Zips {
     finally {
       if (isInPlace()) {
         // destinationZip is a temporary file
-        FileUtils.deleteQuietly(destinationFile);
+        ZTFileUtil.deleteTemp(destinationFile);
       }
     }
   }
@@ -391,7 +390,7 @@ public class Zips {
   private File getDestinationFile() throws IOException {
     if(isUnpack()) {
       if(isInPlace()) {
-        return Files.createTempDirectory("zips").toFile();
+        return ZTFileUtil.createTempDirFor(src);
       }
       else {
         if (!dest.isDirectory()) {
@@ -407,7 +406,7 @@ public class Zips {
     else {
       // we need a file
       if(isInPlace()) { // no destination specified, temp file
-        return File.createTempFile("zips", ".zip");
+        return ZTFileUtil.createTempFile();
       }
       else {
         if(dest.isDirectory()) {
@@ -582,20 +581,13 @@ public class Zips {
   }
 
   /**
-   * if we are doing something in place, move result file into src.
+   * if we are doing something in place, replace src with the result.
    *
-   * @param result destination zip file
+   * @param result destination zip file or directory
    */
   private void handleInPlaceActions(File result) throws IOException {
     if (isInPlace()) {
-      // we operate in-place
-      FileUtils.forceDelete(src);
-      if (result.isFile()) {
-        FileUtils.moveFile(result, src);
-      }
-      else {
-        FileUtils.moveDirectory(result, src);
-      }
+      ZTFileUtil.moveOver(result, src);
     }
   }
 

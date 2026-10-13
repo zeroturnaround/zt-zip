@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- In-place operations (`ZipUtil` and `Zips` without a destination, `repack`, `explode`, `unexplode`) and `FileZipEntryTransformer` now write archive content only to owner-only temporary files, whatever the umask, and the result is never more accessible than the original, so other local users who cannot write to the archive's directory can no longer read its content ([GHSA-pcxh-wx2p-38wc](https://github.com/zeroturnaround/zt-zip/security/advisories/GHSA-pcxh-wx2p-38wc)). Reported by [abdelmouheimen](https://github.com/abdelmouheimen).
+
 ## [1.18.2] - 2026-07-03
 
 ### Security

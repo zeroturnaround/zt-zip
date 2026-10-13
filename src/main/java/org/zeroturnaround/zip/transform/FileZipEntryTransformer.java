@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -47,8 +48,9 @@ public abstract class FileZipEntryTransformer implements ZipEntryTransformer {
     File inFile = null;
     File outFile = null;
     try {
-      inFile = File.createTempFile("zip", null);
-      outFile = File.createTempFile("zip", null);
+      // Files.createTempFile makes owner-only files on POSIX, so other users cannot read the entry data.
+      inFile = Files.createTempFile("zip", null).toFile();
+      outFile = Files.createTempFile("zip", null).toFile();
       copy(in, inFile);
       transform(zipEntry, inFile, outFile);
       FileSource source = new FileSource(zipEntry.getName(), outFile);

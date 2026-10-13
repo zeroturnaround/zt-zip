@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -1503,8 +1502,11 @@ public final class ZipUtil {
   /**
    * Unpacks a ZIP file to its own location.
    * <p>
-   * The ZIP file will be first renamed (using a temporary name). After the
-   * extraction it will be deleted.
+   * The ZIP file is first extracted to a temporary directory next to it, which
+   * has the ZIP file's permissions plus search permission wherever the ZIP file
+   * is readable and full access for the owner, limited by the umask. If the
+   * directory is not in the ZIP file's group, its group and others get only what
+   * both had for the ZIP file. That directory then replaces the ZIP file.
    *
    * @param zip
    *          input ZIP file as well as the target directory.
@@ -1512,52 +1514,18 @@ public final class ZipUtil {
    * @see #unpack(File, File)
    */
   public static void explode(File zip) {
+    File tempDir = null;
     try {
-      // Move the archive into a freshly created, owner-only temporary directory rather than a
-      // predictable name next to it, avoiding a symlink/TOCTOU race in a shared directory.
-      File tempDir = createTempDirFor(zip);
-      File tempFile = new File(tempDir, zip.getName());
-
-      // Move the archive into the temp directory
-      FileUtils.moveFile(zip, tempFile);
-
-      // Unpack it back to the original location
-      unpack(tempFile, zip);
-
-      // Delete the temporary directory and its contents
-      FileUtils.deleteDirectory(tempDir);
+      tempDir = ZTFileUtil.createTempDirFor(zip);
+      unpack(zip, tempDir);
+      ZTFileUtil.moveOver(tempDir, zip);
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
     }
-  }
-
-  /**
-   * Creates a fresh temporary directory for working on the given file, next to it when possible
-   * (so a later rename stays on the same filesystem). The directory is created atomically with
-   * owner-only permissions, so its name cannot be predicted or pre-created by another process.
-   */
-  private static File createTempDirFor(File file) throws IOException {
-    File parent = file.getParentFile();
-    String prefix = file.getName() + "_";
-    return (parent != null
-        ? Files.createTempDirectory(parent.toPath(), prefix)
-        : Files.createTempDirectory(prefix)).toFile();
-  }
-
-  /**
-   * Creates a fresh temporary file for working on the given file, next to it when possible (so a
-   * later rename stays on the same filesystem). The file is created atomically, so its name cannot
-   * be predicted or pre-created by another process.
-   */
-  private static File createTempFileFor(File file) throws IOException {
-    File parent = file.getParentFile();
-    // File.createTempFile requires a prefix of at least three characters.
-    String prefix = file.getName();
-    if (prefix.length() < 3) {
-      prefix = prefix + "tmp";
+    finally {
+      ZTFileUtil.deleteTemp(tempDir);
     }
-    return File.createTempFile(prefix + "_", ".zip", parent);
   }
 
   /* Compressing single entries to ZIP files. */
@@ -2121,21 +2089,17 @@ public final class ZipUtil {
    *          compression level.
    */
   public static void repack(File zip, int compressionLevel) {
+    File tmpZip = null;
     try {
-      File tmpZip = createTempFileFor(zip);
-
+      tmpZip = ZTFileUtil.createTempFile();
       repack(zip, tmpZip, compressionLevel);
-
-      // Delete original zip
-      if (!zip.delete()) {
-        throw new IOException("Unable to delete the file: " + zip);
-      }
-
-      // Rename the archive
-      FileUtils.moveFile(tmpZip, zip);
+      ZTFileUtil.moveOver(tmpZip, zip);
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
+    }
+    finally {
+      ZTFileUtil.deleteTemp(tmpZip);
     }
   }
 
@@ -2190,9 +2154,10 @@ public final class ZipUtil {
   /**
    * Compresses a given directory in its own location.
    * <p>
-   * A ZIP file will be first created with a temporary name. After the
-   * compressing the directory will be deleted and the ZIP file will be renamed
-   * as the original directory.
+   * The directory is first compressed to an owner-only temporary ZIP file. That
+   * ZIP file then replaces the directory and gets its permissions without the
+   * execute bits, never more than the directory had: less if it cannot keep the
+   * directory's group or owner.
    *
    * @param dir
    *          input directory as well as the target ZIP file.
@@ -2206,9 +2171,10 @@ public final class ZipUtil {
   /**
    * Compresses a given directory in its own location.
    * <p>
-   * A ZIP file will be first created with a temporary name. After the
-   * compressing the directory will be deleted and the ZIP file will be renamed
-   * as the original directory.
+   * The directory is first compressed to an owner-only temporary ZIP file. That
+   * ZIP file then replaces the directory and gets its permissions without the
+   * execute bits, never more than the directory had: less if it cannot keep the
+   * directory's group or owner.
    *
    * @param dir
    *          input directory as well as the target ZIP file.
@@ -2218,20 +2184,17 @@ public final class ZipUtil {
    * @see #pack(File, File)
    */
   public static void unexplode(File dir, int compressionLevel) {
+    File zip = null;
     try {
-      File zip = createTempFileFor(dir);
-
-      // Pack it
+      zip = ZTFileUtil.createTempFile();
       pack(dir, zip, compressionLevel);
-
-      // Delete the directory
-      FileUtils.deleteDirectory(dir);
-
-      // Rename the archive
-      FileUtils.moveFile(zip, dir);
+      ZTFileUtil.moveOver(zip, dir);
     }
     catch (IOException e) {
       throw ZipExceptionUtil.rethrow(e);
+    }
+    finally {
+      ZTFileUtil.deleteTemp(zip);
     }
   }
 
@@ -3635,8 +3598,8 @@ public final class ZipUtil {
   /**
    *
    * This method provides a general infrastructure for in-place operations.
-   * It creates temp file as a destination, then invokes the action on source and destination.
-   * Then it copies the result back into src file.
+   * It creates an owner-only temp file as a destination, then invokes the action on source and destination.
+   * Then the result replaces the src file and gets its permissions.
    *
    * @param src - source zip file we want to modify
    * @param action - action which actually modifies the archives
@@ -3646,11 +3609,10 @@ public final class ZipUtil {
   private static boolean operateInPlace(File src, InPlaceAction action) {
     File tmp = null;
     try {
-      tmp = File.createTempFile("zt-zip-tmp", ".zip");
+      tmp = ZTFileUtil.createTempFile();
       boolean result = action.act(tmp);
       if (result) { // else nothing changes
-        FileUtils.forceDelete(src);
-        FileUtils.moveFile(tmp, src);
+        ZTFileUtil.moveOver(tmp, src);
       }
       return result;
     }
@@ -3658,7 +3620,7 @@ public final class ZipUtil {
       throw ZipExceptionUtil.rethrow(e);
     }
     finally {
-      FileUtils.deleteQuietly(tmp);
+      ZTFileUtil.deleteTemp(tmp);
     }
   }
 

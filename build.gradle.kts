@@ -63,6 +63,26 @@ tasks.withType<Test>().configureEach {
   }
 }
 
+// The library targets Java 8, but newer JDKs move files differently (JDK 21 refuses to move a directory without
+// owner write permission), so the in-place file handling is also tested on a current LTS JDK.
+val testOnJdk21 by tasks.registering(Test::class) {
+  description = "Runs the in-place file handling tests on JDK 21."
+  group = LifecycleBasePlugin.VERIFICATION_GROUP
+  testClassesDirs = sourceSets.test.get().output.classesDirs
+  classpath = sourceSets.test.get().runtimeClasspath
+  javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(21)) })
+  filter {
+    includeTestsMatching("org.zeroturnaround.zip.TempFilePermissionsTest")
+    includeTestsMatching("org.zeroturnaround.zip.ZipUtilInPlaceTest")
+    includeTestsMatching("org.zeroturnaround.zip.ZipsTest")
+    includeTestsMatching("org.zeroturnaround.zip.ZipUtilDirTest")
+  }
+}
+
+tasks.check {
+  dependsOn(testOnJdk21)
+}
+
 tasks.jar {
   // Match the historical Maven build: no generated Maven descriptor in the jar
   // and no JRebel descriptor.

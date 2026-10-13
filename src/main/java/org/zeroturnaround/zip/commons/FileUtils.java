@@ -66,8 +66,9 @@ public class FileUtils extends FileUtilsV2_2 {
    * @param file file used for the name and location (it is not read or written).
    * @return a non-existing file in the same directory using the same name as prefix.
    * @deprecated the returned name is predictable and the check-then-use gap allows a symlink/TOCTOU
-   *             race in a shared directory; create temporary files with {@link File#createTempFile}
-   *             or {@link java.nio.file.Files#createTempDirectory} instead.
+   *             race in a shared directory; create temporary files with
+   *             {@link java.nio.file.Files#createTempFile} or {@link java.nio.file.Files#createTempDirectory}
+   *             instead, which also make them owner-only on POSIX file systems.
    */
   @Deprecated
   public static File getTempFileFor(File file) {
