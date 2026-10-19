@@ -618,7 +618,9 @@ public class TempFilePermissionsTest extends TestCase {
   private File createZip(String permissions) throws IOException {
     File zip = new File(workDir, "archive.zip");
     ZipUtil.pack(new ZipEntrySource[] { new ByteSource("secret.txt", "secret".getBytes("UTF-8")) }, zip);
-    Files.setPosixFilePermissions(zip.toPath(), PosixFilePermissions.fromString(permissions));
+    if (posixSupported()) {
+      Files.setPosixFilePermissions(zip.toPath(), PosixFilePermissions.fromString(permissions));
+    }
     return zip;
   }
 
