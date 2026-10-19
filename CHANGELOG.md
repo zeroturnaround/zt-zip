@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.18.3] - 2026-10-19
+
 ### Security
 
 - In-place operations (`ZipUtil` and `Zips` without a destination, `repack`, `explode`, `unexplode`) and `FileZipEntryTransformer` now write archive content only to owner-only temporary files, whatever the umask, and the result is never more accessible than the original, so other local users who cannot write to the archive's directory can no longer read its content ([GHSA-pcxh-wx2p-38wc](https://github.com/zeroturnaround/zt-zip/security/advisories/GHSA-pcxh-wx2p-38wc)). Reported by [abdelmouheimen](https://github.com/abdelmouheimen).
@@ -154,7 +156,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Started to write a changelog.
 - Public CI, https://travis-ci.org/.
 
-[Unreleased]: https://github.com/zeroturnaround/zt-zip/compare/v1.18.2...HEAD
+[Unreleased]: https://github.com/zeroturnaround/zt-zip/compare/v1.18.3...HEAD
+[1.18.3]: https://github.com/zeroturnaround/zt-zip/compare/v1.18.2...v1.18.3
 [1.18.2]: https://github.com/zeroturnaround/zt-zip/compare/v1.18.1...v1.18.2
 [1.18.1]: https://github.com/zeroturnaround/zt-zip/compare/v1.18.0...v1.18.1
 [1.18.0]: https://github.com/zeroturnaround/zt-zip/compare/zt-zip-1.17...v1.18.0
