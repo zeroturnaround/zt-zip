@@ -170,8 +170,8 @@ public final class ZipUtil {
     ZipFile zf = null;
     try {
       zf = new ZipFile(zip);
-      for (int i = 0; i < names.length; i++) {
-        if (zf.getEntry(names[i]) != null) {
+      for (String name : names) {
+        if (zf.getEntry(name) != null) {
           return true;
         }
       }
@@ -293,8 +293,9 @@ public final class ZipUtil {
    */
   public static byte[] unpackEntry(InputStream is, String name) {
     ByteArrayUnpacker action = new ByteArrayUnpacker();
-    if (!handle(is, name, action))
+    if (!handle(is, name, action)) {
       return null; // entry not found
+    }
     return action.getBytes();
   }
 
@@ -586,8 +587,8 @@ public final class ZipUtil {
         zf = new ZipFile(zip, charset);
       }
 
-      for (int i = 0; i < entryNames.length; i++) {
-        ZipEntry e = zf.getEntry(entryNames[i]);
+      for (String entryName : entryNames) {
+        ZipEntry e = zf.getEntry(entryName);
         if (e == null) {
           continue;
         }
@@ -675,8 +676,8 @@ public final class ZipUtil {
     try {
       zf = new ZipFile(zip);
 
-      for (int i = 0; i < entryNames.length; i++) {
-        ZipEntry e = zf.getEntry(entryNames[i]);
+      for (String entryName : entryNames) {
+        ZipEntry e = zf.getEntry(entryName);
         if (e == null) {
           continue;
         }
@@ -779,8 +780,8 @@ public final class ZipUtil {
    */
   public static void iterate(InputStream is, String[] entryNames, ZipEntryCallback action, Charset charset) {
     Set<String> namesSet = new HashSet<String>();
-    for (int i = 0; i < entryNames.length; i++) {
-      namesSet.add(entryNames[i]);
+    for (String entryName : entryNames) {
+      namesSet.add(entryName);
     }
     try {
       ZipInputStream in = null;
@@ -1202,7 +1203,7 @@ public final class ZipUtil {
       canonicalDest = destFile.getCanonicalFile().toPath();
     }
     catch (IOException | InvalidPathException e) {
-      throw new MaliciousZipException(outputDir, name);
+      throw new MaliciousZipException(outputDir, name, e);
     }
     if (!canonicalDest.startsWith(canonicalOutputDir)) {
       throw new MaliciousZipException(outputDir, name);
@@ -1415,8 +1416,8 @@ public final class ZipUtil {
           // EVERY entry is a file; resolve the full path and validate it before creating any
           // directories, so a "..\" entry cannot create directories outside the output directory.
           File destFile = outputDir;
-          for (int i = 0; i < dirs.length; i++) {
-            destFile = new File(destFile, dirs[i]);
+          for (String directory : dirs) {
+            destFile = new File(destFile, directory);
           }
           checkDestinationFileForTraversal(outputDir, name, destFile);
 
@@ -1741,8 +1742,7 @@ public final class ZipUtil {
       out = new ZipOutputStream(new BufferedOutputStream(fos));
       out.setLevel(compressionLevel);
 
-      for (int i = 0; i < filesToPack.length; i++) {
-        File fileToPack = filesToPack[i];
+      for (File fileToPack : filesToPack) {
 
         // A NameMapper may return null to skip an entry, the same convention as the directory pack.
         String name = mapper.map(fileToPack.getName());
@@ -1990,8 +1990,7 @@ public final class ZipUtil {
       throw new ZipException("Given directory '" + dir + "' doesn't contain any files!");
     }
 
-    for (int i = 0; i < filenames.length; i++) {
-      String filename = filenames[i];
+    for (String filename : filenames) {
       File file = new File(dir, filename);
       if (!file.exists()) {
         // A broken (dangling) symbolic link is listed by dir.list() but cannot be read.
@@ -2218,8 +2217,8 @@ public final class ZipUtil {
   private static void pack(ZipEntrySource[] entries, OutputStream os, boolean closeStream) {
     try {
       ZipOutputStream out = new ZipOutputStream(os);
-      for (int i = 0; i < entries.length; i++) {
-        addEntry(entries[i], out);
+      for (ZipEntrySource entry : entries) {
+        addEntry(entry, out);
       }
       out.flush();
       out.finish();
@@ -2286,6 +2285,7 @@ public final class ZipUtil {
    */
   public static void addEntry(final File zip, final String path, final File file) {
     operateInPlace(zip, new InPlaceAction() {
+      @Override
       public boolean act(File tmpFile) {
         addEntry(zip, path, file, tmpFile);
         return true;
@@ -2339,6 +2339,7 @@ public final class ZipUtil {
    */
   public static void addEntry(final File zip, final String path, final byte[] bytes) {
     operateInPlace(zip, new InPlaceAction() {
+      @Override
       public boolean act(File tmpFile) {
         addEntry(zip, path, bytes, tmpFile);
         return true;
@@ -2360,6 +2361,7 @@ public final class ZipUtil {
    */
   public static void addEntry(final File zip, final String path, final byte[] bytes, final int compressionMethod) {
     operateInPlace(zip, new InPlaceAction() {
+      @Override
       public boolean act(File tmpFile) {
         addEntry(zip, path, bytes, tmpFile, compressionMethod);
         return true;
@@ -2391,6 +2393,7 @@ public final class ZipUtil {
    */
   public static void addEntry(final File zip, final ZipEntrySource entry) {
     operateInPlace(zip, new InPlaceAction() {
+      @Override
       public boolean act(File tmpFile) {
         addEntry(zip, entry, tmpFile);
         return true;
@@ -2446,8 +2449,8 @@ public final class ZipUtil {
     try {
       out = new ZipOutputStream(destOut);
       copyEntries(zip, out);
-      for (int i = 0; i < entries.length; i++) {
-        addEntry(entries[i], out);
+      for (ZipEntrySource entry : entries) {
+        addEntry(entry, out);
       }
       out.finish();
     }
@@ -2477,8 +2480,8 @@ public final class ZipUtil {
     try {
       out = new ZipOutputStream(destOut);
       copyEntries(is, out);
-      for (int i = 0; i < entries.length; i++) {
-        addEntry(entries[i], out);
+      for (ZipEntrySource entry : entries) {
+        addEntry(entry, out);
       }
       out.finish();
     }
@@ -2497,6 +2500,7 @@ public final class ZipUtil {
    */
   public static void addEntries(final File zip, final ZipEntrySource[] entries) {
     operateInPlace(zip, new InPlaceAction() {
+      @Override
       public boolean act(File tmpFile) {
         addEntries(zip, entries, tmpFile);
         return true;
@@ -2530,6 +2534,7 @@ public final class ZipUtil {
    */
   public static void removeEntry(final File zip, final String path) {
     operateInPlace(zip, new InPlaceAction() {
+      @Override
       public boolean act(File tmpFile) {
         removeEntry(zip, path, tmpFile);
         return true;
@@ -2604,6 +2609,7 @@ public final class ZipUtil {
    */
   public static void removeEntries(final File zip, final String[] paths) {
     operateInPlace(zip, new InPlaceAction() {
+      @Override
       public boolean act(File tmpFile) {
         removeEntries(zip, paths, tmpFile);
         return true;
@@ -2765,6 +2771,7 @@ public final class ZipUtil {
    */
   public static boolean replaceEntry(final File zip, final String path, final File file) {
     return operateInPlace(zip, new InPlaceAction() {
+      @Override
       public boolean act(File tmpFile) {
         return replaceEntry(zip, new FileSource(path, file), tmpFile);
       }
@@ -2801,6 +2808,7 @@ public final class ZipUtil {
    */
   public static boolean replaceEntry(final File zip, final String path, final byte[] bytes) {
     return operateInPlace(zip, new InPlaceAction() {
+      @Override
       public boolean act(File tmpFile) {
         return replaceEntry(zip, new ByteSource(path, bytes), tmpFile);
       }
@@ -2823,6 +2831,7 @@ public final class ZipUtil {
   public static boolean replaceEntry(final File zip, final String path, final byte[] bytes,
       final int compressionMethod) {
     return operateInPlace(zip, new InPlaceAction() {
+      @Override
       public boolean act(File tmpFile) {
         return replaceEntry(zip, new ByteSource(path, bytes, compressionMethod), tmpFile);
       }
@@ -2855,6 +2864,7 @@ public final class ZipUtil {
    */
   public static boolean replaceEntry(final File zip, final ZipEntrySource entry) {
     return operateInPlace(zip, new InPlaceAction() {
+      @Override
       public boolean act(File tmpFile) {
         return replaceEntry(zip, entry, tmpFile);
       }
@@ -2922,6 +2932,7 @@ public final class ZipUtil {
    */
   public static boolean replaceEntries(final File zip, final ZipEntrySource[] entries) {
     return operateInPlace(zip, new InPlaceAction() {
+      @Override
       public boolean act(File tmpFile) {
         return replaceEntries(zip, entries, tmpFile);
       }
@@ -2992,6 +3003,7 @@ public final class ZipUtil {
    */
   public static void addOrReplaceEntries(final File zip, final ZipEntrySource[] entries) {
     operateInPlace(zip, new InPlaceAction() {
+      @Override
       public boolean act(File tmpFile) {
         addOrReplaceEntries(zip, entries, tmpFile);
         return true;
@@ -3004,8 +3016,7 @@ public final class ZipUtil {
    */
   static Map<String, ZipEntrySource> entriesByPath(ZipEntrySource... entries) {
     Map<String, ZipEntrySource> result = new HashMap<String, ZipEntrySource>();
-    for (int i = 0; i < entries.length; i++) {
-      ZipEntrySource source = entries[i];
+    for (ZipEntrySource source : entries) {
       result.put(source.getPath(), source);
     }
     return result;
@@ -3044,6 +3055,7 @@ public final class ZipUtil {
    */
   public static boolean transformEntry(final File zip, final String path, final ZipEntryTransformer transformer) {
     return operateInPlace(zip, new InPlaceAction() {
+      @Override
       public boolean act(File tmpFile) {
         return transformEntry(zip, path, transformer, tmpFile);
       }
@@ -3076,6 +3088,7 @@ public final class ZipUtil {
    */
   public static boolean transformEntry(final File zip, final ZipEntryTransformerEntry entry) {
     return operateInPlace(zip, new InPlaceAction() {
+      @Override
       public boolean act(File tmpFile) {
         return transformEntry(zip, entry, tmpFile);
       }
@@ -3095,8 +3108,9 @@ public final class ZipUtil {
    */
   public static boolean transformEntries(File zip, ZipEntryTransformerEntry[] entries, File destZip) {
     checkSourceAndDestinationAreNotTheSame(zip, destZip);
-    if (log.isDebugEnabled())
+    if (log.isDebugEnabled()) {
       log.debug("Copying '" + zip + "' to '" + destZip + "' and transforming entries " + Arrays.asList(entries) + ".");
+    }
 
     try {
       ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(destZip)));
@@ -3125,6 +3139,7 @@ public final class ZipUtil {
    */
   public static boolean transformEntries(final File zip, final ZipEntryTransformerEntry[] entries) {
     return operateInPlace(zip, new InPlaceAction() {
+      @Override
       public boolean act(File tmpFile) {
         return transformEntries(zip, entries, tmpFile);
       }
@@ -3175,8 +3190,9 @@ public final class ZipUtil {
    * @return <code>true</code> if at least one entry was replaced.
    */
   public static boolean transformEntries(InputStream is, ZipEntryTransformerEntry[] entries, OutputStream os) {
-    if (log.isDebugEnabled())
+    if (log.isDebugEnabled()) {
       log.debug("Copying '" + is + "' to '" + os + "' and transforming entries " + Arrays.asList(entries) + ".");
+    }
 
     try {
       ZipOutputStream out = new ZipOutputStream(os);

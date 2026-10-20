@@ -66,13 +66,13 @@ public class ExtraFieldUtils {
       implementations.put(ze.getHeaderId(), c);
     }
     catch (ClassCastException cc) {
-      throw new RuntimeException(c + " doesn\'t implement ZipExtraField");
+      throw new RuntimeException(c + " doesn\'t implement ZipExtraField", cc);
     }
     catch (InstantiationException ie) {
-      throw new RuntimeException(c + " is not a concrete class");
+      throw new RuntimeException(c + " is not a concrete class", ie);
     }
     catch (IllegalAccessException ie) {
-      throw new RuntimeException(c + "\'s no-arg constructor is not public");
+      throw new RuntimeException(c + "\'s no-arg constructor is not public", ie);
     }
   }
 
@@ -134,12 +134,12 @@ public class ExtraFieldUtils {
         v.add(ze);
       }
       catch (InstantiationException ie) {
-        throw new ZipException(ie.getMessage());
+        throw new org.zeroturnaround.zip.ZipException(ie.getMessage(), ie);
       }
       catch (IllegalAccessException iae) {
-        throw new ZipException(iae.getMessage());
+        throw new org.zeroturnaround.zip.ZipException(iae.getMessage(), iae);
       }
-      start += (length + WORD);
+      start += length + WORD;
     }
     return v;
   }
@@ -168,7 +168,7 @@ public class ExtraFieldUtils {
           0, result, start + 2, 2);
       byte[] local = element.getLocalFileDataData();
       System.arraycopy(local, 0, result, start + WORD, local.length);
-      start += (local.length + WORD);
+      start += local.length + WORD;
     }
     return result;
   }

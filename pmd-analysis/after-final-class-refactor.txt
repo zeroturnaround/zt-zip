@@ -1,0 +1,151 @@
+src/main/java/org/zeroturnaround/zip/ByteSource.java:94:	MissingOverride:	The method 'toString()' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/FileSource.java:64:	MissingOverride:	The method 'toString()' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/ZTFilePermissionsUtil.java:15:	AvoidUsingOctalValues:	Avoid integer literals that start with zero (interpreted as octal), remove the leading 0 to get a decimal literal (or use explicit 0x, 0b prefixes)
+src/main/java/org/zeroturnaround/zip/ZTFilePermissionsUtil.java:16:	AvoidUsingOctalValues:	Avoid integer literals that start with zero (interpreted as octal), remove the leading 0 to get a decimal literal (or use explicit 0x, 0b prefixes)
+src/main/java/org/zeroturnaround/zip/ZTFilePermissionsUtil.java:17:	AvoidUsingOctalValues:	Avoid integer literals that start with zero (interpreted as octal), remove the leading 0 to get a decimal literal (or use explicit 0x, 0b prefixes)
+src/main/java/org/zeroturnaround/zip/ZTFilePermissionsUtil.java:19:	AvoidUsingOctalValues:	Avoid integer literals that start with zero (interpreted as octal), remove the leading 0 to get a decimal literal (or use explicit 0x, 0b prefixes)
+src/main/java/org/zeroturnaround/zip/ZTFilePermissionsUtil.java:20:	AvoidUsingOctalValues:	Avoid integer literals that start with zero (interpreted as octal), remove the leading 0 to get a decimal literal (or use explicit 0x, 0b prefixes)
+src/main/java/org/zeroturnaround/zip/ZTFilePermissionsUtil.java:21:	AvoidUsingOctalValues:	Avoid integer literals that start with zero (interpreted as octal), remove the leading 0 to get a decimal literal (or use explicit 0x, 0b prefixes)
+src/main/java/org/zeroturnaround/zip/ZTFileUtil.java:42:	MissingOverride:	The method 'accept(File)' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/ZTFileUtil.java:57:	ForLoopCanBeForeach:	This for loop can be replaced by a foreach loop
+src/main/java/org/zeroturnaround/zip/ZipEntryUtil.java:3:	DanglingJavadoc:	Javadoc comment does not belong to any class, method or field
+src/main/java/org/zeroturnaround/zip/ZipEntryUtil.java:156:	UnnecessaryFullyQualifiedName:	Unnecessary qualifier 'ZipEntryUtil': 'setZTFilePermissions' is already in scope
+src/main/java/org/zeroturnaround/zip/ZipEntryUtil.java:200:	AvoidUsingOctalValues:	Avoid integer literals that start with zero (interpreted as octal), remove the leading 0 to get a decimal literal (or use explicit 0x, 0b prefixes)
+src/main/java/org/zeroturnaround/zip/ZipExceptionUtil.java:5:	InstantiableUtilityClass:	All members are static. Consider adding a private no-args constructor to prevent instantiation.
+src/main/java/org/zeroturnaround/zip/ZipFileUtil.java:35:	ControlStatementBraces:	This statement should have braces
+src/main/java/org/zeroturnaround/zip/ZipFileUtil.java:56:	ControlStatementBraces:	This statement should have braces
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:174:	ForLoopCanBeForeach:	This for loop can be replaced by a foreach loop
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:274:	ReturnEmptyCollectionRatherThanNull:	Return an empty collection rather than null.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:298:	ReturnEmptyCollectionRatherThanNull:	Return an empty collection rather than null.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:298:	ControlStatementBraces:	This statement should have braces
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:307:	ClassWithOnlyPrivateConstructorsShouldBeFinal:	This class has only private constructors and may be final
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:424:	CloseResource:	Ensure that resources like this BufferedInputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:521:	CloseResource:	Ensure that resources like this InputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:590:	ForLoopCanBeForeach:	This for loop can be replaced by a foreach loop
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:595:	CloseResource:	Ensure that resources like this InputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:679:	ForLoopCanBeForeach:	This for loop can be replaced by a foreach loop
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:783:	ForLoopCanBeForeach:	This for loop can be replaced by a foreach loop
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:872:	CloseResource:	Ensure that resources like this BufferedInputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:1367:	EmptyCatchBlock:	Avoid empty catch blocks
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:1403:	DanglingJavadoc:	Javadoc comment does not belong to any class, method or field
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:1419:	ForLoopCanBeForeach:	This for loop can be replaced by a foreach loop
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:1578:	CloseResource:	Ensure that resources like this BufferedInputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:1769:	CloseResource:	Ensure that resources like this ZipOutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:1770:	CloseResource:	Ensure that resources like this FileOutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:1776:	ForLoopCanBeForeach:	This for loop can be replaced by a foreach loop
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:1833:	CloseResource:	Ensure that resources like this ZipOutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:1920:	CloseResource:	Ensure that resources like this ZipOutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2025:	ForLoopCanBeForeach:	This for loop can be replaced by a foreach loop
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2149:	CloseResource:	Ensure that resources like this FileOutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2258:	ForLoopCanBeForeach:	This for loop can be replaced by a foreach loop
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2285:	CloseResource:	Ensure that resources like this OutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2326:	MissingOverride:	The method 'act(File)' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2379:	MissingOverride:	The method 'act(File)' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2400:	MissingOverride:	The method 'act(File)' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2431:	MissingOverride:	The method 'act(File)' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2454:	CloseResource:	Ensure that resources like this OutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2482:	CloseResource:	Ensure that resources like this ZipOutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2486:	ForLoopCanBeForeach:	This for loop can be replaced by a foreach loop
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2513:	CloseResource:	Ensure that resources like this ZipOutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2517:	ForLoopCanBeForeach:	This for loop can be replaced by a foreach loop
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2537:	MissingOverride:	The method 'act(File)' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2570:	MissingOverride:	The method 'act(File)' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2594:	CloseResource:	Ensure that resources like this ZipOutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2623:	CloseResource:	Ensure that resources like this ZipOutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2644:	MissingOverride:	The method 'act(File)' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2805:	MissingOverride:	The method 'act(File)' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2841:	MissingOverride:	The method 'act(File)' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2863:	MissingOverride:	The method 'act(File)' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2895:	MissingOverride:	The method 'act(File)' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2921:	CloseResource:	Ensure that resources like this ZipOutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2962:	MissingOverride:	The method 'act(File)' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:2987:	CloseResource:	Ensure that resources like this ZipOutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:3032:	MissingOverride:	The method 'act(File)' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:3044:	ForLoopCanBeForeach:	This for loop can be replaced by a foreach loop
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:3084:	MissingOverride:	The method 'act(File)' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:3116:	MissingOverride:	The method 'act(File)' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:3136:	ControlStatementBraces:	This statement should have braces
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:3139:	CloseResource:	Ensure that resources like this ZipOutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:3165:	MissingOverride:	The method 'act(File)' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:3216:	ControlStatementBraces:	This statement should have braces
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:3290:	CloseResource:	Ensure that resources like this InputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:3350:	GuardLogStatement:	Logger calls should be surrounded by log level guards.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:3355:	GuardLogStatement:	Logger calls should be surrounded by log level guards.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:3369:	GuardLogStatement:	Logger calls should be surrounded by log level guards.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:3395:	CloseResource:	Ensure that resources like this InputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:3396:	CloseResource:	Ensure that resources like this InputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:3467:	GuardLogStatement:	Logger calls should be surrounded by log level guards.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:3475:	GuardLogStatement:	Logger calls should be surrounded by log level guards.
+src/main/java/org/zeroturnaround/zip/ZipUtil.java:3618:	EmptyCatchBlock:	Avoid empty catch blocks
+src/main/java/org/zeroturnaround/zip/Zips.java:57:	ClassWithOnlyPrivateConstructorsShouldBeFinal:	This class has only private constructors and may be final
+src/main/java/org/zeroturnaround/zip/Zips.java:357:	CloseResource:	Ensure that resources like this ZipOutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/Zips.java:503:	CloseResource:	Ensure that resources like this ZipFile object are closed after use
+src/main/java/org/zeroturnaround/zip/Zips.java:528:	CloseResource:	Ensure that resources like this InputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/Zips.java:556:	CloseResource:	Ensure that resources like this InputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/Zips.java:704:	CloseResource:	Ensure that resources like this PipedInputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/Zips.java:705:	CloseResource:	Ensure that resources like this PipedOutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/Zips.java:707:	CloseResource:	Ensure that resources like this ZipOutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/Zips.java:708:	CloseResource:	Ensure that resources like this ZipInputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/Zips.java:710:	CloseResource:	Ensure that resources like this ExecutorService object are closed after use
+src/main/java/org/zeroturnaround/zip/Zips.java:715:	MissingOverride:	The method 'run()' is missing an @Override annotation.
+src/main/java/org/zeroturnaround/zip/Zips.java:719:	AvoidCatchingGenericException:	Avoid catching Throwable in try-catch block
+src/main/java/org/zeroturnaround/zip/Zips.java:736:	EmptyCatchBlock:	Avoid empty catch blocks
+src/main/java/org/zeroturnaround/zip/commons/FileUtils.java:34:	CloseResource:	Ensure that resources like this FileInputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/commons/FileUtils.java:54:	CloseResource:	Ensure that resources like this BufferedOutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/commons/FileUtils.java:79:	AssignmentInOperand:	Avoid assignment to index in operand
+src/main/java/org/zeroturnaround/zip/commons/FileUtilsV2_2.java:56:	InstantiableUtilityClass:	All members are static. Consider adding a private no-args constructor to prevent instantiation.
+src/main/java/org/zeroturnaround/zip/commons/FileUtilsV2_2.java:56:	ClassNamingConventions:	The utility class name 'FileUtilsV2_2' doesn't match '[A-Z][a-zA-Z0-9]*'
+src/main/java/org/zeroturnaround/zip/commons/FileUtilsV2_2.java:422:	CloseResource:	Ensure that resources like this FileInputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/commons/FileUtilsV2_2.java:423:	CloseResource:	Ensure that resources like this FileOutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/commons/FileUtilsV2_2.java:424:	CloseResource:	Ensure that resources like this FileChannel object are closed after use
+src/main/java/org/zeroturnaround/zip/commons/FileUtilsV2_2.java:425:	CloseResource:	Ensure that resources like this FileChannel object are closed after use
+src/main/java/org/zeroturnaround/zip/commons/FileUtilsV2_2.java:1084:	SimplifyBooleanReturns:	This if statement can be replaced by `return !{condition};`
+src/main/java/org/zeroturnaround/zip/commons/FilenameUtils.java:86:	InstantiableUtilityClass:	All members are static. Consider adding a private no-args constructor to prevent instantiation.
+src/main/java/org/zeroturnaround/zip/commons/FilenameUtils.java:100:	UselessParentheses:	Useless parentheses around `Character.valueOf(EXTENSION_SEPARATOR)`.
+src/main/java/org/zeroturnaround/zip/commons/FilenameUtils.java:191:	UselessParentheses:	Useless parentheses around `isSeparator(ch0) ? 1 : 0`.
+src/main/java/org/zeroturnaround/zip/commons/FilenameUtils.java:227:	UselessParentheses:	Useless parentheses around `isSeparator(ch0) ? 1 : 0`.
+src/main/java/org/zeroturnaround/zip/commons/IOUtils.java:67:	InstantiableUtilityClass:	All members are static. Consider adding a private no-args constructor to prevent instantiation.
+src/main/java/org/zeroturnaround/zip/commons/IOUtils.java:205:	EmptyCatchBlock:	Avoid empty catch blocks
+src/main/java/org/zeroturnaround/zip/commons/StringBuilderWriter.java:36:	AvoidStringBufferField:	StringBuffers can grow quite a lot, and so may become a source of memory leak (if the owning class has a long life time).
+src/main/java/org/zeroturnaround/zip/commons/StringBuilderWriter.java:105:	UncommentedEmptyMethodBody:	Document empty method body
+src/main/java/org/zeroturnaround/zip/commons/StringBuilderWriter.java:112:	UncommentedEmptyMethodBody:	Document empty method body
+src/main/java/org/zeroturnaround/zip/extra/AsiExtraField.java:70:	FinalFieldCouldBeStatic:	The final field PERM_MASK could be made static
+src/main/java/org/zeroturnaround/zip/extra/AsiExtraField.java:70:	AvoidUsingOctalValues:	Avoid integer literals that start with zero (interpreted as octal), remove the leading 0 to get a decimal literal (or use explicit 0x, 0b prefixes)
+src/main/java/org/zeroturnaround/zip/extra/AsiExtraField.java:76:	FinalFieldCouldBeStatic:	The final field LINK_FLAG could be made static
+src/main/java/org/zeroturnaround/zip/extra/AsiExtraField.java:76:	AvoidUsingOctalValues:	Avoid integer literals that start with zero (interpreted as octal), remove the leading 0 to get a decimal literal (or use explicit 0x, 0b prefixes)
+src/main/java/org/zeroturnaround/zip/extra/AsiExtraField.java:82:	FinalFieldCouldBeStatic:	The final field FILE_FLAG could be made static
+src/main/java/org/zeroturnaround/zip/extra/AsiExtraField.java:82:	AvoidUsingOctalValues:	Avoid integer literals that start with zero (interpreted as octal), remove the leading 0 to get a decimal literal (or use explicit 0x, 0b prefixes)
+src/main/java/org/zeroturnaround/zip/extra/AsiExtraField.java:88:	FinalFieldCouldBeStatic:	The final field DIR_FLAG could be made static
+src/main/java/org/zeroturnaround/zip/extra/AsiExtraField.java:88:	AvoidUsingOctalValues:	Avoid integer literals that start with zero (interpreted as octal), remove the leading 0 to get a decimal literal (or use explicit 0x, 0b prefixes)
+src/main/java/org/zeroturnaround/zip/extra/AsiExtraField.java:100:	FinalFieldCouldBeStatic:	The final field DEFAULT_LINK_PERM could be made static
+src/main/java/org/zeroturnaround/zip/extra/AsiExtraField.java:100:	AvoidUsingOctalValues:	Avoid integer literals that start with zero (interpreted as octal), remove the leading 0 to get a decimal literal (or use explicit 0x, 0b prefixes)
+src/main/java/org/zeroturnaround/zip/extra/AsiExtraField.java:106:	FinalFieldCouldBeStatic:	The final field DEFAULT_DIR_PERM could be made static
+src/main/java/org/zeroturnaround/zip/extra/AsiExtraField.java:106:	AvoidUsingOctalValues:	Avoid integer literals that start with zero (interpreted as octal), remove the leading 0 to get a decimal literal (or use explicit 0x, 0b prefixes)
+src/main/java/org/zeroturnaround/zip/extra/AsiExtraField.java:112:	FinalFieldCouldBeStatic:	The final field DEFAULT_FILE_PERM could be made static
+src/main/java/org/zeroturnaround/zip/extra/AsiExtraField.java:112:	AvoidUsingOctalValues:	Avoid integer literals that start with zero (interpreted as octal), remove the leading 0 to get a decimal literal (or use explicit 0x, 0b prefixes)
+src/main/java/org/zeroturnaround/zip/extra/AsiExtraField.java:161:	UncommentedEmptyConstructor:	Document empty constructor
+src/main/java/org/zeroturnaround/zip/extra/AsiExtraField.java:436:	CloneMethodReturnTypeMustMatchClassName:	The return type of the clone() method must be the class name when implements Cloneable
+src/main/java/org/zeroturnaround/zip/extra/ExtraFieldUtils.java:36:	InstantiableUtilityClass:	All members are static. Consider adding a private no-args constructor to prevent instantiation.
+src/main/java/org/zeroturnaround/zip/extra/ExtraFieldUtils.java:122:	UselessParentheses:	Useless parentheses around `new ZipShort(data, start + 2)`.
+src/main/java/org/zeroturnaround/zip/extra/ExtraFieldUtils.java:139:	IdenticalCatchBranches:	'catch' branch identical to 'InstantiationException' branch
+src/main/java/org/zeroturnaround/zip/extra/ExtraFieldUtils.java:142:	UselessParentheses:	Useless parentheses around `length + WORD`.
+src/main/java/org/zeroturnaround/zip/extra/ExtraFieldUtils.java:171:	UselessParentheses:	Useless parentheses around `local.length + WORD`.
+src/main/java/org/zeroturnaround/zip/extra/UnrecognizedExtraField.java:176:	ReturnEmptyCollectionRatherThanNull:	Return an empty collection rather than null.
+src/main/java/org/zeroturnaround/zip/extra/ZipLong.java:96:	UnnecessaryFullyQualifiedName:	Unnecessary qualifier 'ZipLong': 'getValue' is already in scope
+src/main/java/org/zeroturnaround/zip/extra/ZipLong.java:106:	UnnecessaryFullyQualifiedName:	Unnecessary qualifier 'ZipLong': 'getBytes' is already in scope
+src/main/java/org/zeroturnaround/zip/extra/ZipLong.java:127:	UselessParentheses:	Duplicate parentheses around `value & BYTE_MASK`.
+src/main/java/org/zeroturnaround/zip/extra/ZipLong.java:145:	UselessParentheses:	Useless parentheses around `bytes[offset] & BYTE_MASK`.
+src/main/java/org/zeroturnaround/zip/extra/ZipLong.java:168:	SimplifyConditional:	No need to check for null before an instanceof
+src/main/java/org/zeroturnaround/zip/extra/ZipLong.java:186:	CloneMethodReturnTypeMustMatchClassName:	The return type of the clone() method must be the class name when implements Cloneable
+src/main/java/org/zeroturnaround/zip/extra/ZipShort.java:66:	UnnecessaryFullyQualifiedName:	Unnecessary qualifier 'ZipShort': 'getValue' is already in scope
+src/main/java/org/zeroturnaround/zip/extra/ZipShort.java:114:	UselessParentheses:	Useless parentheses around `bytes[offset] & BYTE_MASK`.
+src/main/java/org/zeroturnaround/zip/extra/ZipShort.java:137:	SimplifyConditional:	No need to check for null before an instanceof
+src/main/java/org/zeroturnaround/zip/extra/ZipShort.java:155:	CloneMethodReturnTypeMustMatchClassName:	The return type of the clone() method must be the class name when implements Cloneable
+src/main/java/org/zeroturnaround/zip/timestamps/Java8TimestampStrategy.java:3:	DanglingJavadoc:	Javadoc comment does not belong to any class, method or field
+src/main/java/org/zeroturnaround/zip/timestamps/PreJava8TimestampStrategy.java:2:	DanglingJavadoc:	Javadoc comment does not belong to any class, method or field
+src/main/java/org/zeroturnaround/zip/timestamps/TimestampStrategy.java:2:	DanglingJavadoc:	Javadoc comment does not belong to any class, method or field
+src/main/java/org/zeroturnaround/zip/timestamps/TimestampStrategyFactory.java:2:	DanglingJavadoc:	Javadoc comment does not belong to any class, method or field
+src/main/java/org/zeroturnaround/zip/timestamps/TimestampStrategyFactory.java:27:	ClassWithOnlyPrivateConstructorsShouldBeFinal:	This class has only private constructors and may be final
+src/main/java/org/zeroturnaround/zip/transform/FileZipEntryTransformer.java:64:	CloseResource:	Ensure that resources like this BufferedOutputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/transform/ZipEntrySourceZipEntryTransformer.java:33:	CloseResource:	Ensure that resources like this InputStream object are closed after use
+src/main/java/org/zeroturnaround/zip/transform/ZipEntryTransformerEntry.java:27:	MissingOverride:	The method 'toString()' is missing an @Override annotation.
