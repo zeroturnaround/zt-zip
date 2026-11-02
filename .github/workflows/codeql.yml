@@ -37,7 +37,7 @@ jobs:
 
       - name: Set up Gradle
         if: matrix.build-mode == 'manual'
-        uses: gradle/actions/setup-gradle@v6.4.0
+        uses: gradle/actions/setup-gradle@v6.4.1
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4.39.1
